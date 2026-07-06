@@ -3,6 +3,8 @@ import { Activity, GitCommit, Flame, BookOpen, Layers, CheckCircle2 } from 'luci
 import { getProjects, getBlogPosts } from '@/lib/content';
 import { cn } from '@/lib/utils';
 import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 export const metadata = {
   title: 'Mission Control — BuildWithPNJ',
@@ -13,31 +15,79 @@ export default function PublicMissionControlPage() {
   const projects = getProjects();
   const posts = getBlogPosts();
 
-  // Attempt to load real Git commits and heatmap data from local repository
-  let commitsList: { hash: string; subject: string; author: string; date: string }[] = [];
+  // Attempt to load real Git commits and heatmap data from all local repositories
+  let commitsList: { hash: string; subject: string; author: string; date: string; project: string }[] = [];
   let totalCommits = 0;
   let heatmapCells: number[] = [];
   let gitEnabled = false;
-  
+  const dateCounts: Record<string, number> = {};
+
   try {
-    // 1. Get last 5 commits from git history
-    const gitLog = execSync('git log -n 5 --pretty=format:"%h|%s|%an|%ad" --date=short', { encoding: 'utf-8' });
-    commitsList = gitLog.split('\n').filter(Boolean).map(line => {
-      const [hash, subject, author, date] = line.split('|');
-      return { hash, subject: subject || 'No commit message', author: author || 'Unknown', date: date || '' };
-    });
+    const baseProjectsDir = 'C:\\Users\\praka\\my-github-projects';
+    if (fs.existsSync(baseProjectsDir)) {
+      const dirs = fs.readdirSync(baseProjectsDir);
+      const allCommits: { hash: string; subject: string; author: string; date: string; timestamp: number; project: string }[] = [];
 
-    // 2. Count total commits
-    const totalCommitsStr = execSync('git rev-list --count HEAD', { encoding: 'utf-8' }).trim();
-    totalCommits = parseInt(totalCommitsStr, 10) || 0;
+      for (const dir of dirs) {
+        const projPath = path.join(baseProjectsDir, dir);
+        if (!fs.statSync(projPath).isDirectory()) continue;
 
-    // 3. Map real commit history to past 364 days heatmap (52 weeks * 7 days)
-    const gitDates = execSync('git log --pretty=format:"%ad" --date=short', { encoding: 'utf-8' });
-    const dateCounts: Record<string, number> = {};
-    gitDates.split('\n').filter(Boolean).forEach(date => {
-      dateCounts[date] = (dateCounts[date] || 0) + 1;
-    });
+        const gitDir = path.join(projPath, '.git');
+        if (fs.existsSync(gitDir)) {
+          try {
+            // Get commits from this directory
+            const gitLog = execSync('git log -n 10 --pretty=format:"%h|%s|%an|%ad|%at" --date=short', { 
+              cwd: projPath, 
+              encoding: 'utf-8',
+              stdio: ['pipe', 'pipe', 'ignore']
+            });
 
+            gitLog.split('\n').filter(Boolean).forEach(line => {
+              const [hash, subject, author, date, timestampStr] = line.split('|');
+              const timestamp = parseInt(timestampStr, 10) || 0;
+              allCommits.push({
+                hash,
+                subject: subject || 'No commit message',
+                author: author || 'Unknown',
+                date: date || '',
+                timestamp,
+                project: dir
+              });
+            });
+
+            // Count all commits for heatmap
+            const gitDates = execSync('git log --pretty=format:"%ad" --date=short', { 
+              cwd: projPath, 
+              encoding: 'utf-8',
+              stdio: ['pipe', 'pipe', 'ignore']
+            });
+            gitDates.split('\n').filter(Boolean).forEach(date => {
+              dateCounts[date] = (dateCounts[date] || 0) + 1;
+              totalCommits++;
+            });
+            gitEnabled = true;
+          } catch (e) {
+            // Skip this folder if git fails
+          }
+        }
+      }
+
+      // Sort all commits by timestamp descending and take the top 6
+      allCommits.sort((a, b) => b.timestamp - a.timestamp);
+      commitsList = allCommits.slice(0, 6).map(c => ({
+        hash: c.hash,
+        subject: c.subject,
+        author: c.author,
+        date: c.date,
+        project: c.project
+      }));
+    }
+  } catch (err) {
+    // Fallback if filesystem read fails
+  }
+
+  // Populate heatmap cells based on accumulated dates
+  if (gitEnabled) {
     const today = new Date();
     for (let i = 0; i < 52 * 7; i++) {
       const d = new Date(today);
@@ -53,16 +103,15 @@ export default function PublicMissionControlPage() {
       }
       heatmapCells.push(density);
     }
-    gitEnabled = true;
-  } catch (e) {
+  } else {
     // Fallback mock logs if git command is not available (e.g., in serverless host container)
     totalCommits = 847;
     commitsList = [
-      { hash: 'fdcbd78', subject: 'feat(portfolio): Integrate scanned GitHub projects and complete portfolio cataloging all 16 repositories', author: 'buildwithpnj', date: '2026-07-06' },
-      { hash: 'f308226', subject: 'docs(governance): add project-scoped AGENTS.md rules for engineering memory and repository intelligence', author: 'buildwithpnj', date: '2026-07-06' },
-      { hash: 'b3d6f40', subject: 'feat(hero): Anchor bottom portrait pixels to remain static and unmovable under hover and physics', author: 'buildwithpnj', date: '2026-07-06' },
-      { hash: '8ff7145', subject: 'feat(hero): Unified brand styling and Hero Section v2.0 with dynamic transparent background PNGs', author: 'buildwithpnj', date: '2026-07-06' },
-      { hash: 'c1622d0', subject: 'Initial commit with MIT License, complete dashboard features (Notes, Finance, Books, Habits)', author: 'buildwithpnj', date: '2026-07-03' }
+      { hash: 'fdcbd78', subject: 'feat(portfolio): Integrate scanned GitHub projects and complete portfolio cataloging all 16 repositories', author: 'buildwithpnj', date: '2026-07-06', project: 'Dashboard' },
+      { hash: 'f308226', subject: 'docs(governance): add project-scoped AGENTS.md rules for engineering memory and repository intelligence', author: 'buildwithpnj', date: '2026-07-06', project: 'Dashboard' },
+      { hash: 'b3d6f40', subject: 'feat(hero): Anchor bottom portrait pixels to remain static and unmovable under hover and physics', author: 'buildwithpnj', date: '2026-07-06', project: 'Dashboard' },
+      { hash: '8ff7145', subject: 'feat(hero): Unified brand styling and Hero Section v2.0 with dynamic transparent background PNGs', author: 'buildwithpnj', date: '2026-07-06', project: 'Dashboard' },
+      { hash: 'c1622d0', subject: 'Initial commit with MIT License, complete dashboard features (Notes, Finance, Books, Habits)', author: 'buildwithpnj', date: '2026-07-03', project: 'Dashboard' }
     ];
     heatmapCells = Array.from({ length: 52 * 7 }, (_, i) => {
       const factor = Math.sin(i / 15) * Math.cos(i / 30);
@@ -105,7 +154,7 @@ export default function PublicMissionControlPage() {
         <div className="p-5 rounded-2xl border border-border bg-card border-t-2 border-t-primary flex flex-col gap-2 relative overflow-hidden">
           <GitCommit className="h-4 w-4 text-muted-foreground" />
           <div className="font-mono text-3xl font-bold text-primary mt-2">{totalCommits}</div>
-          <div className="font-pixel text-[10px] text-muted-foreground tracking-wider uppercase">COMMITS</div>
+          <div className="font-pixel text-[10px] text-muted-foreground tracking-wider uppercase">TOTAL COMMITS</div>
           <span className="text-[10px] text-positive mt-1 font-mono">{gitEnabled ? '+34 total' : '+23 this week'}</span>
         </div>
 
@@ -198,7 +247,7 @@ export default function PublicMissionControlPage() {
           </div>
 
           <div className="text-xs text-muted-foreground leading-relaxed pt-2 border-t border-border font-mono">
-            <strong>{gitEnabled ? `${totalCommits} contributions` : '23 contributions'}</strong> tracked across active repositories.
+            <strong>{gitEnabled ? `${totalCommits} contributions` : '23 contributions'}</strong> tracked across all active repositories.
           </div>
         </div>
 
@@ -215,10 +264,10 @@ export default function PublicMissionControlPage() {
             {commitsList.map((c) => (
               <div key={c.hash} className="flex items-start gap-3 p-3 rounded-xl bg-background border border-border">
                 <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1 shadow-[0_0_8px_rgba(59,130,246,0.4)] animate-pulse" />
-                <div className="flex flex-col text-left">
+                <div className="flex flex-col text-left text-[11px]">
                   <span className="text-foreground font-semibold">{c.subject}</span>
                   <span className="text-muted-foreground mt-0.5">
-                    commit {c.hash} · {c.date} · by <span className="text-primary font-semibold">{c.author}</span>
+                    commit {c.hash} ({c.project}) · {c.date} · by <span className="text-primary font-semibold">{c.author}</span>
                   </span>
                 </div>
               </div>
