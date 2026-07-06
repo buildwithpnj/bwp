@@ -239,6 +239,19 @@ export function AIPortraitHero() {
       let xOffset = rect.left + (rect.width - targetWidth) / 2;
       let yOffset = rect.top + (rect.height - targetHeight) / 2;
       
+      // Prevent bottom edge clipping on short viewports
+      if (yOffset + targetHeight > height * 0.94) {
+        const excess = (yOffset + targetHeight) - (height * 0.94);
+        yOffset = Math.max(10, yOffset - excess); // Shift up
+        
+        // If still overflowing, scale down height
+        if (yOffset + targetHeight > height * 0.94) {
+          targetHeight = (height * 0.94) - yOffset;
+          targetWidth = targetHeight * targetAspect;
+          xOffset = rect.left + (rect.width - targetWidth) / 2;
+        }
+      }
+      
       layoutRef.current = { xOffset, yOffset, targetWidth, targetHeight };
       
       offscreenCanvas.width = 110; // Full high-density background grid
@@ -267,8 +280,8 @@ export function AIPortraitHero() {
             let pSize = Math.random() * 1.5 + 2.5;
             let pAlpha = Math.random() * 0.35 + 0.65;
             
-            // Soft chest fade-out at bottom
-            const fadeZoneHeight = Math.round(offscreenCanvas.height * 0.12);
+            // Soft chest fade-out at bottom (increased to 28% for a very smooth transition)
+            const fadeZoneHeight = Math.round(offscreenCanvas.height * 0.28);
             const startFadeY = offscreenCanvas.height - fadeZoneHeight;
             if (y > startFadeY) {
               const fraction = Math.min(1.0, Math.max(0.0, (y - startFadeY) / fadeZoneHeight));
