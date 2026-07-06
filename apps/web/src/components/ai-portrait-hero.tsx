@@ -527,14 +527,27 @@ export function AIPortraitHero() {
       ctx.globalCompositeOperation = resolvedTheme === 'light' ? 'source-over' : 'screen';
 
       // Randomly detach a few particles to create the floating/glowing self-assembly flow
+      // Randomly detach a few particles to create the floating/glowing self-assembly flow
       if (!isReducedMotion && Math.random() < 0.28 && particles.length > 0) {
         const detachCount = Math.floor(Math.random() * 2) + 1;
         for (let k = 0; k < detachCount; k++) {
           const randIdx = Math.floor(Math.random() * particles.length);
           const p = particles[randIdx];
           if (p && !p.detached) {
-            p.detached = true;
-            p.detachTimer = 100 + Math.random() * 110; // ~2-3.5 seconds
+            // Anchor check: particles in the bottom region have lower/zero chance of detaching
+            let canDetach = true;
+            if (layoutRef.current.targetHeight > 0) {
+              const bottomY = layoutRef.current.yOffset + layoutRef.current.targetHeight;
+              const distToBottom = bottomY - p.oy;
+              const stability = Math.max(0.0, Math.min(1.0, distToBottom / (layoutRef.current.targetHeight * 0.40)));
+              if (stability < 0.15 || Math.random() > stability) {
+                canDetach = false;
+              }
+            }
+            if (canDetach) {
+              p.detached = true;
+              p.detachTimer = 100 + Math.random() * 110; // ~2-3.5 seconds
+            }
           }
         }
       }
@@ -548,6 +561,16 @@ export function AIPortraitHero() {
           p.color.b += (p.targetColor.b - p.color.b) * p.colorTransition;
         }
         
+        // Calculate stability anchor factor at the bottom of the portrait layout (0.0 = fully static base, 1.0 = fully dynamic upper zone)
+        let stabilityFactor = 1.0;
+        if (layoutRef.current.targetHeight > 0) {
+          const bottomY = layoutRef.current.yOffset + layoutRef.current.targetHeight;
+          const distToBottom = bottomY - p.oy;
+          // Anchor the bottom 40% height of the portrait
+          stabilityFactor = Math.max(0.0, Math.min(1.0, distToBottom / (layoutRef.current.targetHeight * 0.40)));
+          stabilityFactor = Math.pow(stabilityFactor, 2); // Quadratic ease for smoother transition
+        }
+        
         // 1. Core target alignment with idle breathing & parallax
         let targetX = p.ox;
         let targetY = p.oy;
@@ -559,8 +582,15 @@ export function AIPortraitHero() {
           const rx = dx * Math.cos(breathRotate) - dy * Math.sin(breathRotate);
           const ry = dx * Math.sin(breathRotate) + dy * Math.cos(breathRotate);
           
-          targetX = rx * breathScale + width * 0.5 + mouseRef.current.rx * 8; // Layered 3D parallax
-          targetY = ry * breathScale + height * 0.5 + mouseRef.current.ry * 8;
+          const breatheTargetX = rx * breathScale + width * 0.5;
+          const breatheTargetY = ry * breathScale + height * 0.5;
+          
+          const parallaxOffsetX = mouseRef.current.rx * 8;
+          const parallaxOffsetY = mouseRef.current.ry * 8;
+          
+          // Apply stabilityFactor to breathing and parallax offsets so bottom is 100% stationary
+          targetX = p.ox + (breatheTargetX - p.ox + parallaxOffsetX) * stabilityFactor;
+          targetY = p.oy + (breatheTargetY - p.oy + parallaxOffsetY) * stabilityFactor;
         }
 
         // 2. Cursor Intelligence Interaction (Pixel detach/scatter)
@@ -572,15 +602,15 @@ export function AIPortraitHero() {
           if (dist < 55) {
             // Stronger push closer to cursor (Repel) - tighter, smaller radius
             const repelForce = (55 - dist) / 55;
-            const pushX = (dx / dist) * repelForce * 8;
-            const pushY = (dy / dist) * repelForce * 8;
+            const pushX = (dx / dist) * repelForce * 8 * stabilityFactor;
+            const pushY = (dy / dist) * repelForce * 8 * stabilityFactor;
             
             p.vx += pushX;
             p.vy += pushY;
-            p.angle += p.spin * repelForce * 2;
+            p.angle += p.spin * repelForce * 2 * stabilityFactor;
             
-            // Pulse particle size on hover
-            p.size = p.originalSize * (1.0 + repelForce * 0.4);
+            // Pulse particle size on hover (scaled by stability)
+            p.size = p.originalSize * (1.0 + repelForce * 0.4 * stabilityFactor);
           }
         }
 
@@ -589,10 +619,10 @@ export function AIPortraitHero() {
           const scanDist = Math.abs(p.y - scanRef.current.y);
           if (scanDist < 60) {
             const waveForce = (60 - scanDist) / 60;
-            // Explode outward laterally
-            p.vx += (Math.random() - 0.5) * waveForce * 16;
-            p.vy += (Math.random() - 0.5) * waveForce * 4;
-            p.alpha = Math.max(0.2, p.alpha - waveForce * 0.4);
+            // Explode outward laterally (scaled by stability)
+            p.vx += (Math.random() - 0.5) * waveForce * 16 * stabilityFactor;
+            p.vy += (Math.random() - 0.5) * waveForce * 4 * stabilityFactor;
+            p.alpha = Math.max(0.2, p.alpha - waveForce * 0.4 * stabilityFactor);
           }
         }
 
