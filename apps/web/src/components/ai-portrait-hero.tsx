@@ -676,10 +676,10 @@ export function AIPortraitHero() {
         let cb = Math.round(p.color.b);
         
         if (resolvedTheme === 'light') {
-          // Darken colors to contrast nicely against the white background in light mode
-          cr = Math.round(cr * 0.65);
-          cg = Math.round(cg * 0.65);
-          cb = Math.round(cb * 0.65);
+          // Darken colors 3x more to contrast nicely against the white background in light mode
+          cr = Math.round(cr * 0.32);
+          cg = Math.round(cg * 0.32);
+          cb = Math.round(cb * 0.32);
         }
         
         // A. Draw soft backing glow (bloom halo) for photo pixels only (only in dark mode to prevent muddiness in light mode)
