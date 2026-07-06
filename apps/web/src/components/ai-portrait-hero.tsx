@@ -275,7 +275,7 @@ export function AIPortraitHero() {
           const brightness = (r + g + b) / 3;
           
           // Since background is already transparent in the new PNGs, map non-transparent pixels directly
-          if (a > 200 && brightness > 10) {
+          if (a > 200) {
             let pSize = Math.random() * 2 + 3.2;
             let pAlpha = Math.random() * 0.4 + 0.6;
             
