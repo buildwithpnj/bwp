@@ -25,6 +25,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@personal-os/ui": [
+        "../../packages/ui/src/index.ts"
+      ],
+      "@personal-os/shared-types": [
+        "../../packages/shared-types/src/index.ts"
       ]
     },
     "baseUrl": "."

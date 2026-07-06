@@ -1,20 +1,42 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { Sun, Moon } from 'lucide-react';
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <button 
+        className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors h-9 w-9"
+        aria-label="Toggle theme"
+      >
+        <Sun className="h-4 w-4" />
+      </button>
+    );
+  }
+
+  const isDark = resolvedTheme === 'dark';
 
   return (
     <button
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors h-9 w-9"
       aria-label="Toggle theme"
       id="theme-toggle"
     >
-      <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      {isDark ? (
+        <Sun className="h-4 w-4 text-primary animate-fade-in" />
+      ) : (
+        <Moon className="h-4 w-4 text-primary animate-fade-in" />
+      )}
     </button>
   );
 }

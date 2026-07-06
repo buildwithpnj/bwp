@@ -155,7 +155,6 @@ async def _sync_section_to_gdrive_impl(user_id: str, section: str, db: AsyncSess
                     "type": a.type,
                     "currency": a.currency,
                     "opening_balance": float(a.opening_balance),
-                    "current_balance": float(a.current_balance),
                     "created_at": a.created_at.isoformat()
                 } for a in accs
             ],
@@ -356,7 +355,6 @@ async def restore_section_from_gdrive(user_id: str, section: str, db: AsyncSessi
                 type=a["type"],
                 currency=a["currency"],
                 opening_balance=a["opening_balance"],
-                current_balance=a["current_balance"],
                 created_at=datetime.fromisoformat(a["created_at"])
             )
             db.add(acc)

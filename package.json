@@ -4,7 +4,8 @@
   "packageManager": "npm@11.16.0",
   "workspaces": [
     "apps/web",
-    "packages/shared-types"
+    "packages/shared-types",
+    "packages/ui"
   ],
   "scripts": {
     "dev": "turbo run dev",
