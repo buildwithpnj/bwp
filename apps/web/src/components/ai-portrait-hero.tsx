@@ -686,16 +686,11 @@ export function AIPortraitHero() {
         let drawAlpha = p.alpha;
         
         if (resolvedTheme === 'light') {
-          // Grayscale base color (with a premium cool slate blue tint)
-          const gray = cr * 0.299 + cg * 0.587 + cb * 0.114;
-          const baseR = Math.round(gray * 0.72 + 38);
-          const baseG = Math.round(gray * 0.72 + 45);
-          const baseB = Math.round(gray * 0.72 + 58);
-          
-          // Interpolate between cool gray-slate and full color based on hover proximity
-          drawR = Math.round(baseR + (cr - baseR) * hoverActive);
-          drawG = Math.round(baseG + (cg - baseG) * hoverActive);
-          drawB = Math.round(baseB + (cb - baseB) * hoverActive);
+          // Pure grayscale black and white tones
+          const gray = Math.round(cr * 0.299 + cg * 0.587 + cb * 0.114);
+          drawR = gray;
+          drawG = gray;
+          drawB = gray;
           
           // Boost alpha and size slightly when hovered to create the "bloom pop" effect
           drawSize = p.size * (1.0 + hoverActive * 0.5 * stabilityFactor);
