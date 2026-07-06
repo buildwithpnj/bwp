@@ -2,9 +2,31 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Github, Twitter, Linkedin, Mail } from 'lucide-react';
+import { ArrowRight, Github, Twitter, Linkedin, Mail, Sparkles, Terminal } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { AiEcosystemCommandCenter } from './ai-ecosystem-visualization';
+import { cn } from '@/lib/utils';
+
+// Types
+interface Particle {
+  x: number;
+  y: number;
+  ox: number;
+  oy: number;
+  color: { r: number; g: number; b: number };
+  targetColor: { r: number; g: number; b: number };
+  colorTransition: number;
+  vx: number;
+  vy: number;
+  size: number;
+  originalSize: number;
+  alpha: number;
+  originalAlpha: number;
+  angle: number;
+  spin: number;
+  active: boolean;
+  detached?: boolean;
+  detachTimer?: number;
+}
 
 interface BGParticle {
   x: number;
@@ -16,18 +38,44 @@ interface BGParticle {
   color: string;
 }
 
+interface Ember {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  originalSize: number;
+  alpha: number;
+  color: { r: number; g: number; b: number };
+  life: number;
+  maxLife: number;
+  swaySpeed: number;
+  swayOffset: number;
+}
+
 export function AIPortraitHero() {
   const { resolvedTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rightContainerRef = useRef<HTMLDivElement>(null);
+  
+  const [portraits, setPortraits] = useState<string[]>([]);
+  const [activePortrait, setActivePortrait] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   
   const mouseRef = useRef({ x: -1000, y: -1000, rx: 0, ry: 0, targetRx: 0, targetRy: 0, inside: false });
+  const particlesRef = useRef<Particle[]>([]);
   const bgParticlesRef = useRef<BGParticle[]>([]);
+  const embersRef = useRef<Ember[]>([]);
+  const layoutRef = useRef({ xOffset: 0, yOffset: 0, targetWidth: 0, targetHeight: 0 });
+  const scanRef = useRef({ active: false, y: 0, progress: 0, timer: 0 });
+  const morphProgressRef = useRef(1.0);
   
-  // Parallax rotation states for heading and buttons
+  // Parallax rotation states for heading and elements
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
 
-  // Typewriter typing animation states for capabilities advertisement
+  // Typewriter typing animation states
   const [displayText, setDisplayText] = useState('');
   const [phraseIdx, setPhraseIdx] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -65,12 +113,10 @@ export function AIPortraitHero() {
     }
 
     if (!isDeleting && displayText === activePhrase) {
-      // Pause on full phrase display
       timer = setTimeout(() => {
         setIsDeleting(true);
       }, 2200);
     } else if (isDeleting && displayText === '') {
-      // Transition to next index
       setIsDeleting(false);
       setPhraseIdx((prev) => (prev + 1) % PHRASES.length);
     }
@@ -78,7 +124,46 @@ export function AIPortraitHero() {
     return () => clearTimeout(timer);
   }, [displayText, isDeleting, phraseIdx]);
 
-  // Main interactive canvas rendering loop (handles background particles, glow, and grid)
+  // 1. Fetch portraits from dynamic API
+  useEffect(() => {
+    async function loadPortraits() {
+      try {
+        const res = await fetch('/api/portraits');
+        const data = await res.json();
+        if (data.portraits && data.portraits.length > 0) {
+          setPortraits(data.portraits);
+          const randomIdx = Math.floor(Math.random() * data.portraits.length);
+          setActivePortrait(data.portraits[randomIdx]);
+        } else {
+          setPortraits(['/assets/images/Man_looking_directly_camera_2K_202607062110.png']);
+          setActivePortrait('/assets/images/Man_looking_directly_camera_2K_202607062110.png');
+        }
+      } catch (err) {
+        console.error('Failed to load portraits:', err);
+        setPortraits(['/assets/images/Man_looking_directly_camera_2K_202607062110.png']);
+        setActivePortrait('/assets/images/Man_looking_directly_camera_2K_202607062110.png');
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadPortraits();
+  }, []);
+
+  // 2. Crossfade/Morph interval
+  useEffect(() => {
+    if (portraits.length <= 1) return;
+    const interval = setInterval(() => {
+      setActivePortrait((current) => {
+        const remaining = portraits.filter(p => p !== current);
+        if (remaining.length === 0) return current;
+        const randomIdx = Math.floor(Math.random() * remaining.length);
+        return remaining[randomIdx];
+      });
+    }, 12000); // Morph every 12 seconds
+    return () => clearInterval(interval);
+  }, [portraits]);
+
+  // 3. Main interactive canvas rendering loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -90,19 +175,25 @@ export function AIPortraitHero() {
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
     
+    // Set offscreen canvas for downsampling
+    const offscreenCanvas = document.createElement('canvas');
+    const offscreenCtx = offscreenCanvas.getContext('2d');
+    
+    let activeImage: HTMLImageElement | null = null;
+    
     // Initialize background floating particles
     const initBGParticles = () => {
-      const pCount = window.innerWidth < 768 ? 30 : 80;
+      const pCount = window.innerWidth < 768 ? 35 : 90;
       const bgParticles: BGParticle[] = [];
       const colors = ['#3B82F6', '#06B6D4', '#7C3AED', '#8B5CF6', '#FFFFFF'];
       for (let i = 0; i < pCount; i++) {
         bgParticles.push({
           x: Math.random() * width,
           y: Math.random() * height,
-          vx: (Math.random() - 0.5) * 0.3,
-          vy: (Math.random() - 0.5) * 0.3,
-          size: Math.random() * 1.8 + 0.8,
-          alpha: Math.random() * 0.4 + 0.15,
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: (Math.random() - 0.5) * 0.35,
+          size: Math.random() * 2 + 0.8,
+          alpha: Math.random() * 0.4 + 0.1,
           color: colors[Math.floor(Math.random() * colors.length)]
         });
       }
@@ -115,8 +206,132 @@ export function AIPortraitHero() {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
       initBGParticles();
+      if (activeImage) {
+        processImage(activeImage);
+      }
     };
     window.addEventListener('resize', handleResize);
+
+    // Process active image and initialize/morph face particles centered inside the right column
+    const processImage = (img: HTMLImageElement) => {
+      if (!offscreenCtx) return;
+      
+      const targetAspect = 0.9;
+      let rect = { left: width * 0.58, top: height * 0.2, width: width * 0.38, height: height * 0.6 };
+      
+      const el = rightContainerRef.current;
+      if (el) {
+        const r = el.getBoundingClientRect();
+        rect = { left: r.left, top: r.top, width: r.width, height: r.height };
+      }
+      
+      // Face occupies ~38-42% of the hero column bounds
+      let targetWidth = Math.min(270, rect.width * 0.58);
+      if (window.innerWidth < 768) {
+        targetWidth = 160;
+      }
+      let targetHeight = targetWidth / targetAspect;
+      
+      // Position center of gravity in the top part of the right container column
+      let xOffset = rect.left + (rect.width - targetWidth) / 2;
+      let yOffset = rect.top + (rect.height * 0.40 - targetHeight) / 2;
+      
+      layoutRef.current = { xOffset, yOffset, targetWidth, targetHeight };
+      
+      offscreenCanvas.width = 80; // High-density grid
+      offscreenCanvas.height = Math.round(80 / targetAspect);
+      
+      offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+      offscreenCtx.drawImage(img, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+      
+      const imgData = offscreenCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+      const data = imgData.data;
+      
+      const newParticles: Particle[] = [];
+      const cellWidth = targetWidth / offscreenCanvas.width;
+      const cellHeight = targetHeight / offscreenCanvas.height;
+      
+      for (let y = 0; y < offscreenCanvas.height; y++) {
+        for (let x = 0; x < offscreenCanvas.width; x++) {
+          const idx = (y * offscreenCanvas.width + x) * 4;
+          const r = data[idx];
+          const g = data[idx+1];
+          const b = data[idx+2];
+          const a = data[idx+3];
+          
+          // Omit transparent background noise entirely
+          if (a > 200) {
+            let pSize = Math.random() * 1.5 + 2.5;
+            let pAlpha = Math.random() * 0.35 + 0.65;
+            
+            // Soft chest fade-out at bottom
+            const fadeZoneHeight = Math.round(offscreenCanvas.height * 0.12);
+            const startFadeY = offscreenCanvas.height - fadeZoneHeight;
+            if (y > startFadeY) {
+              const fraction = Math.min(1.0, Math.max(0.0, (y - startFadeY) / fadeZoneHeight));
+              const fade = 1.0 - fraction;
+              pAlpha *= fade;
+              pSize *= (0.75 + fade * 0.25);
+            }
+            
+            const px = x * cellWidth + xOffset;
+            const py = y * cellHeight + yOffset;
+            
+            newParticles.push({
+              x: px,
+              y: py,
+              ox: px,
+              oy: py,
+              color: { r, g, b },
+              targetColor: { r, g, b },
+              colorTransition: 1.0,
+              vx: 0,
+              vy: 0,
+              size: pSize,
+              originalSize: pSize,
+              alpha: pAlpha,
+              originalAlpha: pAlpha,
+              angle: Math.random() * Math.PI * 2,
+              spin: (Math.random() - 0.5) * 0.05,
+              active: true,
+              detached: false,
+              detachTimer: 0
+            });
+          }
+        }
+      }
+
+      if (particlesRef.current.length > 0) {
+        const oldP = particlesRef.current;
+        const count = Math.min(oldP.length, newParticles.length);
+        for (let i = 0; i < count; i++) {
+          oldP[i].ox = newParticles[i].ox;
+          oldP[i].oy = newParticles[i].oy;
+          oldP[i].targetColor = newParticles[i].color;
+          oldP[i].originalAlpha = newParticles[i].originalAlpha;
+          oldP[i].originalSize = newParticles[i].originalSize;
+          oldP[i].colorTransition = 0;
+          oldP[i].vx += (Math.random() - 0.5) * 4;
+          oldP[i].vy += (Math.random() - 0.5) * 4;
+        }
+        if (newParticles.length > oldP.length) {
+          particlesRef.current = [...oldP, ...newParticles.slice(oldP.length)];
+        } else if (newParticles.length < oldP.length) {
+          particlesRef.current = oldP.slice(0, newParticles.length);
+        }
+        morphProgressRef.current = 0;
+      } else {
+        particlesRef.current = newParticles;
+      }
+    };
+
+    if (activePortrait) {
+      activeImage = new Image();
+      activeImage.src = activePortrait;
+      activeImage.onload = () => {
+        processImage(activeImage!);
+      };
+    }
 
     // Cursor tracking
     const handleMouseMove = (e: MouseEvent) => {
@@ -127,11 +342,10 @@ export function AIPortraitHero() {
       mouseRef.current.y = my;
       mouseRef.current.inside = true;
 
-      // Parallax effect values
       const rx = (mx - width / 2) / (width / 2);
       const ry = (my - height / 2) / (height / 2);
-      mouseRef.current.targetRx = rx * 6; // Max 6deg
-      mouseRef.current.targetRy = ry * -8; // Max -8deg
+      mouseRef.current.targetRx = rx * 6;
+      mouseRef.current.targetRy = ry * -8;
     };
 
     const handleMouseLeave = () => {
@@ -143,11 +357,19 @@ export function AIPortraitHero() {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseleave', handleMouseLeave);
 
+    let scanInterval = setInterval(() => {
+      if (!scanRef.current.active) {
+        scanRef.current.active = true;
+        scanRef.current.progress = 0;
+        scanRef.current.y = 0;
+      }
+    }, 20000); // Sweep scanner laser every 20 seconds
+
     // Animation render loop
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Smooth springs on parallax mouse values
+      // Parallax update
       mouseRef.current.rx += (mouseRef.current.targetRx - mouseRef.current.rx) * 0.08;
       mouseRef.current.ry += (mouseRef.current.targetRy - mouseRef.current.ry) * 0.08;
       
@@ -156,19 +378,19 @@ export function AIPortraitHero() {
         y: mouseRef.current.ry * 2.2
       });
 
-      // (A) Living Ambient Neural Gradient Mesh & Volumetric Glow
       const isDark = resolvedTheme === 'dark';
       const time = Date.now() * 0.0006;
       
+      // Ambient Gradient
       const gX = width * 0.5 + Math.sin(time * 0.8) * width * 0.2;
       const gY = height * 0.5 + Math.cos(time * 0.5) * height * 0.2;
       const glowRad = Math.min(width, height) * 0.8;
       
       const ambientGlow = ctx.createRadialGradient(gX, gY, 10, gX, gY, glowRad);
       if (isDark) {
-        ambientGlow.addColorStop(0, 'rgba(59, 130, 246, 0.05)'); // Blue
-        ambientGlow.addColorStop(0.3, 'rgba(124, 58, 237, 0.025)'); // Purple
-        ambientGlow.addColorStop(1, 'rgba(10, 15, 30, 1)'); // Dark Navy
+        ambientGlow.addColorStop(0, 'rgba(59, 130, 246, 0.06)');
+        ambientGlow.addColorStop(0.3, 'rgba(124, 58, 237, 0.025)');
+        ambientGlow.addColorStop(1, 'rgba(5, 8, 22, 1)');
       } else {
         ambientGlow.addColorStop(0, 'rgba(59, 130, 246, 0.03)');
         ambientGlow.addColorStop(0.5, 'rgba(6, 182, 212, 0.015)');
@@ -177,18 +399,15 @@ export function AIPortraitHero() {
       ctx.fillStyle = ambientGlow;
       ctx.fillRect(0, 0, width, height);
 
-      // Draw subtle neural background grid
-      ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.012)' : 'rgba(0, 0, 0, 0.018)';
+      // Background grid
+      ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.015)' : 'rgba(0, 0, 0, 0.02)';
       ctx.lineWidth = 1;
       const gridSize = 45;
-      
-      // Parallax distortion on background grid
-      const gridParallaxX = mouseRef.current.rx * 10;
-      const gridParallaxY = mouseRef.current.ry * 10;
+      const gridParallaxX = mouseRef.current.rx * 12;
+      const gridParallaxY = mouseRef.current.ry * 12;
       
       ctx.save();
       ctx.translate(gridParallaxX, gridParallaxY);
-      
       ctx.beginPath();
       for (let x = 0; x < width; x += gridSize) {
         ctx.moveTo(x, 0);
@@ -201,18 +420,15 @@ export function AIPortraitHero() {
       ctx.stroke();
       ctx.restore();
 
-      // (B) Render Floating Background Particles
+      // Render Floating Background Particles
       bgParticlesRef.current.forEach((bp) => {
         bp.x += bp.vx;
         bp.y += bp.vy;
-        
-        // Boundary wrap
         if (bp.x < 0) bp.x = width;
         if (bp.x > width) bp.x = 0;
         if (bp.y < 0) bp.y = height;
         if (bp.y > height) bp.y = 0;
         
-        // Mouse repelling on background particles
         if (mouseRef.current.inside) {
           const dx = bp.x - mouseRef.current.x;
           const dy = bp.y - mouseRef.current.y;
@@ -232,19 +448,315 @@ export function AIPortraitHero() {
       });
       ctx.globalAlpha = 1.0;
 
-      // (C) Cursor Glow Overlay
+      // Update scan line
+      if (scanRef.current.active) {
+        scanRef.current.progress += 0.012;
+        scanRef.current.y = scanRef.current.progress * height;
+        if (scanRef.current.progress >= 1.0) {
+          scanRef.current.active = false;
+        }
+      }
+
+      if (morphProgressRef.current < 1.0) {
+        morphProgressRef.current += 0.03;
+      }
+
+      // Render portrait particles
+      const particles = particlesRef.current;
       const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      
+      const mouseX = mouseRef.current.x;
+      const mouseY = mouseRef.current.y;
+      const breathScale = 1.0 + Math.sin(time * 1.5) * 0.01;
+      const breathRotate = Math.sin(time * 0.5) * 0.004;
+
+      ctx.save();
+      ctx.globalCompositeOperation = resolvedTheme === 'light' ? 'source-over' : 'screen';
+
+      if (!isReducedMotion && Math.random() < 0.28 && particles.length > 0) {
+        const detachCount = Math.floor(Math.random() * 2) + 1;
+        for (let k = 0; k < detachCount; k++) {
+          const randIdx = Math.floor(Math.random() * particles.length);
+          const p = particles[randIdx];
+          if (p && !p.detached) {
+            let canDetach = true;
+            if (layoutRef.current.targetHeight > 0) {
+              const bottomY = layoutRef.current.yOffset + layoutRef.current.targetHeight;
+              const distToBottom = bottomY - p.oy;
+              const stability = Math.max(0.0, Math.min(1.0, distToBottom / (layoutRef.current.targetHeight * 0.40)));
+              if (stability < 0.15 || Math.random() > stability) {
+                canDetach = false;
+              }
+            }
+            if (canDetach) {
+              p.detached = true;
+              p.detachTimer = 100 + Math.random() * 110;
+            }
+          }
+        }
+      }
+
+      particles.forEach((p) => {
+        if (p.colorTransition < 1.0) {
+          p.colorTransition += 0.03;
+          p.color.r += (p.targetColor.r - p.color.r) * p.colorTransition;
+          p.color.g += (p.targetColor.g - p.color.g) * p.colorTransition;
+          p.color.b += (p.targetColor.b - p.color.b) * p.colorTransition;
+        }
+        
+        let stabilityFactor = 1.0;
+        if (layoutRef.current.targetHeight > 0) {
+          const bottomY = layoutRef.current.yOffset + layoutRef.current.targetHeight;
+          const distToBottom = bottomY - p.oy;
+          stabilityFactor = Math.max(0.0, Math.min(1.0, distToBottom / (layoutRef.current.targetHeight * 0.40)));
+          stabilityFactor = Math.pow(stabilityFactor, 2);
+        }
+        
+        let targetX = p.ox;
+        let targetY = p.oy;
+        
+        if (!isReducedMotion) {
+          const dx = p.ox - width * 0.5;
+          const dy = p.oy - height * 0.5;
+          const rx = dx * Math.cos(breathRotate) - dy * Math.sin(breathRotate);
+          const ry = dx * Math.sin(breathRotate) + dy * Math.cos(breathRotate);
+          
+          const breatheTargetX = rx * breathScale + width * 0.5;
+          const breatheTargetY = ry * breathScale + height * 0.5;
+          const parallaxOffsetX = mouseRef.current.rx * 8;
+          const parallaxOffsetY = mouseRef.current.ry * 8;
+          
+          targetX = p.ox + (breatheTargetX - p.ox + parallaxOffsetX) * stabilityFactor;
+          targetY = p.oy + (breatheTargetY - p.oy + parallaxOffsetY) * stabilityFactor;
+        }
+
+        if (mouseRef.current.inside && !isReducedMotion) {
+          const dx = p.x - mouseX;
+          const dy = p.y - mouseY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 55) {
+            const repelForce = (55 - dist) / 55;
+            p.vx += (dx / dist) * repelForce * 8 * stabilityFactor;
+            p.vy += (dy / dist) * repelForce * 8 * stabilityFactor;
+            p.angle += p.spin * repelForce * 2 * stabilityFactor;
+            p.size = p.originalSize * (1.0 + repelForce * 0.4 * stabilityFactor);
+          }
+        }
+
+        if (scanRef.current.active && !isReducedMotion) {
+          const scanDist = Math.abs(p.y - scanRef.current.y);
+          if (scanDist < 60) {
+            const waveForce = (60 - scanDist) / 60;
+            p.vx += (Math.random() - 0.5) * waveForce * 16 * stabilityFactor;
+            p.vy += (Math.random() - 0.5) * waveForce * 4 * stabilityFactor;
+            p.alpha = Math.max(0.2, p.alpha - waveForce * 0.4 * stabilityFactor);
+          }
+        }
+
+        if (p.detached) {
+          p.detachTimer!--;
+          if (p.detachTimer! <= 0) p.detached = false;
+          p.vx += (Math.random() - 0.5) * 0.28;
+          p.vy += (Math.random() - 0.5) * 0.16 - 0.08;
+          p.vx *= 0.94;
+          p.vy *= 0.94;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.size += (p.originalSize * 1.4 - p.size) * 0.06;
+          p.alpha += (1.0 - p.alpha) * 0.1;
+        } else {
+          if (isReducedMotion) {
+            p.x = targetX;
+            p.y = targetY;
+            p.vx = 0;
+            p.vy = 0;
+          } else {
+            const springF = 0.08;
+            const friction = 0.82;
+            p.vx = (p.vx + (targetX - p.x) * springF) * friction;
+            p.vy = (p.vy + (targetY - p.y) * springF) * friction;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.size += (p.originalSize - p.size) * 0.08;
+            p.alpha += (p.originalAlpha - p.alpha) * 0.08;
+          }
+        }
+
+        const cr = Math.round(p.color.r);
+        const cg = Math.round(p.color.g);
+        const cb = Math.round(p.color.b);
+        
+        if (resolvedTheme !== 'light') {
+          ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${p.alpha * 0.35})`;
+          ctx.fillRect(p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
+        }
+        ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${p.alpha})`;
+        ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      });
+      ctx.restore();
+
+      // Spawn and Render Rising Energy Embers
+      if (!isReducedMotion) {
+        const layout = layoutRef.current;
+        if (layout.targetWidth > 0) {
+          const spawnCount = Math.random() < 0.4 ? 2 : 1;
+          for (let i = 0; i < spawnCount; i++) {
+            const spawnX = layout.xOffset + Math.random() * layout.targetWidth;
+            const spawnY = layout.yOffset + layout.targetHeight - Math.random() * (layout.targetHeight * 0.12);
+            const speed = Math.random() * 1.8 + 1.2;
+            const originalSize = Math.random() * 2.5 + 2.0;
+            
+            const colors = [
+              { r: 6, g: 182, b: 212 },
+              { r: 59, g: 130, b: 246 },
+              { r: 124, g: 58, b: 237 }
+            ];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            embersRef.current.push({
+              x: spawnX,
+              y: spawnY,
+              vx: (Math.random() - 0.5) * 0.5,
+              vy: -speed,
+              size: originalSize,
+              originalSize,
+              alpha: Math.random() * 0.4 + 0.6,
+              color,
+              life: 90 + Math.random() * 60,
+              maxLife: 150,
+              swaySpeed: Math.random() * 0.04 + 0.02,
+              swayOffset: Math.random() * Math.PI * 2
+            });
+          }
+        }
+
+        ctx.save();
+        ctx.globalCompositeOperation = resolvedTheme === 'light' ? 'source-over' : 'screen';
+        
+        embersRef.current = embersRef.current.filter((ember) => {
+          ember.life--;
+          if (ember.life <= 0) return false;
+          ember.y += ember.vy;
+          ember.x += Math.sin(time * 2 + ember.swayOffset) * 0.45 + ember.vx;
+          
+          const lifeRatio = ember.life / ember.maxLife;
+          ember.alpha = Math.min(1.0, lifeRatio * 1.6);
+          ember.size = ember.originalSize * (0.35 + lifeRatio * 0.65);
+          
+          const cr = ember.color.r;
+          const cg = ember.color.g;
+          const cb = ember.color.b;
+          
+          if (resolvedTheme !== 'light') {
+            ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${ember.alpha * 0.35})`;
+            ctx.fillRect(ember.x - ember.size, ember.y - ember.size, ember.size * 2, ember.size * 2);
+          }
+          ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${ember.alpha})`;
+          ctx.fillRect(ember.x - ember.size / 2, ember.y - ember.size / 2, ember.size, ember.size);
+          return true;
+        });
+        ctx.restore();
+      }
+
+      // Draw Laser Identity Scan wave overlay
+      if (scanRef.current.active && !isReducedMotion) {
+        ctx.save();
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#06B6D4';
+        const scanGrad = ctx.createLinearGradient(0, scanRef.current.y - 12, 0, scanRef.current.y + 12);
+        scanGrad.addColorStop(0, 'rgba(6, 182, 212, 0)');
+        scanGrad.addColorStop(0.5, 'rgba(6, 182, 212, 0.7)');
+        scanGrad.addColorStop(1, 'rgba(6, 182, 212, 0)');
+        ctx.fillStyle = scanGrad;
+        ctx.fillRect(0, scanRef.current.y - 12, width, 24);
+        ctx.restore();
+      }
+
+      // Cursor Light source glow
       if (mouseRef.current.inside && !isReducedMotion) {
         ctx.save();
         ctx.globalCompositeOperation = 'screen';
-        const mouseGlow = ctx.createRadialGradient(mouseRef.current.x, mouseRef.current.y, 0, mouseRef.current.x, mouseRef.current.y, 75);
-        mouseGlow.addColorStop(0, 'rgba(6, 182, 212, 0.12)'); // Cyan core
-        mouseGlow.addColorStop(0.5, 'rgba(124, 58, 237, 0.03)'); // Purple bloom
+        const mouseGlow = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 75);
+        mouseGlow.addColorStop(0, 'rgba(6, 182, 212, 0.15)');
+        mouseGlow.addColorStop(0.5, 'rgba(124, 58, 237, 0.04)');
         mouseGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = mouseGlow;
         ctx.beginPath();
-        ctx.arc(mouseRef.current.x, mouseRef.current.y, 75, 0, Math.PI * 2);
+        ctx.arc(mouseX, mouseY, 75, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
+      }
+
+      // ======================================================================
+      // DRAW NEURAL NETWORK CONNECTIVE LINES (ORBITING TECH STACK TO PORTRAIT)
+      // ======================================================================
+      const pxCenter = layoutRef.current.xOffset + layoutRef.current.targetWidth / 2;
+      const pyCenter = layoutRef.current.yOffset + layoutRef.current.targetHeight / 2;
+
+      if (layoutRef.current.targetWidth > 0) {
+        const nodeIds = [
+          'node-python', 'node-fastapi', 'node-langchain', 'node-postgresql',
+          'node-claude', 'node-gemini', 'node-openai', 'node-voiceagent',
+          'node-flow-mcp'
+        ];
+
+        ctx.save();
+        ctx.globalCompositeOperation = resolvedTheme === 'light' ? 'source-over' : 'screen';
+
+        nodeIds.forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const rect = el.getBoundingClientRect();
+          const canvasRect = canvas.getBoundingClientRect();
+          
+          const targetX = rect.left - canvasRect.left + rect.width / 2;
+          const targetY = rect.top - canvasRect.top + rect.height / 2;
+
+          // A. Draw solid neural connection link
+          ctx.strokeStyle = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(6, 182, 212, 0.25)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(pxCenter, pyCenter);
+          ctx.lineTo(targetX, targetY);
+          ctx.stroke();
+
+          // B. Animate traveling data particle pulse along the link
+          const pulseSpeed = 0.22;
+          const pulseProgress = (time * pulseSpeed + (id.charCodeAt(5) * 0.1)) % 1.0;
+          const pulseX = pxCenter + (targetX - pxCenter) * pulseProgress;
+          const pulseY = pyCenter + (targetY - pyCenter) * pulseProgress;
+
+          ctx.fillStyle = resolvedTheme === 'light' ? '#3B82F6' : '#06B6D4';
+          if (resolvedTheme !== 'light') {
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = '#06B6D4';
+          }
+          ctx.beginPath();
+          ctx.arc(pulseX, pulseY, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        });
+
+        // Specific Python to FastAPI interconnect link
+        const pythonEl = document.getElementById('node-python');
+        const fastapiEl = document.getElementById('node-fastapi');
+        if (pythonEl && fastapiEl) {
+          const pyRect = pythonEl.getBoundingClientRect();
+          const faRect = fastapiEl.getBoundingClientRect();
+          const canvasRect = canvas.getBoundingClientRect();
+          const pyX = pyRect.left - canvasRect.left + pyRect.width / 2;
+          const pyY = pyRect.top - canvasRect.top + pyRect.height / 2;
+          const faX = faRect.left - canvasRect.left + faRect.width / 2;
+          const faY = faRect.top - canvasRect.top + faRect.height / 2;
+
+          ctx.strokeStyle = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(6, 182, 212, 0.2)';
+          ctx.lineWidth = 1.0;
+          ctx.beginPath();
+          ctx.moveTo(pyX, pyY);
+          ctx.lineTo(faX, faY);
+          ctx.stroke();
+        }
+
         ctx.restore();
       }
 
@@ -257,9 +769,10 @@ export function AIPortraitHero() {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
+      clearInterval(scanInterval);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [resolvedTheme]);
+  }, [activePortrait, resolvedTheme]);
 
   // Inline 3D parallax styles on container hover
   const transformStyle = {
@@ -270,7 +783,7 @@ export function AIPortraitHero() {
   return (
     <section 
       ref={containerRef}
-      className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mt-[-32px] md:mt-[-48px] min-h-[100vh] py-16 md:py-0 flex flex-col justify-center overflow-hidden bg-background select-none border-b border-border/20 z-30"
+      className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mt-[-32px] md:mt-[-48px] min-h-[100vh] py-16 lg:py-0 flex flex-col justify-center overflow-hidden bg-background select-none border-b border-border/20 z-30"
     >
       {/* Background Interactive canvas */}
       <canvas 
@@ -292,7 +805,7 @@ export function AIPortraitHero() {
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
           {/* Text block (Left side on large viewport) */}
-          <div className="lg:col-span-6 flex flex-col items-start gap-5 text-left max-w-xl">
+          <div className="lg:col-span-5 flex flex-col items-start gap-5 text-left max-w-xl">
             
             <div className="font-pixel text-[10px] tracking-[0.25em] text-primary uppercase bg-primary/5 border border-primary/15 px-3 py-1 rounded-full animate-pulse select-none">
               {"// NEURAL SCANNING ACTIVE"}
@@ -350,10 +863,131 @@ export function AIPortraitHero() {
 
           </div>
 
-          {/* Interactive AI Ecosystem Command Center (Right side on large viewport) */}
-          <div className="lg:col-span-6 w-full h-[470px] sm:h-[490px] md:h-[510px] z-20">
-            <AiEcosystemCommandCenter />
+          {/* RIGHT SIDE: Interactive Portrait and Orbiting Tech Stack Ecosystem */}
+          <div 
+            ref={rightContainerRef}
+            className="lg:col-span-7 w-full h-[650px] sm:h-[700px] md:h-[760px] relative flex items-center justify-center select-none z-20"
+          >
+            {/* Top Orbiting Card: AI Voice Agent */}
+            <div 
+              id="node-voiceagent"
+              className="absolute top-0 left-1/2 -translate-x-1/2 p-2.5 rounded-xl border border-border/30 bg-card/75 backdrop-blur-md text-left flex flex-col gap-1 max-w-[170px] shadow-lg shadow-cyan-500/5 hover:border-primary/30 transition-all hover:scale-[1.03] duration-300"
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="font-pixel text-[8px] font-bold text-emerald-400">● LIVE</span>
+              </div>
+              <h4 className="font-mono text-[9px] font-black text-foreground uppercase">AI Voice Agent</h4>
+              <p className="text-[7.5px] leading-snug text-muted-foreground">Real-time conversational voice.</p>
+            </div>
+
+            {/* Orbiting Category Node Badges */}
+            
+            {/* Python Badge */}
+            <EcosystemNode 
+              id="node-python"
+              label="Python"
+              className="top-[22%] left-[6%]"
+              hoverLabel="Ollama • DeepSeek • Mistral • Llama • Hugging Face"
+              hoveredNode={hoveredNode}
+              setHoveredNode={setHoveredNode}
+            />
+
+            {/* FastAPI Badge */}
+            <EcosystemNode 
+              id="node-fastapi"
+              label="FastAPI"
+              className="top-[22%] right-[6%]"
+              hoverLabel="REST APIs • WebSockets • GraphQL • Node.js"
+              hoveredNode={hoveredNode}
+              setHoveredNode={setHoveredNode}
+            />
+
+            {/* LangChain Badge */}
+            <EcosystemNode 
+              id="node-langchain"
+              label="LangChain"
+              className="top-[38%] left-[2%]"
+              hoverLabel="LangGraph • LlamaIndex • Agentic AI • Prompt Eng"
+              hoveredNode={hoveredNode}
+              setHoveredNode={setHoveredNode}
+            />
+
+            {/* PostgreSQL Badge */}
+            <EcosystemNode 
+              id="node-postgresql"
+              label="PostgreSQL"
+              className="top-[38%] right-[2%]"
+              hoverLabel="Redis • MongoDB • pgvector • Supabase"
+              hoveredNode={hoveredNode}
+              setHoveredNode={setHoveredNode}
+            />
+
+            {/* Claude Badge */}
+            <EcosystemNode 
+              id="node-claude"
+              label="Claude"
+              className="top-[54%] left-[6%]"
+              hoverLabel="TypeScript • JavaScript • Embeddings • Context Eng"
+              hoveredNode={hoveredNode}
+              setHoveredNode={setHoveredNode}
+            />
+
+            {/* Gemini Badge */}
+            <EcosystemNode 
+              id="node-gemini"
+              label="Gemini"
+              className="top-[58%] left-1/2 -translate-x-1/2"
+              hoverLabel="Google • A2A • JSON Schema • Evaluation"
+              hoveredNode={hoveredNode}
+              setHoveredNode={setHoveredNode}
+            />
+
+            {/* OpenAI Badge */}
+            <EcosystemNode 
+              id="node-openai"
+              label="OpenAI"
+              className="top-[54%] right-[6%]"
+              hoverLabel="Tool Calling • Function Calling • Streaming • OAuth"
+              hoveredNode={hoveredNode}
+              setHoveredNode={setHoveredNode}
+            />
+
+            {/* CENTER LABELS (Visual hints overlay behind the portrait) */}
+            <div className="absolute top-[38%] left-1/2 -translate-x-1/2 text-center pointer-events-none">
+              <span className="font-pixel text-[8px] tracking-[0.3em] text-primary/30 uppercase block">AI CORE</span>
+              <span className="font-mono text-[7px] text-muted-foreground/20 uppercase block mt-1">REASONING • PLANNING • MEMORY</span>
+            </div>
+
+            {/* Downward Vertical Orchestration Flow */}
+            <div 
+              id="node-flow-mcp"
+              className="absolute top-[67%] left-1/2 -translate-x-1/2 w-full max-w-[280px] flex flex-col gap-2.5 items-center font-mono text-[8px]"
+            >
+              {/* Vertical connecting line indicator */}
+              <div className="w-[1.2px] h-6 bg-gradient-to-b from-primary/35 to-purple-500/25 animate-pulse" />
+
+              <FlowStackItem label="MCP • A2A • RAG" desc="Agent communication context layers" />
+              <FlowStackItem label="Memory • Context • Tools" desc="Persistent semantic extraction" />
+              <FlowStackItem label="Voice AI • Automation" desc="Trigger logic routing pipelines" />
+              
+              {/* Product Stack Cards */}
+              <FlowCardItem label="AI Automation Platform" status="ACTIVE" desc="Workflow Trigger routing pipes." version="v1.0" />
+              <FlowCardItem label="Customer Support AI" status="ONLINE" desc="Multi-agent CRM ticket resolver." version="v1.8" />
+              <FlowCardItem label="Warborn OS" status="BUILDING" desc="Agentic desktop workspace." version="v0.2" color="bg-amber-500" />
+              <FlowCardItem label="AI Growth Agent" status="DEPLOYED" desc="Autonomous lead outreach engine." version="v2.1" />
+            </div>
+
+            {/* Hover secondary tech disclosures panel */}
+            {hoveredNode && (
+              <div className="absolute bottom-[2px] left-4 right-4 p-2.5 rounded-xl border border-primary/20 bg-background/90 backdrop-blur-md flex flex-col gap-1 text-center font-mono text-[8.5px] z-30 shadow-lg animate-in">
+                <span className="text-[7.5px] text-primary/80 uppercase font-black tracking-widest">{"// COMPILER PIPELINE STACK"}</span>
+                <span className="text-foreground font-black tracking-wide uppercase">{hoveredNode}</span>
+              </div>
+            )}
+
           </div>
+
         </div>
       </div>
       
@@ -365,5 +999,67 @@ export function AIPortraitHero() {
         </div>
       </div>
     </section>
+  );
+}
+
+/* ============================================================================
+   SUB-COMPONENT: Orbiting Ecosystem Node Badge
+   ============================================================================ */
+function EcosystemNode({ 
+  id, 
+  label, 
+  className, 
+  hoverLabel, 
+  setHoveredNode 
+}: { 
+  id: string; 
+  label: string; 
+  className: string; 
+  hoverLabel: string;
+  hoveredNode: string | null;
+  setHoveredNode: (val: string | null) => void;
+}) {
+  return (
+    <div
+      id={id}
+      onMouseEnter={() => setHoveredNode(`${label}: ${hoverLabel}`)}
+      onMouseLeave={() => setHoveredNode(null)}
+      className={cn(
+        "absolute p-2 px-3 rounded-lg border border-border/40 bg-card/75 backdrop-blur-sm font-mono text-[8.5px] font-black text-foreground/80 hover:text-primary hover:border-primary/30 transition-all hover:scale-[1.06] duration-250 cursor-pointer shadow shadow-primary/2 shadow-lg",
+        className
+      )}
+    >
+      {label}
+    </div>
+  );
+}
+
+/* ============================================================================
+   SUB-COMPONENTS: Vertical Flow Orchestration stack
+   ============================================================================ */
+function FlowStackItem({ label, desc }: { label: string; desc: string }) {
+  return (
+    <div className="w-full max-w-[200px] p-2 rounded-lg border border-border/25 bg-background/50 text-center flex flex-col gap-0.5 shadow">
+      <span className="font-black text-foreground/90 uppercase tracking-tight text-[8px]">{label}</span>
+      <span className="text-[7px] text-muted-foreground/80">{desc}</span>
+    </div>
+  );
+}
+
+function FlowCardItem({ label, status, desc, version, color = 'bg-primary' }: { label: string; status: string; desc: string; version: string; color?: string }) {
+  return (
+    <div className="w-full p-2.5 rounded-xl border border-border/30 bg-card/60 hover:bg-card/90 text-left flex items-start justify-between gap-3 shadow hover:border-primary/20 hover:scale-[1.01] transition-all">
+      <div className="flex flex-col gap-1 max-w-[70%]">
+        <h5 className="font-black text-foreground uppercase tracking-tight text-[9px]">{label}</h5>
+        <p className="text-[7.5px] leading-snug text-muted-foreground">{desc}</p>
+      </div>
+      <div className="flex flex-col items-end gap-1.5">
+        <div className="flex items-center gap-1">
+          <span className={cn("w-1.2 h-1.2 rounded-full", color)} />
+          <span className="text-[7px] font-bold text-foreground/75 tracking-wider">{status}</span>
+        </div>
+        <span className="text-[6.5px] text-muted-foreground font-bold px-1 rounded bg-background/50 border border-border/40">{version}</span>
+      </div>
+    </div>
   );
 }
