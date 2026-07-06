@@ -106,7 +106,7 @@ export default async function PublicLabDetailPage({ params }: PageProps) {
           )}
 
           {/* Compiled markdown overview */}
-          <section className="prose prose-invert max-w-none text-foreground leading-relaxed prose-headings:font-pixel prose-headings:text-foreground prose-h2:text-xl prose-h2:border-b prose-h2:border-border prose-h2:pb-2 prose-h2:mt-8">
+          <section className="prose dark:prose-invert max-w-none text-foreground leading-relaxed prose-headings:font-pixel prose-headings:text-foreground prose-h2:text-xl prose-h2:border-b prose-h2:border-border prose-h2:pb-2 prose-h2:mt-8">
             <div dangerouslySetInnerHTML={{ __html: exp.contentHtml }} />
           </section>
 

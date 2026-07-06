@@ -136,7 +136,7 @@ export default async function PublicJournalDetailPage({ params }: PageProps) {
           
           {/* Post Markdown compiled Content */}
           <article 
-            className="prose prose-invert max-w-none text-foreground leading-relaxed 
+            className="prose dark:prose-invert max-w-none text-foreground leading-relaxed 
                        prose-headings:font-pixel prose-headings:text-foreground 
                        prose-h2:text-xl prose-h2:border-b prose-h2:border-border prose-h2:pb-2 prose-h2:mt-8 
                        prose-code:text-primary prose-code:bg-secondary prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:border prose-code:border-border
