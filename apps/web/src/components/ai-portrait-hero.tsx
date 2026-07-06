@@ -59,9 +59,7 @@ export function AIPortraitHero() {
   const containerRef = useRef<HTMLDivElement>(null);
   const rightContainerRef = useRef<HTMLDivElement>(null);
   
-  const [portraits, setPortraits] = useState<string[]>([]);
-  const [activePortrait, setActivePortrait] = useState<string>('');
-  const [loading, setLoading] = useState(true);
+  const activePortrait = '/assets/images/Man_looking_directly_camera_2K_202607062110.png';
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   
   const mouseRef = useRef({ x: -1000, y: -1000, rx: 0, ry: 0, targetRx: 0, targetRy: 0, inside: false });
@@ -124,44 +122,7 @@ export function AIPortraitHero() {
     return () => clearTimeout(timer);
   }, [displayText, isDeleting, phraseIdx]);
 
-  // 1. Fetch portraits from dynamic API
-  useEffect(() => {
-    async function loadPortraits() {
-      try {
-        const res = await fetch('/api/portraits');
-        const data = await res.json();
-        if (data.portraits && data.portraits.length > 0) {
-          setPortraits(data.portraits);
-          const randomIdx = Math.floor(Math.random() * data.portraits.length);
-          setActivePortrait(data.portraits[randomIdx]);
-        } else {
-          setPortraits(['/assets/images/Man_looking_directly_camera_2K_202607062110.png']);
-          setActivePortrait('/assets/images/Man_looking_directly_camera_2K_202607062110.png');
-        }
-      } catch (err) {
-        console.error('Failed to load portraits:', err);
-        setPortraits(['/assets/images/Man_looking_directly_camera_2K_202607062110.png']);
-        setActivePortrait('/assets/images/Man_looking_directly_camera_2K_202607062110.png');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadPortraits();
-  }, []);
 
-  // 2. Crossfade/Morph interval
-  useEffect(() => {
-    if (portraits.length <= 1) return;
-    const interval = setInterval(() => {
-      setActivePortrait((current) => {
-        const remaining = portraits.filter(p => p !== current);
-        if (remaining.length === 0) return current;
-        const randomIdx = Math.floor(Math.random() * remaining.length);
-        return remaining[randomIdx];
-      });
-    }, 12000); // Morph every 12 seconds
-    return () => clearInterval(interval);
-  }, [portraits]);
 
   // 3. Main interactive canvas rendering loop
   useEffect(() => {
@@ -239,19 +200,6 @@ export function AIPortraitHero() {
       let xOffset = rect.left + (rect.width - targetWidth) / 2;
       let yOffset = rect.top + (rect.height - targetHeight) / 2;
       
-      // Prevent bottom edge clipping on short viewports
-      if (yOffset + targetHeight > height * 0.94) {
-        const excess = (yOffset + targetHeight) - (height * 0.94);
-        yOffset = Math.max(10, yOffset - excess); // Shift up
-        
-        // If still overflowing, scale down height
-        if (yOffset + targetHeight > height * 0.94) {
-          targetHeight = (height * 0.94) - yOffset;
-          targetWidth = targetHeight * targetAspect;
-          xOffset = rect.left + (rect.width - targetWidth) / 2;
-        }
-      }
-      
       layoutRef.current = { xOffset, yOffset, targetWidth, targetHeight };
       
       offscreenCanvas.width = 110; // Full high-density background grid
@@ -280,8 +228,8 @@ export function AIPortraitHero() {
             let pSize = Math.random() * 1.5 + 2.5;
             let pAlpha = Math.random() * 0.35 + 0.65;
             
-            // Soft chest fade-out at bottom (increased to 28% for a very smooth transition)
-            const fadeZoneHeight = Math.round(offscreenCanvas.height * 0.28);
+            // Soft chest fade-out at bottom
+            const fadeZoneHeight = Math.round(offscreenCanvas.height * 0.12);
             const startFadeY = offscreenCanvas.height - fadeZoneHeight;
             if (y > startFadeY) {
               const fraction = Math.min(1.0, Math.max(0.0, (y - startFadeY) / fadeZoneHeight));
