@@ -671,13 +671,19 @@ export function AIPortraitHero() {
         }
 
         // 5. Drawing particle pixel
-        const isLight = resolvedTheme === 'light';
-        const cr = Math.round(p.color.r * (isLight ? 0.2 : 1.0));
-        const cg = Math.round(p.color.g * (isLight ? 0.2 : 1.0));
-        const cb = Math.round(p.color.b * (isLight ? 0.2 : 1.0));
+        let cr = Math.round(p.color.r);
+        let cg = Math.round(p.color.g);
+        let cb = Math.round(p.color.b);
+        
+        if (resolvedTheme === 'light') {
+          // Darken colors to contrast nicely against the white background in light mode
+          cr = Math.round(cr * 0.65);
+          cg = Math.round(cg * 0.65);
+          cb = Math.round(cb * 0.65);
+        }
         
         // A. Draw soft backing glow (bloom halo) for photo pixels only (only in dark mode to prevent muddiness in light mode)
-        if (!isLight) {
+        if (resolvedTheme !== 'light') {
           ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${p.alpha * 0.35})`;
           ctx.fillRect(p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
         }
@@ -742,9 +748,16 @@ export function AIPortraitHero() {
           ember.alpha = Math.min(1.0, lifeRatio * 1.6);
           ember.size = ember.originalSize * (0.35 + lifeRatio * 0.65);
           
-          const cr = ember.color.r;
-          const cg = ember.color.g;
-          const cb = ember.color.b;
+          let cr = ember.color.r;
+          let cg = ember.color.g;
+          let cb = ember.color.b;
+          
+          if (resolvedTheme === 'light') {
+            // Darken embers for high contrast on light mode background
+            cr = Math.round(cr * 0.70);
+            cg = Math.round(cg * 0.70);
+            cb = Math.round(cb * 0.70);
+          }
           
           // Draw soft glow under ember (only in dark mode)
           if (resolvedTheme !== 'light') {
