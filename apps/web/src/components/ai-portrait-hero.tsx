@@ -593,24 +593,28 @@ export function AIPortraitHero() {
           targetY = p.oy + (breatheTargetY - p.oy + parallaxOffsetY) * stabilityFactor;
         }
 
-        // 2. Cursor Intelligence Interaction (Pixel detach/scatter)
+        // 2. Cursor Intelligence Interaction (Neural Bloom & Magnetic Vortex Swirl)
+        let hoverActive = 0;
         if (mouseRef.current.inside && !isReducedMotion) {
           const dx = p.x - mouseX;
           const dy = p.y - mouseY;
           const dist = Math.sqrt(dx * dx + dy * dy);
           
-          if (dist < 55) {
-            // Stronger push closer to cursor (Repel) - tighter, smaller radius
-            const repelForce = (55 - dist) / 55;
-            const pushX = (dx / dist) * repelForce * 8 * stabilityFactor;
-            const pushY = (dy / dist) * repelForce * 8 * stabilityFactor;
+          if (dist < 120) {
+            hoverActive = Math.pow((120 - dist) / 120, 1.5);
+            const safeDist = Math.max(dist, 8);
             
-            p.vx += pushX;
-            p.vy += pushY;
-            p.angle += p.spin * repelForce * 2 * stabilityFactor;
+            // Magnetic attraction pull (pull towards cursor)
+            const pullX = (dx / safeDist) * hoverActive * -3.5 * stabilityFactor;
+            const pullY = (dy / safeDist) * hoverActive * -3.5 * stabilityFactor;
             
-            // Pulse particle size on hover (scaled by stability)
-            p.size = p.originalSize * (1.0 + repelForce * 0.4 * stabilityFactor);
+            // Tangential orbital swirl
+            const swirlX = (-dy / safeDist) * hoverActive * 2.8 * stabilityFactor;
+            const swirlY = (dx / safeDist) * hoverActive * 2.8 * stabilityFactor;
+            
+            p.vx += pullX + swirlX;
+            p.vy += pullY + swirlY;
+            p.angle += p.spin * hoverActive * 1.5 * stabilityFactor;
           }
         }
 
@@ -675,15 +679,42 @@ export function AIPortraitHero() {
         const cg = Math.round(p.color.g);
         const cb = Math.round(p.color.b);
         
+        let drawR = cr;
+        let drawG = cg;
+        let drawB = cb;
+        let drawSize = p.size;
+        let drawAlpha = p.alpha;
+        
+        if (resolvedTheme === 'light') {
+          // Grayscale base color (with a premium cool slate blue tint)
+          const gray = cr * 0.299 + cg * 0.587 + cb * 0.114;
+          const baseR = Math.round(gray * 0.72 + 38);
+          const baseG = Math.round(gray * 0.72 + 45);
+          const baseB = Math.round(gray * 0.72 + 58);
+          
+          // Interpolate between cool gray-slate and full color based on hover proximity
+          drawR = Math.round(baseR + (cr - baseR) * hoverActive);
+          drawG = Math.round(baseG + (cg - baseG) * hoverActive);
+          drawB = Math.round(baseB + (cb - baseB) * hoverActive);
+          
+          // Boost alpha and size slightly when hovered to create the "bloom pop" effect
+          drawSize = p.size * (1.0 + hoverActive * 0.5 * stabilityFactor);
+          drawAlpha = p.alpha * (0.38 + hoverActive * 0.62); // 38% opacity base, blooming to 100%
+        } else {
+          // Dark theme: original glowing pop
+          drawSize = p.size * (1.0 + hoverActive * 0.35 * stabilityFactor);
+          drawAlpha = p.alpha * (0.75 + hoverActive * 0.25);
+        }
+        
         // A. Draw soft backing glow (bloom halo) for photo pixels only (only in dark mode to prevent muddiness in light mode)
         if (resolvedTheme !== 'light') {
-          ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${p.alpha * 0.35})`;
-          ctx.fillRect(p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
+          ctx.fillStyle = `rgba(${drawR}, ${drawG}, ${drawB}, ${drawAlpha * 0.35})`;
+          ctx.fillRect(p.x - drawSize, p.y - drawSize, drawSize * 2, drawSize * 2);
         }
         
         // B. Draw crisp main square pixel on top
-        ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${p.alpha})`;
-        ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        ctx.fillStyle = `rgba(${drawR}, ${drawG}, ${drawB}, ${drawAlpha})`;
+        ctx.fillRect(p.x - drawSize / 2, p.y - drawSize / 2, drawSize, drawSize);
       });
       ctx.restore();
 
