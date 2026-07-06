@@ -225,21 +225,24 @@ export function AIPortraitHero() {
         rect = { left: r.left, top: r.top, width: r.width, height: r.height };
       }
       
-      // Face occupies ~38-42% of the hero column bounds
-      let targetWidth = Math.min(270, rect.width * 0.58);
-      if (window.innerWidth < 768) {
-        targetWidth = 160;
-      }
-      let targetHeight = targetWidth / targetAspect;
+      // Scale portrait to cover the full background of the right container
+      let targetHeight = rect.height * 0.90;
+      let targetWidth = targetHeight * targetAspect;
       
-      // Position center of gravity in the top part of the right container column
+      // Prevent horizontal overflow
+      if (targetWidth > rect.width * 0.95) {
+        targetWidth = rect.width * 0.95;
+        targetHeight = targetWidth / targetAspect;
+      }
+      
+      // Position center of gravity in the middle of the right container column
       let xOffset = rect.left + (rect.width - targetWidth) / 2;
-      let yOffset = rect.top + (rect.height * 0.40 - targetHeight) / 2;
+      let yOffset = rect.top + (rect.height - targetHeight) / 2;
       
       layoutRef.current = { xOffset, yOffset, targetWidth, targetHeight };
       
-      offscreenCanvas.width = 80; // High-density grid
-      offscreenCanvas.height = Math.round(80 / targetAspect);
+      offscreenCanvas.width = 110; // Full high-density background grid
+      offscreenCanvas.height = Math.round(110 / targetAspect);
       
       offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
       offscreenCtx.drawImage(img, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
