@@ -658,18 +658,93 @@ export function AIPortraitHero() {
         ctx.restore();
       }
 
-      // Cursor Light source glow
+      // Cybernetic AI Agent Target HUD Cursor
       if (mouseRef.current.inside && !isReducedMotion) {
         ctx.save();
-        ctx.globalCompositeOperation = 'screen';
+        ctx.globalCompositeOperation = resolvedTheme === 'light' ? 'source-over' : 'screen';
+        
+        // 1. Soft cursor base glow
         const mouseGlow = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 75);
-        mouseGlow.addColorStop(0, 'rgba(6, 182, 212, 0.15)');
-        mouseGlow.addColorStop(0.5, 'rgba(124, 58, 237, 0.04)');
+        mouseGlow.addColorStop(0, resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(6, 182, 212, 0.18)');
+        mouseGlow.addColorStop(0.5, resolvedTheme === 'light' ? 'rgba(124, 58, 237, 0.02)' : 'rgba(124, 58, 237, 0.04)');
         mouseGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = mouseGlow;
         ctx.beginPath();
         ctx.arc(mouseX, mouseY, 75, 0, Math.PI * 2);
         ctx.fill();
+        
+        // 2. Rotating outer dashed reticle
+        const reticleTime = Date.now() * 0.0015;
+        const radius = 28;
+        
+        ctx.strokeStyle = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.45)' : 'rgba(6, 182, 212, 0.55)';
+        ctx.lineWidth = 1.0;
+        
+        ctx.save();
+        ctx.translate(mouseX, mouseY);
+        ctx.rotate(reticleTime);
+        
+        ctx.setLineDash([4, 6]);
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Corner bracket crosshairs
+        ctx.setLineDash([]);
+        const bracketSize = 4.5;
+        const bracketOffset = radius + 2.5;
+        
+        // Top-Left
+        ctx.beginPath();
+        ctx.moveTo(-bracketOffset, -bracketOffset + bracketSize);
+        ctx.lineTo(-bracketOffset, -bracketOffset);
+        ctx.lineTo(-bracketOffset + bracketSize, -bracketOffset);
+        ctx.stroke();
+        
+        // Top-Right
+        ctx.beginPath();
+        ctx.moveTo(bracketOffset - bracketSize, -bracketOffset);
+        ctx.lineTo(bracketOffset, -bracketOffset);
+        ctx.lineTo(bracketOffset, -bracketOffset + bracketSize);
+        ctx.stroke();
+        
+        // Bottom-Left
+        ctx.beginPath();
+        ctx.moveTo(-bracketOffset, bracketOffset - bracketSize);
+        ctx.lineTo(-bracketOffset, bracketOffset);
+        ctx.lineTo(-bracketOffset + bracketSize, bracketOffset);
+        ctx.stroke();
+        
+        // Bottom-Right
+        ctx.beginPath();
+        ctx.moveTo(bracketOffset - bracketSize, bracketOffset);
+        ctx.lineTo(bracketOffset, bracketOffset);
+        ctx.lineTo(bracketOffset, bracketOffset - bracketSize);
+        ctx.stroke();
+        
+        ctx.restore();
+        
+        // 3. Orbiting micro-agent nodes
+        const agentCount = 3;
+        for (let aIdx = 0; aIdx < agentCount; aIdx++) {
+          const orbitRadius = radius * 1.45 + Math.sin(reticleTime * 2.2 + aIdx) * 4;
+          const orbitSpeed = 1.6 + aIdx * 0.45;
+          const angle = reticleTime * orbitSpeed + (aIdx * Math.PI * 2) / agentCount;
+          const agentX = mouseX + Math.cos(angle) * orbitRadius;
+          const agentY = mouseY + Math.sin(angle) * orbitRadius;
+          
+          ctx.fillStyle = aIdx === 0 ? '#06B6D4' : aIdx === 1 ? '#7C3AED' : '#10B981';
+          ctx.beginPath();
+          ctx.arc(agentX, agentY, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        // 4. Floating HUD details
+        ctx.fillStyle = resolvedTheme === 'light' ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.5)';
+        ctx.font = '6px monospace';
+        ctx.fillText(`SYS_AGENT: 0x${Math.abs(Math.floor(mouseX)) % 256}`, mouseX + radius + 10, mouseY - 5);
+        ctx.fillText(`SCAN_LOCK: OK`, mouseX + radius + 10, mouseY + 4);
+        
         ctx.restore();
       }
 
