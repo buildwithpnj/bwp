@@ -963,7 +963,7 @@ export function AIPortraitHero() {
           {/* RIGHT SIDE: Interactive Portrait and Orbiting Tech Stack Ecosystem */}
           <div 
             ref={rightContainerRef}
-            className="lg:col-span-7 w-full mt-10 lg:mt-0 h-[440px] sm:h-[650px] lg:h-[760px] relative flex items-center justify-center select-none z-20"
+            className="lg:col-span-7 w-full mt-10 lg:mt-0 h-[520px] sm:h-[650px] lg:h-[760px] relative flex items-center justify-center select-none z-20"
           >
             {/* Wrap orbiting stack elements in a unified pointer-interactive layout container */}
             <div className="absolute inset-0 pointer-events-none lg:pointer-events-auto">
@@ -1061,7 +1061,7 @@ export function AIPortraitHero() {
               {/* Downward Vertical Orchestration Flow */}
               <div 
                 id="node-flow-mcp"
-                className="hidden lg:flex absolute top-[51%] left-1/2 -translate-x-1/2 w-full max-w-[280px] flex flex-col gap-1.5 items-center font-mono text-[8px]"
+                className="absolute top-[51%] left-1/2 -translate-x-1/2 w-full max-w-[280px] flex flex-col gap-1.5 items-center font-mono text-[8px]"
               >
                 {/* Vertical connecting line indicator */}
                 <div className="w-[1.2px] h-3 bg-gradient-to-b from-primary/35 to-purple-500/25 animate-pulse" />
