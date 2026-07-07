@@ -11,7 +11,61 @@ interface TerminalProps {
   showPrompt?: boolean;
 }
 
-export function Terminal({ title = 'warborn_telemetry.log', lines, className, showPrompt = true }: TerminalProps) {
+/* ============================================================================
+   ERROR BOUNDARY FALLBACK
+   If the interactive shell throws any runtime errors, the boundary catches it
+   and renders a static, safe shell layout to keep the rest of the website up.
+   ============================================================================ */
+class TerminalErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallbackLines: string[]; title?: string; className?: string },
+  { hasError: boolean }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("Terminal component error caught:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className={cn("w-full rounded-2xl border border-border/40 bg-card/65 backdrop-blur-md shadow-2xl overflow-hidden font-mono text-[10.5px] text-left", this.props.className)}>
+          <div className="flex items-center justify-between px-4 py-2.5 bg-background/60 border-b border-border/40 select-none">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F56] border border-[#E0443E]/20" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E] border border-[#DEA123]/20" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F] border border-[#1AAB29]/20" />
+            </div>
+            <span className="text-[9px] text-amber-500 font-semibold flex items-center gap-1.5 uppercase tracking-wider font-sans">
+              ⚠️ SYSTEM RUNTIME FALLBACK
+            </span>
+            <div className="w-10" />
+          </div>
+          <div className="p-4 flex flex-col gap-1.5 h-[240px] overflow-y-auto bg-card/60 backdrop-blur-md text-muted-foreground">
+            {this.props.fallbackLines.map((line, idx) => (
+              <div key={idx} className="leading-relaxed whitespace-pre-wrap select-text">{line}</div>
+            ))}
+            <div className="text-[9px] text-amber-500/80 font-bold mt-2">// Interactive session degraded. Reconnecting...</div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+/* ============================================================================
+   INTERACTIVE SHELL IMPLEMENTATION
+   ============================================================================ */
+function TerminalInteractive({ title = 'warborn_telemetry.log', lines, className, showPrompt = true }: TerminalProps) {
   const [history, setHistory] = useState<string[]>([]);
   const [inputVal, setInputVal] = useState('');
   const [isStreaming, setIsStreaming] = useState(true);
@@ -55,13 +109,24 @@ export function Terminal({ title = 'warborn_telemetry.log', lines, className, sh
     return () => clearInterval(interval);
   }, [isStreaming]);
 
-  // Auto-scroll on content updates
+  // Auto-scroll on content updates (defensive timeout to prevent render-cycle races)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const timer = setTimeout(() => {
+      try {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        console.warn('Terminal scroll error:', err);
+      }
+    }, 50);
+    return () => clearTimeout(timer);
   }, [history]);
 
   const handleTerminalClick = () => {
-    inputRef.current?.focus();
+    try {
+      inputRef.current?.focus();
+    } catch (err) {
+      console.warn('Input focus error:', err);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -70,10 +135,14 @@ export function Terminal({ title = 'warborn_telemetry.log', lines, className, sh
       if (!command) return;
 
       const newHistory = [...history, `pnj@studio:~$ ${command}`];
-      const output = executeCommand(command);
       
-      if (output && output.length > 0) {
-        newHistory.push(...output);
+      try {
+        const output = executeCommand(command);
+        if (output && output.length > 0) {
+          newHistory.push(...output);
+        }
+      } catch (err) {
+        newHistory.push(`SYSTEM ERROR: execution failed - ${err}`);
       }
 
       setHistory(newHistory.slice(-60));
@@ -172,7 +241,6 @@ export function Terminal({ title = 'warborn_telemetry.log', lines, className, sh
       {/* Terminal Window Header Bar */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-background/60 border-b border-border/40 select-none">
         <div className="flex items-center gap-1.5">
-          {/* Simulated Mac OS window controls */}
           <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F56] border border-[#E0443E]/20" />
           <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E] border border-[#DEA123]/20" />
           <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F] border border-[#1AAB29]/20" />
@@ -243,5 +311,20 @@ export function Terminal({ title = 'warborn_telemetry.log', lines, className, sh
         <div ref={bottomRef} />
       </div>
     </div>
+  );
+}
+
+/* ============================================================================
+   EXPORT WRAPPER WITH ERROR BOUNDARY
+   ============================================================================ */
+export function Terminal(props: TerminalProps) {
+  return (
+    <TerminalErrorBoundary 
+      fallbackLines={props.lines} 
+      title={props.title} 
+      className={props.className}
+    >
+      <TerminalInteractive {...props} />
+    </TerminalErrorBoundary>
   );
 }
