@@ -234,19 +234,21 @@ export function AIPortraitHero() {
         rect = { left: r.left, top: r.top, width: r.width, height: r.height };
       }
       
-      // Scale portrait to be a little smaller (70% container height) to make it a perfect centerpiece
-      let targetHeight = rect.height * 0.70;
+      // Scale portrait to match responsive screen dimensions
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+      let targetHeight = rect.height * (isMobile ? 0.92 : 0.70);
       let targetWidth = targetHeight * targetAspect;
       
       // Prevent horizontal overflow
-      if (targetWidth > rect.width * 0.85) {
-        targetWidth = rect.width * 0.85;
+      const maxPct = isMobile ? 0.92 : 0.85;
+      if (targetWidth > rect.width * maxPct) {
+        targetWidth = rect.width * maxPct;
         targetHeight = targetWidth / targetAspect;
       }
       
       // Portrait center of gravity
       const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height * 0.42; // slightly elevated to leave room for bottom flow
+      const cy = rect.top + rect.height * (isMobile ? 0.50 : 0.42); // Centered vertically on mobile, slightly elevated on desktop for flows
       
       let xOffset = cx - targetWidth / 2;
       let yOffset = cy - targetHeight / 2;
@@ -397,9 +399,10 @@ export function AIPortraitHero() {
       const canvasTop = canvasBounds ? canvasBounds.top : 0;
       const canvasLeft = canvasBounds ? canvasBounds.left : 0;
 
+      const isMobileViewport = typeof window !== 'undefined' && window.innerWidth < 1024;
       const rBounds = rightContainerRef.current?.getBoundingClientRect();
       const cx = rBounds ? (rBounds.left - canvasLeft + rBounds.width / 2) : (width * 0.58);
-      const cy = rBounds ? (rBounds.top - canvasTop + rBounds.height * 0.42) : (height * 0.45);
+      const cy = rBounds ? (rBounds.top - canvasTop + rBounds.height * (isMobileViewport ? 0.50 : 0.42)) : (height * 0.45);
       
       if (layoutRef.current.targetWidth > 0) {
         layoutRef.current.xOffset = cx - layoutRef.current.targetWidth / 2;
