@@ -133,8 +133,15 @@ export function AIPortraitHero() {
     if (!ctx) return;
     
     let animationFrameId: number;
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.scale(dpr, dpr);
     
     // Set offscreen canvas for downsampling
     const offscreenCanvas = document.createElement('canvas');
@@ -164,8 +171,13 @@ export function AIPortraitHero() {
 
     // Resize handler
     const handleResize = () => {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.scale(dpr, dpr);
       initBGParticles();
       if (activeImage) {
         processImage(activeImage);
@@ -678,11 +690,17 @@ export function AIPortraitHero() {
         ctx.globalCompositeOperation = resolvedTheme === 'light' ? 'source-over' : 'screen';
         
         const hudHue = (Date.now() * 0.018) % 360; // Smooth energetic color cycle
-        const rColor = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.35)' : `hsla(${hudHue}, 85%, 60%, 0.65)`;
-        const textColor = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.65)' : `hsla(${hudHue}, 85%, 70%, 0.95)`;
+        const rColor = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.45)' : `hsla(${hudHue}, 100%, 65%, 0.75)`;
+        const textColor = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.75)' : `hsla(${hudHue}, 100%, 75%, 1.0)`;
         
         ctx.strokeStyle = rColor;
         ctx.lineWidth = 0.8;
+        
+        // Add neon HDR glow in dark mode
+        if (resolvedTheme !== 'light') {
+          ctx.shadowBlur = 4;
+          ctx.shadowColor = rColor;
+        }
         
         // 1. Draw dashed outer ring
         ctx.setLineDash([2, 3]);
@@ -700,8 +718,12 @@ export function AIPortraitHero() {
         ctx.stroke();
         
         // 3. Draw miniature telemetry HUD text on the right
-        ctx.font = '7px monospace, Courier New';
+        ctx.font = '7.5px monospace, Courier New';
         ctx.fillStyle = textColor;
+        if (resolvedTheme !== 'light') {
+          ctx.shadowBlur = 5;
+          ctx.shadowColor = textColor;
+        }
         ctx.fillText(`SYS_AGENT: ACTIVE`, mouseX + 22, mouseY - 5);
         ctx.fillText(`CORE_SYNC: 99.8%`, mouseX + 22, mouseY + 2);
         ctx.fillText(`LATENCY: 12ms`, mouseX + 22, mouseY + 9);
