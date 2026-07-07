@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Terminal as TerminalIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -11,126 +11,167 @@ interface TerminalProps {
   showPrompt?: boolean;
 }
 
-export function Terminal({ title = 'pnj-telemetry', lines, className, showPrompt = true }: TerminalProps) {
-  const [history, setHistory] = useState<string[]>(lines);
-  const [input, setInput] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+export function Terminal({ title = 'warborn_telemetry.log', lines, className, showPrompt = true }: TerminalProps) {
+  const [history, setHistory] = useState<string[]>([]);
+  const [inputVal, setInputVal] = useState('');
+  const [isStreaming, setIsStreaming] = useState(true);
 
-  // Focus the input when clicking anywhere inside the terminal screen
+  const inputRef = useRef<HTMLInputElement>(null);
+  const screenRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Initialize history with initial lines
+  useEffect(() => {
+    if (lines && lines.length > 0 && history.length === 0) {
+      setHistory(lines);
+    }
+  }, [lines]);
+
+  // Live telemetry stream simulator
+  useEffect(() => {
+    if (!isStreaming) return;
+
+    const logTemplates = [
+      () => `API  GET /api/v1/notes 200 OK - ${(Math.random() * 8 + 4).toFixed(1)}ms`,
+      () => `TASK celery_worker_1: Embedding extraction completed for ID ${Math.floor(Math.random() * 400 + 100)}`,
+      () => `DB   pgvector lookup: match similarity ${(Math.random() * 5 + 92).toFixed(1)}% - ${(Math.random() * 2 + 1.5).toFixed(1)}ms`,
+      () => `SYNC Google Drive stateless check: 0 changes pending`,
+      () => `MEM  Redis cache lookup hit for dashboard_stats - ${(Math.random() * 0.4 + 0.2).toFixed(2)}ms`,
+      () => `API  POST /api/v1/habits/check_in [200 OK] - ${(Math.random() * 10 + 8).toFixed(1)}ms`,
+      () => `SYS  Garbage collection cycle completed - reclaimed 4.1MB`,
+      () => `SEC  JWT verification: session validated for pnj@studio`,
+      () => `TASK celery_worker_1: process_staging_entry completed job_${Math.floor(Math.random() * 800 + 100)}`
+    ];
+
+    const interval = setInterval(() => {
+      const randomLog = logTemplates[Math.floor(Math.random() * logTemplates.length)]();
+      const timestamp = new Date().toISOString().substring(11, 19);
+      setHistory(prev => {
+        const next = [...prev, `[${timestamp}] ${randomLog}`];
+        return next.slice(-35); // Keep history capped
+      });
+    }, 3200);
+
+    return () => clearInterval(interval);
+  }, [isStreaming]);
+
+  // Auto-scroll on content updates
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [history]);
+
   const handleTerminalClick = () => {
     inputRef.current?.focus();
   };
 
-  // Scroll to the bottom when history logs update
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const command = inputVal.trim();
+      if (!command) return;
+
+      const newHistory = [...history, `pnj@studio:~$ ${command}`];
+      const output = executeCommand(command);
+      
+      if (output && output.length > 0) {
+        newHistory.push(...output);
+      }
+
+      setHistory(newHistory.slice(-60));
+      setInputVal('');
     }
-  }, [history]);
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cmd = input.trim();
-    if (!cmd) return;
-
-    const newHistory = [...history, `pnj@studio:~$ ${cmd}`];
-    const parts = cmd.toLowerCase().split(' ');
-    const command = parts[0];
-
-    let output: string[] = [];
+  const executeCommand = (cmdStr: string): string[] => {
+    const args = cmdStr.toLowerCase().split(' ');
+    const command = args[0];
 
     switch (command) {
-      case 'help':
-        output = [
-          'Available commands:',
-          '  help      - List available shell operations',
-          '  status    - Check telemetry health & database states',
-          '  neofetch  - Render system info & OS stats',
-          '  modules   - List loaded personal OS dashboard features',
-          '  sync      - Trigger manual vector embedding database updates',
-          '  contact   - Display BuildWithPNJ communication channels',
-          '  clear     - Clear the terminal console output'
-        ];
-        break;
       case 'clear':
         setHistory([]);
-        setInput('');
-        return;
-      case 'status':
-        output = [
-          'WARBORN SYSTEM TELEMETRY:',
-          '  [+] CORE: Active & Synchronized',
-          '  [+] DATABASE: PostgreSQL (pgvector index enabled)',
-          '  [+] QUEUE: Celery worker solo-thread online',
-          '  [+] LATENCY: 12ms (vector embedding lookup query)',
-          '  [+] CACHE: Redis pool initialized (156 keys loaded)',
-          '  [+] DRIVE SYNC: Google Drive API (0 pending updates)'
+        return [];
+      case 'help':
+        return [
+          'Available Commands:',
+          '  help      - Display this list of commands',
+          '  status    - View system health & latency telemetry',
+          '  neofetch  - Display host specs & ASCI art logo',
+          '  ping      - Check roundtrip response latency',
+          '  telemetry - Toggle live log stream (active/paused)',
+          '  about     - About BuildWithPNJ & Warborn OS',
+          '  clear     - Clear terminal screen buffer'
         ];
-        break;
+      case 'status':
+        const latency = (Math.random() * 4 + 11).toFixed(1);
+        return [
+          '=============================================',
+          '   WARBORN OS STATUS & HEALTH OVERVIEW      ',
+          '=============================================',
+          'NEXTJS WEB PORTAL : ONLINE  [PORT 3000]',
+          'FASTAPI SERVICE   : ONLINE  [PORT 8000]',
+          'CELERY SOLO TASK  : ONLINE  [SOLO WORKER]',
+          `DATABASE pgvector : OPERATIONAL (similarity search)`,
+          `AVG API LATENCY   : ${latency}ms`,
+          'REDIS MEMORY CACHE: ACTIVE (99.8% hit rate)',
+          'SYSTEM CONTROL    : 100% OK'
+        ];
       case 'neofetch':
-        output = [
+        return [
           '   _      __           __                  ',
           '  | | /| / /__ _____  / /  ___  _______    ',
           '  | |/ |/ / _ `/ __/ / _ \\/ _ \\/ __/ _ \\   ',
           '  |__/|__/\\_,_/_/   /_.__/\\___/_/  \\___/   ',
-          '                                           ',
-          '  OS: Warborn OS v1.2 (Stateless Core)',
-          '  Host: pnj-studio (BuildWithPNJ Client)',
-          '  Kernel: Next.js 15.5 / FastAPI Backend',
-          '  Shell: Interactive AI Agent Shell',
-          '  Uptime: 100% active operational session',
-          '  Database: PostgreSQL + pgvector lookup',
-          '  Status: Operational / Ready for production'
+          '  --------------------------------------   ',
+          '  OS      : Warborn OS v1.0.4',
+          '  HOST    : buildwithpnj.studio',
+          '  KERNEL  : Linux 6.1.0-py-agent',
+          '  SHELL   : pnj-sh 2.0',
+          '  UPTIME  : 14 days, 6 hours, 12 mins',
+          '  CPU     : Virtual AI Agent Core (16 Cores)',
+          '  MEMORY  : Redis In-Memory Buffered',
+          '  THEME   : Electric Cyan / Graphite Black'
         ];
-        break;
-      case 'modules':
-        output = [
-          'LOADED OS MODULES:',
-          '  - Notes Archive (Stateful Markdown search & RAG)',
-          '  - Finance tracker (Double-entry ledger & balance sheet)',
-          '  - Habits tracker (Weekly checklist metrics grid)',
-          '  - Stateless Cloud Sync (Stateless Google Drive bridge)'
+      case 'ping':
+        const p1 = (Math.random() * 3 + 11).toFixed(1);
+        const p2 = (Math.random() * 3 + 10).toFixed(1);
+        const p3 = (Math.random() * 3 + 12).toFixed(1);
+        return [
+          'PING api.buildwithpnj.com (104.21.3.112): 56 data bytes',
+          `64 bytes from 104.21.3.112: icmp_seq=0 ttl=56 time=${p1} ms`,
+          `64 bytes from 104.21.3.112: icmp_seq=1 ttl=56 time=${p2} ms`,
+          `64 bytes from 104.21.3.112: icmp_seq=2 ttl=56 time=${p3} ms`,
+          '--- api.buildwithpnj.com ping statistics ---',
+          '3 packets transmitted, 3 received, 0% packet loss'
         ];
-        break;
-      case 'sync':
-        output = [
-          'Initializing vector index database sync...',
-          'Scanning Google Drive directories...',
-          '[1/3] Reading updated files (2 modifications found)',
-          '[2/3] Generating sentence-transformer vector chunks...',
-          '[3/3] Inserting vector index into pgvector schema... SUCCESS',
-          'Sync finished successfully in 1.18s'
+      case 'telemetry':
+        const newState = !isStreaming;
+        setIsStreaming(newState);
+        return [
+          `Telemetry logs streaming ${newState ? 'STARTED' : 'PAUSED'}.`
         ];
-        break;
-      case 'contact':
-        output = [
-          'BUILDWITHPNJ CONTACT BLUEPRINTS:',
-          '  Email: hello@buildwithpnj.com',
-          '  Twitter/X: @buildwithpnj',
-          '  GitHub: github.com/buildwithpnj'
+      case 'about':
+        return [
+          'BuildWithPNJ is an AI Product Engineering Lab.',
+          'Warborn OS is the central management dashboard built',
+          'to automate note indexing, financial logs tracking,',
+          'habits check-ins, and data synchronization workflows.',
+          'Visit https://github.com/buildwithpnj for source designs.'
         ];
-        break;
       default:
-        output = [
-          `bash: command not found: ${cmd}`,
-          'Type "help" to view a list of available commands.'
+        return [
+          `bash: command not found: ${command}`,
+          'Type "help" to see available commands.'
         ];
     }
-
-    setHistory([...newHistory, ...output]);
-    setInput('');
   };
 
   return (
     <div 
       onClick={handleTerminalClick}
-      className={cn("w-full rounded-2xl border border-border/40 bg-card/65 backdrop-blur-md shadow-2xl overflow-hidden font-mono text-[11px] text-left cursor-text", className)}
+      className={cn("w-full rounded-2xl border border-border/40 bg-card/65 backdrop-blur-md shadow-2xl overflow-hidden font-mono text-[10.5px] text-left cursor-text", className)}
     >
-      
       {/* Terminal Window Header Bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-background/60 border-b border-border/40 select-none">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-background/60 border-b border-border/40 select-none">
+        <div className="flex items-center gap-1.5">
           {/* Simulated Mac OS window controls */}
           <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F56] border border-[#E0443E]/20" />
           <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E] border border-[#DEA123]/20" />
@@ -141,55 +182,66 @@ export function Terminal({ title = 'pnj-telemetry', lines, className, showPrompt
           <TerminalIcon className="h-3 w-3 text-primary" /> {title}
         </span>
         
-        <div className="w-12" /> {/* Spacer */}
+        <div className="w-10" />
       </div>
 
       {/* Terminal Content Screen */}
       <div 
-        ref={scrollRef}
-        className="p-5 flex flex-col gap-1.5 max-h-[260px] overflow-y-auto bg-black/45 text-muted-foreground"
+        ref={screenRef}
+        className="p-4 flex flex-col gap-1.5 h-[240px] overflow-y-auto bg-card/60 backdrop-blur-md text-muted-foreground"
       >
-        
         {/* Output lines */}
-        {history.map((line, idx) => (
-          <div key={idx} className="flex items-start gap-1.5 leading-normal">
-            {line.startsWith('pnj@') ? (
-              <span className="text-primary shrink-0 select-none">pnj@studio:~$</span>
-            ) : line.startsWith('>') ? (
-              <span className="text-primary shrink-0 select-none">&gt;</span>
-            ) : null}
-            <span className={cn(
-              "whitespace-pre-wrap select-text",
-              line.includes('SUCCESS') || line.includes('online') || line.includes('ACTIVE') ? 'text-emerald-400 font-bold' :
-              line.includes('ERROR') || line.includes('failed') || line.includes('command not found') ? 'text-red-500 font-bold' :
-              line.startsWith('pnj@') ? 'text-foreground' : ''
-            )}>
-              {line.startsWith('pnj@') ? line.replace('pnj@studio:~$ ', '') : line.startsWith('>') ? line.substring(1) : line}
-            </span>
-          </div>
-        ))}
+        {history.map((line, idx) => {
+          const isUserCommand = line.startsWith('pnj@studio:~$');
+          const isError = line.startsWith('bash:') || line.includes('ERROR') || line.includes('failed');
+          const isSuccess = line.includes('SUCCESS') || line.includes('200 OK') || line.includes('success') || line.includes('ONLINE');
 
-        {/* Interactive Shell Prompt Form */}
+          return (
+            <div key={idx} className="flex items-start gap-1 leading-relaxed">
+              {isUserCommand ? (
+                <>
+                  <span className="text-primary shrink-0 font-bold">pnj@studio:~$</span>
+                  <span className="whitespace-pre-wrap select-text text-foreground">{line.replace('pnj@studio:~$ ', '')}</span>
+                </>
+              ) : (
+                <span className={cn(
+                  "whitespace-pre-wrap select-text",
+                  isSuccess && 'text-emerald-400 font-medium',
+                  isError && 'text-red-400',
+                  line.startsWith('Available') || line.startsWith('OS ') ? 'text-cyan-400' : ''
+                )}>
+                  {line}
+                </span>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Dynamic prompt input line */}
         {showPrompt && (
-          <form onSubmit={handleSubmit} className="flex items-center gap-1.5 mt-0.5 w-full">
-            <span className="text-primary shrink-0 select-none">pnj@studio:~$</span>
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              className="flex-1 bg-transparent border-none outline-none text-foreground caret-primary font-mono text-[11px] focus:ring-0 p-0 focus:outline-none"
-              autoFocus
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck="false"
-            />
-          </form>
+          <div className="flex items-center gap-1.5 mt-1 relative min-h-[1.5rem]">
+            <span className="text-primary shrink-0 font-bold">pnj@studio:~$</span>
+            <div className="flex-1 flex items-center relative min-w-[50px]">
+              <span className="text-foreground whitespace-pre">{inputVal}</span>
+              <span className="w-1.5 h-3.5 bg-primary animate-pulse ml-0.5" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputVal}
+                onChange={(e) => setInputVal(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-text outline-none font-mono"
+                autoCapitalize="none"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </div>
+          </div>
         )}
 
+        <div ref={bottomRef} />
       </div>
-
     </div>
   );
 }
