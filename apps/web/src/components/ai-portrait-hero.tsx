@@ -353,10 +353,14 @@ export function AIPortraitHero() {
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Calculate dynamic center of gravity for the right container column on every frame
+      // Calculate dynamic center of gravity relative to the canvas local coordinates
+      const canvasBounds = canvasRef.current?.getBoundingClientRect();
+      const canvasTop = canvasBounds ? canvasBounds.top : 0;
+      const canvasLeft = canvasBounds ? canvasBounds.left : 0;
+
       const rBounds = rightContainerRef.current?.getBoundingClientRect();
-      const cx = rBounds ? (rBounds.left + rBounds.width / 2) : (width * 0.58);
-      const cy = rBounds ? (rBounds.top + rBounds.height * 0.42) : (height * 0.45);
+      const cx = rBounds ? (rBounds.left - canvasLeft + rBounds.width / 2) : (width * 0.58);
+      const cy = rBounds ? (rBounds.top - canvasTop + rBounds.height * 0.42) : (height * 0.45);
       
       if (layoutRef.current.targetWidth > 0) {
         layoutRef.current.xOffset = cx - layoutRef.current.targetWidth / 2;
@@ -912,7 +916,7 @@ export function AIPortraitHero() {
           {/* RIGHT SIDE: Interactive Portrait and Orbiting Tech Stack Ecosystem */}
           <div 
             ref={rightContainerRef}
-            className="lg:col-span-7 w-full h-[580px] sm:h-[650px] lg:h-[760px] relative flex items-center justify-center select-none z-20"
+            className="lg:col-span-7 w-full mt-20 lg:mt-0 h-[440px] sm:h-[650px] lg:h-[760px] relative flex items-center justify-center select-none z-20"
           >
             {/* Wrap orbiting stack elements in a layout overlay hidden on mobile viewports */}
             <div className="absolute inset-0 pointer-events-none lg:pointer-events-auto hidden lg:block">
