@@ -59,7 +59,8 @@ export function AIPortraitHero() {
   const containerRef = useRef<HTMLDivElement>(null);
   const rightContainerRef = useRef<HTMLDivElement>(null);
   
-  const activePortrait = '/assets/images/Man_looking_directly_camera_2K_202607062110.png';
+  const [portraits, setPortraits] = useState<string[]>([]);
+  const [activePortrait, setActivePortrait] = useState<string>('/assets/images/Man_looking_directly_camera_2K_202607062110.png');
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   
   const mouseRef = useRef({ x: -1000, y: -1000, rx: 0, ry: 0, targetRx: 0, targetRy: 0, inside: false });
@@ -86,6 +87,39 @@ export function AIPortraitHero() {
     "System Designing",
     "UI/UX Product Engineering"
   ];
+
+  // Fetch portraits dynamic list on mount
+  useEffect(() => {
+    async function loadPortraits() {
+      try {
+        const res = await fetch('/api/portraits');
+        const data = await res.json();
+        if (data.portraits && data.portraits.length > 0) {
+          setPortraits(data.portraits);
+          // Set initial random portrait
+          const randomIdx = Math.floor(Math.random() * data.portraits.length);
+          setActivePortrait(data.portraits[randomIdx]);
+        }
+      } catch (err) {
+        console.error('Failed to load portraits:', err);
+      }
+    }
+    loadPortraits();
+  }, []);
+
+  // Cycle/morph active portraits dynamically
+  useEffect(() => {
+    if (portraits.length <= 1) return;
+    const interval = setInterval(() => {
+      setActivePortrait((current) => {
+        const remaining = portraits.filter(p => p !== current);
+        if (remaining.length === 0) return current;
+        const randomIdx = Math.floor(Math.random() * remaining.length);
+        return remaining[randomIdx];
+      });
+    }, 12000); // 12 seconds morph loop
+    return () => clearInterval(interval);
+  }, [portraits]);
 
   // Blinking terminal cursor interval
   useEffect(() => {
@@ -918,7 +952,7 @@ export function AIPortraitHero() {
           {/* RIGHT SIDE: Interactive Portrait and Orbiting Tech Stack Ecosystem */}
           <div 
             ref={rightContainerRef}
-            className="lg:col-span-7 w-full mt-6 lg:mt-0 h-[440px] sm:h-[650px] lg:h-[760px] relative flex items-center justify-center select-none z-20"
+            className="lg:col-span-7 w-full mt-10 lg:mt-0 h-[440px] sm:h-[650px] lg:h-[760px] relative flex items-center justify-center select-none z-20"
           >
             {/* Wrap orbiting stack elements in a layout overlay hidden on mobile viewports */}
             <div className="absolute inset-0 pointer-events-none lg:pointer-events-auto hidden lg:block">
