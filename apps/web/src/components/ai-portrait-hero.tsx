@@ -755,6 +755,7 @@ export function AIPortraitHero() {
           const el = document.getElementById(id);
           if (!el) return;
           const rect = el.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) return; // Skip drawing connection link if element is hidden in CSS!
           const canvasRect = canvas.getBoundingClientRect();
           
           const targetX = rect.left - canvasRect.left + rect.width / 2;
@@ -792,6 +793,7 @@ export function AIPortraitHero() {
         if (pythonEl && fastapiEl) {
           const pyRect = pythonEl.getBoundingClientRect();
           const faRect = fastapiEl.getBoundingClientRect();
+          if (pyRect.width === 0 || faRect.width === 0) return; // Exit if hidden!
           const canvasRect = canvas.getBoundingClientRect();
           const pyX = pyRect.left - canvasRect.left + pyRect.width / 2;
           const pyY = pyRect.top - canvasRect.top + pyRect.height / 2;
@@ -916,7 +918,7 @@ export function AIPortraitHero() {
           {/* RIGHT SIDE: Interactive Portrait and Orbiting Tech Stack Ecosystem */}
           <div 
             ref={rightContainerRef}
-            className="lg:col-span-7 w-full mt-20 lg:mt-0 h-[440px] sm:h-[650px] lg:h-[760px] relative flex items-center justify-center select-none z-20"
+            className="lg:col-span-7 w-full mt-6 lg:mt-0 h-[440px] sm:h-[650px] lg:h-[760px] relative flex items-center justify-center select-none z-20"
           >
             {/* Wrap orbiting stack elements in a layout overlay hidden on mobile viewports */}
             <div className="absolute inset-0 pointer-events-none lg:pointer-events-auto hidden lg:block">
