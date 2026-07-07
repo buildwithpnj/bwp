@@ -857,7 +857,7 @@ export function AIPortraitHero() {
             {/* Top Orbiting Card: AI Voice Agent */}
             <div 
               id="node-voiceagent"
-              className="absolute top-0 left-1/2 -translate-x-1/2 p-2.5 rounded-xl border border-border/30 bg-card/75 backdrop-blur-md text-left flex flex-col gap-1 max-w-[170px] shadow-lg shadow-cyan-500/5 hover:border-primary/30 transition-all hover:scale-[1.03] duration-300"
+              className="absolute top-[2%] left-1/2 -translate-x-1/2 p-2 rounded-xl border border-border/30 bg-card/75 backdrop-blur-md text-left flex flex-col gap-1 max-w-[150px] shadow-lg shadow-cyan-500/5 hover:border-primary/30 transition-all hover:scale-[1.03] duration-300"
             >
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -873,7 +873,7 @@ export function AIPortraitHero() {
             <EcosystemNode 
               id="node-python"
               label="Python"
-              className="top-[22%] left-[6%]"
+              className="top-[18%] left-[10%]"
               hoverLabel="Ollama • DeepSeek • Mistral • Llama • Hugging Face"
               hoveredNode={hoveredNode}
               setHoveredNode={setHoveredNode}
@@ -883,7 +883,7 @@ export function AIPortraitHero() {
             <EcosystemNode 
               id="node-fastapi"
               label="FastAPI"
-              className="top-[22%] right-[6%]"
+              className="top-[18%] right-[10%]"
               hoverLabel="REST APIs • WebSockets • GraphQL • Node.js"
               hoveredNode={hoveredNode}
               setHoveredNode={setHoveredNode}
@@ -893,7 +893,7 @@ export function AIPortraitHero() {
             <EcosystemNode 
               id="node-langchain"
               label="LangChain"
-              className="top-[38%] left-[2%]"
+              className="top-[30%] left-[4%]"
               hoverLabel="LangGraph • LlamaIndex • Agentic AI • Prompt Eng"
               hoveredNode={hoveredNode}
               setHoveredNode={setHoveredNode}
@@ -903,7 +903,7 @@ export function AIPortraitHero() {
             <EcosystemNode 
               id="node-postgresql"
               label="PostgreSQL"
-              className="top-[38%] right-[2%]"
+              className="top-[30%] right-[4%]"
               hoverLabel="Redis • MongoDB • pgvector • Supabase"
               hoveredNode={hoveredNode}
               setHoveredNode={setHoveredNode}
@@ -913,7 +913,7 @@ export function AIPortraitHero() {
             <EcosystemNode 
               id="node-claude"
               label="Claude"
-              className="top-[54%] left-[6%]"
+              className="top-[42%] left-[10%]"
               hoverLabel="TypeScript • JavaScript • Embeddings • Context Eng"
               hoveredNode={hoveredNode}
               setHoveredNode={setHoveredNode}
@@ -923,7 +923,7 @@ export function AIPortraitHero() {
             <EcosystemNode 
               id="node-gemini"
               label="Gemini"
-              className="top-[58%] left-1/2 -translate-x-1/2"
+              className="top-[45%] left-1/2 -translate-x-1/2"
               hoverLabel="Google • A2A • JSON Schema • Evaluation"
               hoveredNode={hoveredNode}
               setHoveredNode={setHoveredNode}
@@ -933,14 +933,14 @@ export function AIPortraitHero() {
             <EcosystemNode 
               id="node-openai"
               label="OpenAI"
-              className="top-[54%] right-[6%]"
+              className="top-[42%] right-[10%]"
               hoverLabel="Tool Calling • Function Calling • Streaming • OAuth"
               hoveredNode={hoveredNode}
               setHoveredNode={setHoveredNode}
             />
 
             {/* CENTER LABELS (Visual hints overlay behind the portrait) */}
-            <div className="absolute top-[38%] left-1/2 -translate-x-1/2 text-center pointer-events-none">
+            <div className="absolute top-[30%] left-1/2 -translate-x-1/2 text-center pointer-events-none">
               <span className="font-pixel text-[8px] tracking-[0.3em] text-primary/30 uppercase block">AI CORE</span>
               <span className="font-mono text-[7px] text-muted-foreground/20 uppercase block mt-1">REASONING • PLANNING • MEMORY</span>
             </div>
@@ -948,10 +948,10 @@ export function AIPortraitHero() {
             {/* Downward Vertical Orchestration Flow */}
             <div 
               id="node-flow-mcp"
-              className="absolute top-[67%] left-1/2 -translate-x-1/2 w-full max-w-[280px] flex flex-col gap-2.5 items-center font-mono text-[8px]"
+              className="absolute top-[51%] left-1/2 -translate-x-1/2 w-full max-w-[280px] flex flex-col gap-1.5 items-center font-mono text-[8px]"
             >
               {/* Vertical connecting line indicator */}
-              <div className="w-[1.2px] h-6 bg-gradient-to-b from-primary/35 to-purple-500/25 animate-pulse" />
+              <div className="w-[1.2px] h-3 bg-gradient-to-b from-primary/35 to-purple-500/25 animate-pulse" />
 
               <FlowStackItem label="MCP • A2A • RAG" desc="Agent communication context layers" />
               <FlowStackItem label="Memory • Context • Tools" desc="Persistent semantic extraction" />
@@ -1025,26 +1025,26 @@ function EcosystemNode({
    ============================================================================ */
 function FlowStackItem({ label, desc }: { label: string; desc: string }) {
   return (
-    <div className="w-full max-w-[200px] p-2 rounded-lg border border-border/25 bg-background/50 text-center flex flex-col gap-0.5 shadow">
+    <div className="w-full max-w-[190px] p-1 px-2 rounded-lg border border-border/25 bg-background/50 text-center flex flex-col gap-0.5 shadow">
       <span className="font-black text-foreground/90 uppercase tracking-tight text-[8px]">{label}</span>
-      <span className="text-[7px] text-muted-foreground/80">{desc}</span>
+      <span className="text-[6.5px] text-muted-foreground/80 leading-none">{desc}</span>
     </div>
   );
 }
 
 function FlowCardItem({ label, status, desc, version, color = 'bg-primary' }: { label: string; status: string; desc: string; version: string; color?: string }) {
   return (
-    <div className="w-full p-2.5 rounded-xl border border-border/30 bg-card/60 hover:bg-card/90 text-left flex items-start justify-between gap-3 shadow hover:border-primary/20 hover:scale-[1.01] transition-all">
-      <div className="flex flex-col gap-1 max-w-[70%]">
-        <h5 className="font-black text-foreground uppercase tracking-tight text-[9px]">{label}</h5>
-        <p className="text-[7.5px] leading-snug text-muted-foreground">{desc}</p>
+    <div className="w-full p-1.5 px-2.5 rounded-xl border border-border/30 bg-card/60 hover:bg-card/90 text-left flex items-start justify-between gap-3 shadow hover:border-primary/20 hover:scale-[1.01] transition-all">
+      <div className="flex flex-col gap-0.5 max-w-[72%]">
+        <h5 className="font-black text-foreground uppercase tracking-tight text-[8.5px]">{label}</h5>
+        <p className="text-[7px] leading-tight text-muted-foreground">{desc}</p>
       </div>
-      <div className="flex flex-col items-end gap-1.5">
+      <div className="flex flex-col items-end gap-1">
         <div className="flex items-center gap-1">
-          <span className={cn("w-1.2 h-1.2 rounded-full", color)} />
-          <span className="text-[7px] font-bold text-foreground/75 tracking-wider">{status}</span>
+          <span className={cn("w-1 h-1 rounded-full", color)} />
+          <span className="text-[6.5px] font-bold text-foreground/75 tracking-wider">{status}</span>
         </div>
-        <span className="text-[6.5px] text-muted-foreground font-bold px-1 rounded bg-background/50 border border-border/40">{version}</span>
+        <span className="text-[6px] text-muted-foreground font-bold px-0.5 rounded bg-background/50 border border-border/40">{version}</span>
       </div>
     </div>
   );
