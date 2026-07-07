@@ -186,24 +186,27 @@ export function AIPortraitHero() {
         rect = { left: r.left, top: r.top, width: r.width, height: r.height };
       }
       
-      // Scale portrait to cover the full background of the right container
-      let targetHeight = rect.height * 0.90;
+      // Scale portrait to be a little smaller (70% container height) to make it a perfect centerpiece
+      let targetHeight = rect.height * 0.70;
       let targetWidth = targetHeight * targetAspect;
       
       // Prevent horizontal overflow
-      if (targetWidth > rect.width * 0.95) {
-        targetWidth = rect.width * 0.95;
+      if (targetWidth > rect.width * 0.85) {
+        targetWidth = rect.width * 0.85;
         targetHeight = targetWidth / targetAspect;
       }
       
-      // Position center of gravity in the middle of the right container column
-      let xOffset = rect.left + (rect.width - targetWidth) / 2;
-      let yOffset = rect.top + (rect.height - targetHeight) / 2;
+      // Portrait center of gravity
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height * 0.42; // slightly elevated to leave room for bottom flow
+      
+      let xOffset = cx - targetWidth / 2;
+      let yOffset = cy - targetHeight / 2;
       
       layoutRef.current = { xOffset, yOffset, targetWidth, targetHeight };
       
-      offscreenCanvas.width = 110; // Full high-density background grid
-      offscreenCanvas.height = Math.round(110 / targetAspect);
+      offscreenCanvas.width = 95; // Crisp high-density background grid
+      offscreenCanvas.height = Math.round(95 / targetAspect);
       
       offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
       offscreenCtx.drawImage(img, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
@@ -214,6 +217,10 @@ export function AIPortraitHero() {
       const newParticles: Particle[] = [];
       const cellWidth = targetWidth / offscreenCanvas.width;
       const cellHeight = targetHeight / offscreenCanvas.height;
+      
+      // Center-relative starting coordinates
+      const gridStartX = -targetWidth / 2;
+      const gridStartY = -targetHeight / 2;
       
       for (let y = 0; y < offscreenCanvas.height; y++) {
         for (let x = 0; x < offscreenCanvas.width; x++) {
@@ -238,14 +245,15 @@ export function AIPortraitHero() {
               pSize *= (0.75 + fade * 0.25);
             }
             
-            const px = x * cellWidth + xOffset;
-            const py = y * cellHeight + yOffset;
+            // Store ox and oy as relative offsets from portrait center (cx, cy)
+            const prx = x * cellWidth + gridStartX;
+            const pry = y * cellHeight + gridStartY;
             
             newParticles.push({
-              x: px,
-              y: py,
-              ox: px,
-              oy: py,
+              x: cx + prx,
+              y: cy + pry,
+              ox: prx, // relative offset
+              oy: pry, // relative offset
               color: { r, g, b },
               targetColor: { r, g, b },
               colorTransition: 1.0,
@@ -269,8 +277,8 @@ export function AIPortraitHero() {
         const oldP = particlesRef.current;
         const count = Math.min(oldP.length, newParticles.length);
         for (let i = 0; i < count; i++) {
-          oldP[i].ox = newParticles[i].ox;
-          oldP[i].oy = newParticles[i].oy;
+          oldP[i].ox = newParticles[i].ox; // Store new relative offset
+          oldP[i].oy = newParticles[i].oy; // Store new relative offset
           oldP[i].targetColor = newParticles[i].color;
           oldP[i].originalAlpha = newParticles[i].originalAlpha;
           oldP[i].originalSize = newParticles[i].originalSize;
@@ -332,6 +340,16 @@ export function AIPortraitHero() {
     // Animation render loop
     const render = () => {
       ctx.clearRect(0, 0, width, height);
+
+      // Calculate dynamic center of gravity for the right container column on every frame
+      const rBounds = rightContainerRef.current?.getBoundingClientRect();
+      const cx = rBounds ? (rBounds.left + rBounds.width / 2) : (width * 0.58);
+      const cy = rBounds ? (rBounds.top + rBounds.height * 0.42) : (height * 0.45);
+      
+      if (layoutRef.current.targetWidth > 0) {
+        layoutRef.current.xOffset = cx - layoutRef.current.targetWidth / 2;
+        layoutRef.current.yOffset = cy - layoutRef.current.targetHeight / 2;
+      }
 
       // Parallax update
       mouseRef.current.rx += (mouseRef.current.targetRx - mouseRef.current.rx) * 0.08;
@@ -445,8 +463,9 @@ export function AIPortraitHero() {
           if (p && !p.detached) {
             let canDetach = true;
             if (layoutRef.current.targetHeight > 0) {
-              const bottomY = layoutRef.current.yOffset + layoutRef.current.targetHeight;
-              const distToBottom = bottomY - p.oy;
+              const baseOy = cy + p.oy;
+              const bottomY = cy + layoutRef.current.targetHeight / 2;
+              const distToBottom = bottomY - baseOy;
               const stability = Math.max(0.0, Math.min(1.0, distToBottom / (layoutRef.current.targetHeight * 0.40)));
               if (stability < 0.15 || Math.random() > stability) {
                 canDetach = false;
@@ -468,30 +487,33 @@ export function AIPortraitHero() {
           p.color.b += (p.targetColor.b - p.color.b) * p.colorTransition;
         }
         
+        const baseOx = cx + p.ox;
+        const baseOy = cy + p.oy;
+        
         let stabilityFactor = 1.0;
         if (layoutRef.current.targetHeight > 0) {
-          const bottomY = layoutRef.current.yOffset + layoutRef.current.targetHeight;
-          const distToBottom = bottomY - p.oy;
+          const bottomY = cy + layoutRef.current.targetHeight / 2;
+          const distToBottom = bottomY - baseOy;
           stabilityFactor = Math.max(0.0, Math.min(1.0, distToBottom / (layoutRef.current.targetHeight * 0.40)));
           stabilityFactor = Math.pow(stabilityFactor, 2);
         }
         
-        let targetX = p.ox;
-        let targetY = p.oy;
+        let targetX = baseOx;
+        let targetY = baseOy;
         
         if (!isReducedMotion) {
-          const dx = p.ox - width * 0.5;
-          const dy = p.oy - height * 0.5;
+          const dx = baseOx - cx;
+          const dy = baseOy - cy;
           const rx = dx * Math.cos(breathRotate) - dy * Math.sin(breathRotate);
           const ry = dx * Math.sin(breathRotate) + dy * Math.cos(breathRotate);
           
-          const breatheTargetX = rx * breathScale + width * 0.5;
-          const breatheTargetY = ry * breathScale + height * 0.5;
+          const breatheTargetX = rx * breathScale + cx;
+          const breatheTargetY = ry * breathScale + cy;
           const parallaxOffsetX = mouseRef.current.rx * 8;
           const parallaxOffsetY = mouseRef.current.ry * 8;
           
-          targetX = p.ox + (breatheTargetX - p.ox + parallaxOffsetX) * stabilityFactor;
-          targetY = p.oy + (breatheTargetY - p.oy + parallaxOffsetY) * stabilityFactor;
+          targetX = baseOx + (breatheTargetX - baseOx + parallaxOffsetX) * stabilityFactor;
+          targetY = baseOy + (breatheTargetY - baseOy + parallaxOffsetY) * stabilityFactor;
         }
 
         if (mouseRef.current.inside && !isReducedMotion) {
