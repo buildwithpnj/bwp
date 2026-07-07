@@ -168,8 +168,9 @@ export function AIPortraitHero() {
     
     let animationFrameId: number;
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-    let width = window.innerWidth;
-    let height = window.innerHeight;
+    const container = containerRef.current;
+    let width = container ? container.clientWidth : window.innerWidth;
+    let height = container ? container.clientHeight : window.innerHeight;
     
     canvas.width = width * dpr;
     canvas.height = height * dpr;
@@ -205,8 +206,9 @@ export function AIPortraitHero() {
 
     // Resize handler
     const handleResize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
+      const container = containerRef.current;
+      width = container ? container.clientWidth : window.innerWidth;
+      height = container ? container.clientHeight : window.innerHeight;
       canvas.width = width * dpr;
       canvas.height = height * dpr;
       canvas.style.width = `${width}px`;
