@@ -368,14 +368,15 @@ export function AIPortraitHero() {
       const gY = height * 0.5 + Math.cos(time * 0.5) * height * 0.2;
       const glowRad = Math.min(width, height) * 0.8;
       
+      const bgHue = (Date.now() * 0.012) % 360;
       const ambientGlow = ctx.createRadialGradient(gX, gY, 10, gX, gY, glowRad);
       if (isDark) {
-        ambientGlow.addColorStop(0, 'rgba(59, 130, 246, 0.06)');
-        ambientGlow.addColorStop(0.3, 'rgba(124, 58, 237, 0.025)');
-        ambientGlow.addColorStop(1, 'rgba(5, 8, 22, 1)');
+        ambientGlow.addColorStop(0, `hsla(${bgHue}, 70%, 50%, 0.05)`);
+        ambientGlow.addColorStop(0.35, `hsla(${(bgHue + 120) % 360}, 65%, 50%, 0.02)`);
+        ambientGlow.addColorStop(1, 'rgba(3, 4, 8, 1)'); // Deep black/graphite core
       } else {
-        ambientGlow.addColorStop(0, 'rgba(59, 130, 246, 0.03)');
-        ambientGlow.addColorStop(0.5, 'rgba(6, 182, 212, 0.015)');
+        ambientGlow.addColorStop(0, `hsla(${bgHue}, 70%, 50%, 0.03)`);
+        ambientGlow.addColorStop(0.5, `hsla(${(bgHue + 180) % 360}, 60%, 50%, 0.015)`);
         ambientGlow.addColorStop(1, 'rgba(255, 255, 255, 1)');
       }
       ctx.fillStyle = ambientGlow;
@@ -676,8 +677,9 @@ export function AIPortraitHero() {
         ctx.save();
         ctx.globalCompositeOperation = resolvedTheme === 'light' ? 'source-over' : 'screen';
         
-        const rColor = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.35)' : 'rgba(6, 182, 212, 0.55)';
-        const textColor = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.65)' : 'rgba(6, 182, 212, 0.85)';
+        const hudHue = (Date.now() * 0.018) % 360; // Smooth energetic color cycle
+        const rColor = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.35)' : `hsla(${hudHue}, 85%, 60%, 0.65)`;
+        const textColor = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.65)' : `hsla(${hudHue}, 85%, 70%, 0.95)`;
         
         ctx.strokeStyle = rColor;
         ctx.lineWidth = 0.8;
@@ -733,7 +735,8 @@ export function AIPortraitHero() {
           const targetY = rect.top - canvasRect.top + rect.height / 2;
 
           // A. Draw solid neural connection link
-          ctx.strokeStyle = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(6, 182, 212, 0.25)';
+          const linkHue = (Date.now() * 0.01 + (id.charCodeAt(5) * 12)) % 360; // Offset color phases per connection line for rainbow current effect!
+          ctx.strokeStyle = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.15)' : `hsla(${linkHue}, 80%, 55%, 0.22)`;
           ctx.lineWidth = 1.2;
           ctx.beginPath();
           ctx.moveTo(pxCenter, pyCenter);
@@ -746,10 +749,10 @@ export function AIPortraitHero() {
           const pulseX = pxCenter + (targetX - pxCenter) * pulseProgress;
           const pulseY = pyCenter + (targetY - pyCenter) * pulseProgress;
 
-          ctx.fillStyle = resolvedTheme === 'light' ? '#3B82F6' : '#06B6D4';
+          ctx.fillStyle = resolvedTheme === 'light' ? '#3B82F6' : `hsla(${linkHue}, 95%, 60%, 0.95)`;
           if (resolvedTheme !== 'light') {
             ctx.shadowBlur = 8;
-            ctx.shadowColor = '#06B6D4';
+            ctx.shadowColor = `hsla(${linkHue}, 95%, 60%, 0.85)`;
           }
           ctx.beginPath();
           ctx.arc(pulseX, pulseY, 2.5, 0, Math.PI * 2);
@@ -769,7 +772,8 @@ export function AIPortraitHero() {
           const faX = faRect.left - canvasRect.left + faRect.width / 2;
           const faY = faRect.top - canvasRect.top + faRect.height / 2;
 
-          ctx.strokeStyle = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(6, 182, 212, 0.2)';
+          const interconnectHue = (Date.now() * 0.01 + 45) % 360;
+          ctx.strokeStyle = resolvedTheme === 'light' ? 'rgba(59, 130, 246, 0.12)' : `hsla(${interconnectHue}, 80%, 55%, 0.18)`;
           ctx.lineWidth = 1.0;
           ctx.beginPath();
           ctx.moveTo(pyX, pyY);
