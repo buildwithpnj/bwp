@@ -912,125 +912,128 @@ export function AIPortraitHero() {
           {/* RIGHT SIDE: Interactive Portrait and Orbiting Tech Stack Ecosystem */}
           <div 
             ref={rightContainerRef}
-            className="hidden lg:flex lg:col-span-7 w-full h-[760px] relative items-center justify-center select-none z-20"
+            className="lg:col-span-7 w-full h-[580px] sm:h-[650px] lg:h-[760px] relative flex items-center justify-center select-none z-20"
           >
-            {/* Top Orbiting Card: AI Voice Agent */}
-            <div 
-              id="node-voiceagent"
-              className="absolute top-[2%] left-1/2 -translate-x-1/2 p-2 rounded-xl border border-border/30 bg-card/75 backdrop-blur-md text-left flex flex-col gap-1 max-w-[150px] shadow-lg shadow-cyan-500/5 hover:border-primary/30 transition-all hover:scale-[1.03] duration-300"
-            >
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-pixel text-[8px] font-bold text-emerald-400">● LIVE</span>
+            {/* Wrap orbiting stack elements in a layout overlay hidden on mobile viewports */}
+            <div className="absolute inset-0 pointer-events-none lg:pointer-events-auto hidden lg:block">
+              {/* Top Orbiting Card: AI Voice Agent */}
+              <div 
+                id="node-voiceagent"
+                className="absolute top-[2%] left-1/2 -translate-x-1/2 p-2 rounded-xl border border-border/30 bg-card/75 backdrop-blur-md text-left flex flex-col gap-1 max-w-[150px] shadow-lg shadow-cyan-500/5 hover:border-primary/30 transition-all hover:scale-[1.03] duration-300"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="font-pixel text-[8px] font-bold text-emerald-400">● LIVE</span>
+                </div>
+                <h4 className="font-mono text-[9px] font-black text-foreground uppercase">AI Voice Agent</h4>
+                <p className="text-[7.5px] leading-snug text-muted-foreground">Real-time conversational voice.</p>
               </div>
-              <h4 className="font-mono text-[9px] font-black text-foreground uppercase">AI Voice Agent</h4>
-              <p className="text-[7.5px] leading-snug text-muted-foreground">Real-time conversational voice.</p>
-            </div>
 
-            {/* Orbiting Category Node Badges */}
-            
-            {/* Python Badge */}
-            <EcosystemNode 
-              id="node-python"
-              label="Python"
-              className="top-[18%] left-[10%]"
-              hoverLabel="Ollama • DeepSeek • Mistral • Llama • Hugging Face"
-              hoveredNode={hoveredNode}
-              setHoveredNode={setHoveredNode}
-            />
-
-            {/* FastAPI Badge */}
-            <EcosystemNode 
-              id="node-fastapi"
-              label="FastAPI"
-              className="top-[18%] right-[10%]"
-              hoverLabel="REST APIs • WebSockets • GraphQL • Node.js"
-              hoveredNode={hoveredNode}
-              setHoveredNode={setHoveredNode}
-            />
-
-            {/* LangChain Badge */}
-            <EcosystemNode 
-              id="node-langchain"
-              label="LangChain"
-              className="top-[30%] left-[4%]"
-              hoverLabel="LangGraph • LlamaIndex • Agentic AI • Prompt Eng"
-              hoveredNode={hoveredNode}
-              setHoveredNode={setHoveredNode}
-            />
-
-            {/* PostgreSQL Badge */}
-            <EcosystemNode 
-              id="node-postgresql"
-              label="PostgreSQL"
-              className="top-[30%] right-[4%]"
-              hoverLabel="Redis • MongoDB • pgvector • Supabase"
-              hoveredNode={hoveredNode}
-              setHoveredNode={setHoveredNode}
-            />
-
-            {/* Claude Badge */}
-            <EcosystemNode 
-              id="node-claude"
-              label="Claude"
-              className="top-[42%] left-[10%]"
-              hoverLabel="TypeScript • JavaScript • Embeddings • Context Eng"
-              hoveredNode={hoveredNode}
-              setHoveredNode={setHoveredNode}
-            />
-
-            {/* Gemini Badge */}
-            <EcosystemNode 
-              id="node-gemini"
-              label="Gemini"
-              className="top-[45%] left-1/2 -translate-x-1/2"
-              hoverLabel="Google • A2A • JSON Schema • Evaluation"
-              hoveredNode={hoveredNode}
-              setHoveredNode={setHoveredNode}
-            />
-
-            {/* OpenAI Badge */}
-            <EcosystemNode 
-              id="node-openai"
-              label="OpenAI"
-              className="top-[42%] right-[10%]"
-              hoverLabel="Tool Calling • Function Calling • Streaming • OAuth"
-              hoveredNode={hoveredNode}
-              setHoveredNode={setHoveredNode}
-            />
-
-            {/* CENTER LABELS (Visual hints overlay behind the portrait) */}
-            <div className="absolute top-[30%] left-1/2 -translate-x-1/2 text-center pointer-events-none">
-              <span className="font-pixel text-[8px] tracking-[0.3em] text-primary/30 uppercase block">AI CORE</span>
-              <span className="font-mono text-[7px] text-muted-foreground/20 uppercase block mt-1">REASONING • PLANNING • MEMORY</span>
-            </div>
-
-            {/* Downward Vertical Orchestration Flow */}
-            <div 
-              id="node-flow-mcp"
-              className="absolute top-[51%] left-1/2 -translate-x-1/2 w-full max-w-[280px] flex flex-col gap-1.5 items-center font-mono text-[8px]"
-            >
-              {/* Vertical connecting line indicator */}
-              <div className="w-[1.2px] h-3 bg-gradient-to-b from-primary/35 to-purple-500/25 animate-pulse" />
-
-              <FlowStackItem label="MCP • A2A • RAG" desc="Agent communication context layers" />
-              <FlowStackItem label="Memory • Context • Tools" desc="Persistent semantic extraction" />
-              <FlowStackItem label="Voice AI • Automation" desc="Trigger logic routing pipelines" />
+              {/* Orbiting Category Node Badges */}
               
-              {/* Product Stack Cards */}
-              <FlowCardItem label="AI Automation Platform" status="ACTIVE" desc="Workflow Trigger routing pipes." version="v1.0" />
-              <FlowCardItem label="Customer Support AI" status="ONLINE" desc="Multi-agent CRM ticket resolver." version="v1.8" />
-              <FlowCardItem label="Warborn OS" status="BUILDING" desc="Agentic desktop workspace." version="v0.2" color="bg-amber-500" />
-              <FlowCardItem label="AI Growth Agent" status="DEPLOYED" desc="Autonomous lead outreach engine." version="v2.1" />
-            </div>
+              {/* Python Badge */}
+              <EcosystemNode 
+                id="node-python"
+                label="Python"
+                className="top-[18%] left-[10%]"
+                hoverLabel="Ollama • DeepSeek • Mistral • Llama • Hugging Face"
+                hoveredNode={hoveredNode}
+                setHoveredNode={setHoveredNode}
+              />
 
-            {/* Hover secondary tech disclosures panel */}
-            {hoveredNode && (
-              <div className="absolute bottom-[2px] left-4 right-4 p-2.5 rounded-xl border border-primary/20 bg-background/90 backdrop-blur-md flex flex-col gap-1 text-center font-mono text-[8.5px] z-30 shadow-lg animate-in">
-                <span className="text-[7.5px] text-primary/80 uppercase font-black tracking-widest">{"// COMPILER PIPELINE STACK"}</span>
-                <span className="text-foreground font-black tracking-wide uppercase">{hoveredNode}</span>
+              {/* FastAPI Badge */}
+              <EcosystemNode 
+                id="node-fastapi"
+                label="FastAPI"
+                className="top-[18%] right-[10%]"
+                hoverLabel="REST APIs • WebSockets • GraphQL • Node.js"
+                hoveredNode={hoveredNode}
+                setHoveredNode={setHoveredNode}
+              />
+
+              {/* LangChain Badge */}
+              <EcosystemNode 
+                id="node-langchain"
+                label="LangChain"
+                className="top-[30%] left-[4%]"
+                hoverLabel="LangGraph • LlamaIndex • Agentic AI • Prompt Eng"
+                hoveredNode={hoveredNode}
+                setHoveredNode={setHoveredNode}
+              />
+
+              {/* PostgreSQL Badge */}
+              <EcosystemNode 
+                id="node-postgresql"
+                label="PostgreSQL"
+                className="top-[30%] right-[4%]"
+                hoverLabel="Redis • MongoDB • pgvector • Supabase"
+                hoveredNode={hoveredNode}
+                setHoveredNode={setHoveredNode}
+              />
+
+              {/* Claude Badge */}
+              <EcosystemNode 
+                id="node-claude"
+                label="Claude"
+                className="top-[42%] left-[10%]"
+                hoverLabel="TypeScript • JavaScript • Embeddings • Context Eng"
+                hoveredNode={hoveredNode}
+                setHoveredNode={setHoveredNode}
+              />
+
+              {/* Gemini Badge */}
+              <EcosystemNode 
+                id="node-gemini"
+                label="Gemini"
+                className="top-[45%] left-1/2 -translate-x-1/2"
+                hoverLabel="Google • A2A • JSON Schema • Evaluation"
+                hoveredNode={hoveredNode}
+                setHoveredNode={setHoveredNode}
+              />
+
+              {/* OpenAI Badge */}
+              <EcosystemNode 
+                id="node-openai"
+                label="OpenAI"
+                className="top-[42%] right-[10%]"
+                hoverLabel="Tool Calling • Function Calling • Streaming • OAuth"
+                hoveredNode={hoveredNode}
+                setHoveredNode={setHoveredNode}
+              />
+
+              {/* CENTER LABELS (Visual hints overlay behind the portrait) */}
+              <div className="absolute top-[30%] left-1/2 -translate-x-1/2 text-center pointer-events-none">
+                <span className="font-pixel text-[8px] tracking-[0.3em] text-primary/30 uppercase block">AI CORE</span>
+                <span className="font-mono text-[7px] text-muted-foreground/20 uppercase block mt-1">REASONING • PLANNING • MEMORY</span>
               </div>
-            )}
+
+              {/* Downward Vertical Orchestration Flow */}
+              <div 
+                id="node-flow-mcp"
+                className="absolute top-[51%] left-1/2 -translate-x-1/2 w-full max-w-[280px] flex flex-col gap-1.5 items-center font-mono text-[8px]"
+              >
+                {/* Vertical connecting line indicator */}
+                <div className="w-[1.2px] h-3 bg-gradient-to-b from-primary/35 to-purple-500/25 animate-pulse" />
+
+                <FlowStackItem label="MCP • A2A • RAG" desc="Agent communication context layers" />
+                <FlowStackItem label="Memory • Context • Tools" desc="Persistent semantic extraction" />
+                <FlowStackItem label="Voice AI • Automation" desc="Trigger logic routing pipelines" />
+                
+                {/* Product Stack Cards */}
+                <FlowCardItem label="AI Automation Platform" status="ACTIVE" desc="Workflow Trigger routing pipes." version="v1.0" />
+                <FlowCardItem label="Customer Support AI" status="ONLINE" desc="Multi-agent CRM ticket resolver." version="v1.8" />
+                <FlowCardItem label="Warborn OS" status="BUILDING" desc="Agentic desktop workspace." version="v0.2" color="bg-amber-500" />
+                <FlowCardItem label="AI Growth Agent" status="DEPLOYED" desc="Autonomous lead outreach engine." version="v2.1" />
+              </div>
+
+              {/* Hover secondary tech disclosures panel */}
+              {hoveredNode && (
+                <div className="absolute bottom-[2px] left-4 right-4 p-2.5 rounded-xl border border-primary/20 bg-background/90 backdrop-blur-md flex flex-col gap-1 text-center font-mono text-[8.5px] z-30 shadow-lg animate-in">
+                  <span className="text-[7.5px] text-primary/80 uppercase font-black tracking-widest">{"// COMPILER PIPELINE STACK"}</span>
+                  <span className="text-foreground font-black tracking-wide uppercase">{hoveredNode}</span>
+                </div>
+              )}
+            </div>
 
           </div>
 
