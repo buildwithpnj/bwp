@@ -25,6 +25,18 @@ export function PublicHeader() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Lock body scroll when mobile menu is open
+  React.useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md transition-all duration-200">
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -123,19 +135,24 @@ export function PublicHeader() {
           </nav>
 
           <div className="flex flex-col gap-4">
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setTimeout(() => {
-                  const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true });
-                  window.dispatchEvent(event);
-                }, 200);
-              }}
-              className="flex items-center justify-center gap-2 w-full h-12 rounded-xl border border-border bg-secondary text-muted-foreground"
-            >
-              <Command className="h-4 w-4" />
-              <span>Open Command Palette</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setTimeout(() => {
+                    const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true });
+                    window.dispatchEvent(event);
+                  }, 200);
+                }}
+                className="flex flex-1 items-center justify-center gap-2 h-12 rounded-xl border border-border bg-secondary text-muted-foreground text-sm font-medium"
+              >
+                <Command className="h-4 w-4" />
+                <span>Search Console</span>
+              </button>
+              <div className="shrink-0 h-12 w-12 rounded-xl border border-border bg-secondary flex items-center justify-center">
+                <ThemeToggle />
+              </div>
+            </div>
             <div className="flex justify-center gap-6 py-4">
               <a href="https://github.com/buildwithpnj" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">GitHub</a>
               <a href="https://twitter.com/buildwithpnj" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">Twitter</a>

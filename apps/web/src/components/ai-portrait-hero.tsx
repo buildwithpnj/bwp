@@ -1071,7 +1071,7 @@ function EcosystemNode({
       onMouseEnter={() => setHoveredNode(`${label}: ${hoverLabel}`)}
       onMouseLeave={() => setHoveredNode(null)}
       className={cn(
-        "absolute p-2 px-3 rounded-lg border border-border/40 bg-card/75 backdrop-blur-sm font-mono text-[8.5px] font-black text-foreground/80 hover:text-primary hover:border-primary/30 transition-all hover:scale-[1.06] duration-250 cursor-pointer shadow shadow-primary/2 shadow-lg",
+        "absolute p-1.5 px-2 sm:p-2 sm:px-3 rounded-lg border border-border/40 bg-card/75 backdrop-blur-sm font-mono text-[7.5px] sm:text-[8.5px] font-black text-foreground/80 hover:text-primary hover:border-primary/30 transition-all hover:scale-[1.06] duration-250 cursor-pointer shadow shadow-primary/2 shadow-lg select-none",
         className
       )}
     >
@@ -1085,26 +1085,26 @@ function EcosystemNode({
    ============================================================================ */
 function FlowStackItem({ label, desc }: { label: string; desc: string }) {
   return (
-    <div className="w-full max-w-[190px] p-1 px-2 rounded-lg border border-border/25 bg-background/50 text-center flex flex-col gap-0.5 shadow">
-      <span className="font-black text-foreground/90 uppercase tracking-tight text-[8px]">{label}</span>
-      <span className="text-[6.5px] text-muted-foreground/80 leading-none">{desc}</span>
+    <div className="w-full max-w-[155px] sm:max-w-[190px] p-1 px-1.5 sm:px-2 rounded-lg border border-border/25 bg-background/50 text-center flex flex-col gap-0.5 shadow">
+      <span className="font-black text-foreground/90 uppercase tracking-tight text-[7px] sm:text-[8px]">{label}</span>
+      <span className="text-[5.5px] sm:text-[6.5px] text-muted-foreground/80 leading-none">{desc}</span>
     </div>
   );
 }
 
 function FlowCardItem({ label, status, desc, version, color = 'bg-primary' }: { label: string; status: string; desc: string; version: string; color?: string }) {
   return (
-    <div className="w-full p-1.5 px-2.5 rounded-xl border border-border/30 bg-card/60 hover:bg-card/90 text-left flex items-start justify-between gap-3 shadow hover:border-primary/20 hover:scale-[1.01] transition-all">
+    <div className="w-full p-1 sm:p-1.5 px-2 sm:px-2.5 rounded-xl border border-border/30 bg-card/60 hover:bg-card/90 text-left flex items-start justify-between gap-2 sm:gap-3 shadow hover:border-primary/20 hover:scale-[1.01] transition-all">
       <div className="flex flex-col gap-0.5 max-w-[72%]">
-        <h5 className="font-black text-foreground uppercase tracking-tight text-[8.5px]">{label}</h5>
-        <p className="text-[7px] leading-tight text-muted-foreground">{desc}</p>
+        <h5 className="font-black text-foreground uppercase tracking-tight text-[7.5px] sm:text-[8.5px]">{label}</h5>
+        <p className="text-[6.5px] sm:text-[7px] leading-tight text-muted-foreground">{desc}</p>
       </div>
-      <div className="flex flex-col items-end gap-1">
+      <div className="flex flex-col items-end gap-1 shrink-0">
         <div className="flex items-center gap-1">
           <span className={cn("w-1 h-1 rounded-full", color)} />
-          <span className="text-[6.5px] font-bold text-foreground/75 tracking-wider">{status}</span>
+          <span className="text-[6px] sm:text-[6.5px] font-bold text-foreground/75 tracking-wider">{status}</span>
         </div>
-        <span className="text-[6px] text-muted-foreground font-bold px-0.5 rounded bg-background/50 border border-border/40">{version}</span>
+        <span className="text-[5.5px] sm:text-[6px] text-muted-foreground font-bold px-0.5 rounded bg-background/50 border border-border/40">{version}</span>
       </div>
     </div>
   );
