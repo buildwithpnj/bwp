@@ -29,6 +29,21 @@ export function Terminal({ title = 'warborn_telemetry.log', lines, className, sh
     setMounted(true);
   }, []);
 
+  const [hue, setHue] = useState(0);
+
+  // Sync color cycling with the hero section's time loop
+  useEffect(() => {
+    let animId: number;
+    const updateHue = () => {
+      // Fast gesture color cycling synced with linkHue
+      const currentHue = (Date.now() * 0.015) % 360; 
+      setHue(currentHue);
+      animId = requestAnimationFrame(updateHue);
+    };
+    animId = requestAnimationFrame(updateHue);
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
   // Initialize history with initial lines
   useEffect(() => {
     if (lines && lines.length > 0 && history.length === 0) {
@@ -182,10 +197,6 @@ export function Terminal({ title = 'warborn_telemetry.log', lines, className, sh
   const isDarkTerminal = !mounted || resolvedTheme === 'light';
 
   // Config mapping
-  const termBorder = isDarkTerminal 
-    ? 'border-[#1e2030]/80 shadow-[0_0_20px_rgba(6,182,212,0.18)]' 
-    : 'border-white/10 shadow-[0_0_25px_rgba(255,255,255,0.08)]';
-    
   const termHeader = isDarkTerminal 
     ? 'bg-[#030406]/85 border-[#1e2030]/50 text-[#8e99b0]' 
     : 'bg-[#f4f5f8] border-[#e4e6eb] text-[#4c566a]';
@@ -198,10 +209,20 @@ export function Terminal({ title = 'warborn_telemetry.log', lines, className, sh
   const promptInput = isDarkTerminal ? 'text-white' : 'text-[#090b10]';
   const cursorColor = isDarkTerminal ? 'bg-[#06b6d4]' : 'bg-[#0891b2]';
 
+  // Dynamic synchronized glow styles
+  const glowIntensity = isDarkTerminal ? 0.38 : 0.30;
+  const borderIntensity = isDarkTerminal ? 0.48 : 0.38;
+  const shadowGlow = `0 0 25px hsla(${hue}, 85%, 55%, ${glowIntensity})`;
+  const borderColor = `hsla(${hue}, 85%, 55%, ${borderIntensity})`;
+
   return (
     <div 
       onClick={handleTerminalClick}
-      className={cn("w-full rounded-2xl border transition-all duration-300 overflow-hidden font-mono text-[10.5px] text-left cursor-text", termBorder, className)}
+      style={{
+        boxShadow: shadowGlow,
+        borderColor: borderColor
+      }}
+      className={cn("w-full rounded-2xl border transition-all duration-300 overflow-hidden font-mono text-[10.5px] text-left cursor-text", className)}
     >
       {/* Terminal Window Header Bar */}
       <div className={cn("flex items-center justify-between px-4 py-2.5 border-b select-none", termHeader)}>
