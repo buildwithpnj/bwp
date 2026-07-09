@@ -10,6 +10,114 @@ interface ProjectsListProps {
   initialProjects: Project[];
 }
 
+function TerminalThumbnail({ index }: { index: number }) {
+  const [tick, setTick] = React.useState(0);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setTick((t) => (t + 1) % 8);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const [telemetry, setTelemetry] = React.useState({ cpu: 82, mem: 61, agt: 94 });
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setTelemetry({
+        cpu: Math.floor(Math.random() * 15 + 75),
+        mem: Math.floor(Math.random() * 5 + 58),
+        agt: Math.floor(Math.random() * 4 + 92)
+      });
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const type = index % 3;
+
+  if (type === 0) {
+    return (
+      <div className="w-full h-full p-4 font-mono text-[9px] leading-tight text-primary flex flex-col justify-start gap-1 select-none text-left">
+        <div>{`:> Parsing markdown...`}</div>
+        <div>{`██████████████ 100%`}</div>
+        {tick > 1 && (
+          <>
+            <div>{`> Building routes...`}</div>
+            <div>{tick > 3 ? `██████████████ 100%` : `███████████ 78%`}</div>
+          </>
+        )}
+        {tick > 4 && (
+          <>
+            <div>{`> Optimizing images...`}</div>
+            <div>{`██████████████ 100%`}</div>
+          </>
+        )}
+        {tick > 5 && (
+          <div className="text-emerald-400 mt-auto flex items-center gap-1">
+            <span>{`> Static pages generated.`}</span>
+            <span className="font-bold">{`SYSTEM READY ●`}</span>
+          </div>
+        )}
+      </div>
+    );
+  } else if (type === 1) {
+    const frames = [
+      "□□□□□□□□□□□□",
+      "■■□□□□□□□□□□",
+      "■■■■□□□□□□□□",
+      "■■■■■■□□□□□□",
+      "■■■■■■■■□□□□",
+      "■■■■■■■■■■□□",
+      "■■■■■■■■■■■■",
+      "SYSTEM READY"
+    ];
+    const isReady = tick === 7;
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center font-mono text-[10px] text-primary select-none gap-2">
+        <div className={cn("tracking-widest font-bold", isReady ? "text-emerald-400 font-pixel" : "text-primary")}>
+          {frames[tick]}
+        </div>
+        {!isReady && <div className="text-[8px] uppercase tracking-wider text-muted-foreground">Loading Module...</div>}
+      </div>
+    );
+  } else {
+    const cpuBar = "█".repeat(Math.round(telemetry.cpu / 10)) + "░".repeat(10 - Math.round(telemetry.cpu / 10));
+    const memBar = "█".repeat(Math.round(telemetry.mem / 10)) + "░".repeat(10 - Math.round(telemetry.mem / 10));
+    const agtBar = "█".repeat(Math.round(telemetry.agt / 10)) + "░".repeat(10 - Math.round(telemetry.agt / 10));
+    return (
+      <div className="w-full h-full p-4 font-mono text-[9px] leading-relaxed text-primary flex flex-col justify-between select-none text-left">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex justify-between items-center text-[8px]">
+            <span>CPU</span>
+            <span className="font-bold text-foreground">{telemetry.cpu}%</span>
+          </div>
+          <div className="text-[8px] text-primary/70">{cpuBar}</div>
+        </div>
+
+        <div className="flex flex-col gap-0.5">
+          <div className="flex justify-between items-center text-[8px]">
+            <span>Memory</span>
+            <span className="font-bold text-foreground">{telemetry.mem}%</span>
+          </div>
+          <div className="text-[8px] text-primary/70">{memBar}</div>
+        </div>
+
+        <div className="flex flex-col gap-0.5">
+          <div className="flex justify-between items-center text-[8px]">
+            <span>Agents</span>
+            <span className="font-bold text-foreground">{telemetry.agt}%</span>
+          </div>
+          <div className="text-[8px] text-primary/70">{agtBar}</div>
+        </div>
+
+        <div className="flex justify-between items-center text-emerald-400 border-t border-border/30 pt-1 mt-1 text-[8px] font-bold">
+          <span>STATUS</span>
+          <span className="flex items-center gap-1">ONLINE <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" /></span>
+        </div>
+      </div>
+    );
+  }
+}
+
 export function ProjectsList({ initialProjects }: ProjectsListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -117,15 +225,15 @@ export function ProjectsList({ initialProjects }: ProjectsListProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
+          {filteredProjects.map((project, index) => (
             <Link
               key={project.slug}
               href={`/projects/${project.slug}`}
               className="group p-6 rounded-2xl border border-border bg-card flex flex-col gap-4 card-glow-hover"
             >
               <div className="aspect-video w-full rounded-xl bg-background flex items-center justify-center relative overflow-hidden border border-border">
-                <div className="absolute inset-0 grid-dots opacity-40" />
-                <Cpu className="h-10 w-10 text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-300" />
+                <div className="absolute inset-0 grid-dots opacity-20" />
+                <TerminalThumbnail index={index} />
                 <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary capitalize">
                   {project.category}
                 </div>
