@@ -17,6 +17,7 @@ export async function GET() {
         const ext = path.extname(file).toLowerCase();
         return ['.jpg', '.jpeg', '.png', '.webp', '.avif'].includes(ext);
       })
+      .sort((a, b) => a.localeCompare(b))
       .map(file => `/assets/images/${file}`);
       
     return NextResponse.json({ portraits });

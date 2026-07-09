@@ -4,10 +4,7 @@ import {
   ArrowRight, 
   Zap, 
   FlaskConical, 
-  Radio, 
   Cpu, 
-  Activity, 
-  Shield, 
   Layers, 
   Terminal as TerminalIcon 
 } from 'lucide-react';
@@ -15,6 +12,7 @@ import { getBlogPosts, getProjects, getExperiments } from '@/lib/content';
 import { NewsletterForm } from '@/components/newsletter-form';
 import { Terminal } from '@/components/ui/terminal';
 import { AIPortraitHero } from '@/components/ai-portrait-hero';
+import { AnimatedMissions } from '@/components/animated-missions';
 
 export default async function PublicHomePage() {
   const projects = getProjects().slice(0, 3);
@@ -46,54 +44,7 @@ export default async function PublicHomePage() {
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 flex flex-col gap-28 md:gap-36 text-left">
         
         {/* 2. MISSION SECTION */}
-        <section className="flex flex-col gap-10">
-          <div className="flex flex-col gap-3 max-w-3xl">
-            <span className="font-mono text-[10px] tracking-[0.25em] text-primary/80 uppercase">
-              {"// OPERATIONAL MISSION"}
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight">
-              Architecting production-ready AI products, autonomous agent systems, and context-aware workspaces.
-            </h2>
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              We bypass theoretical delay to ship working software. Explore verified system architectures, database migration post-mortems, and active product blueprints.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card 1 */}
-            <div className="p-6 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-md flex flex-col gap-4 hover:border-primary/25 hover:shadow-[0_8px_30px_rgba(59,130,246,0.02)] transition-all duration-300 group">
-              <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center border border-primary/10">
-                <Zap className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="text-base font-bold text-foreground">Production-First Deployment</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Engineering working software directly to production. Our pipelines favor operational execution over static engineering prototypes.
-              </p>
-            </div>
-
-            {/* Card 2 */}
-            <div className="p-6 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-md flex flex-col gap-4 hover:border-primary/25 hover:shadow-[0_8px_30px_rgba(59,130,246,0.02)] transition-all duration-300 group">
-              <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center border border-primary/10">
-                <Cpu className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="text-base font-bold text-foreground">Context-Aware Core</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Constructing stateful, vector-driven pipelines and memory retention models built for daily operational workflows.
-              </p>
-            </div>
-
-            {/* Card 3 */}
-            <div className="p-6 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-md flex flex-col gap-4 hover:border-primary/25 hover:shadow-[0_8px_30px_rgba(59,130,246,0.02)] transition-all duration-300 group">
-              <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center border border-primary/10">
-                <Radio className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="text-base font-bold text-foreground">Open Architectures</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Publishing complete system designs, database schemas, and codebase blueprints for the developer community.
-              </p>
-            </div>
-          </div>
-        </section>
+        <AnimatedMissions />
  
         {/* 3. DEDICATED WARBORN OS SECTION */}
         <section className="flex flex-col gap-10">

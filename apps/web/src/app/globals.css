@@ -150,7 +150,7 @@
 
 .font-pixel {
   font-family: var(--font-pixel), monospace;
-  font-weight: bold;
+  font-weight: 700;
 }
 
 .gradient-text {

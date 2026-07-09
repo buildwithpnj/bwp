@@ -60,7 +60,7 @@ export function AIPortraitHero() {
   const rightContainerRef = useRef<HTMLDivElement>(null);
   
   const [portraits, setPortraits] = useState<string[]>([]);
-  const [activePortrait, setActivePortrait] = useState<string>('/assets/images/Man_looking_directly_camera_2K_202607062110.png');
+  const [activePortrait, setActivePortrait] = useState<string>('/assets/images/portrait-1.webp');
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   
   const mouseRef = useRef({ x: -1000, y: -1000, rx: 0, ry: 0, targetRx: 0, targetRy: 0, inside: false });
@@ -70,6 +70,8 @@ export function AIPortraitHero() {
   const layoutRef = useRef({ xOffset: 0, yOffset: 0, targetWidth: 0, targetHeight: 0 });
   const scanRef = useRef({ active: false, y: 0, progress: 0, timer: 0 });
   const morphProgressRef = useRef(1.0);
+  const pixelateProgressRef = useRef(0);
+  const nextImageLoadedRef = useRef<HTMLImageElement | null>(null);
   
   // Parallax rotation states for heading and elements
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
@@ -333,8 +335,9 @@ export function AIPortraitHero() {
           oldP[i].originalAlpha = newParticles[i].originalAlpha;
           oldP[i].originalSize = newParticles[i].originalSize;
           oldP[i].colorTransition = 0;
-          oldP[i].vx += (Math.random() - 0.5) * 4;
-          oldP[i].vy += (Math.random() - 0.5) * 4;
+          // Set velocity offsets to zero to prevent scatter/flying effects during pixelated morphs
+          oldP[i].vx = 0;
+          oldP[i].vy = 0;
         }
         if (newParticles.length > oldP.length) {
           particlesRef.current = [...oldP, ...newParticles.slice(oldP.length)];
@@ -351,7 +354,14 @@ export function AIPortraitHero() {
       activeImage = new Image();
       activeImage.src = activePortrait;
       activeImage.onload = () => {
-        processImage(activeImage!);
+        if (particlesRef.current.length > 0) {
+          // Trigger the high-fidelity pixelation transition
+          nextImageLoadedRef.current = activeImage;
+          pixelateProgressRef.current = 0.01;
+        } else {
+          // First load: process immediately without transition
+          processImage(activeImage!);
+        }
       };
     }
 
@@ -390,9 +400,28 @@ export function AIPortraitHero() {
       }
     }, 20000); // Sweep scanner laser every 20 seconds
 
-    // Animation render loop
     const render = () => {
       ctx.clearRect(0, 0, width, height);
+
+      // Update pixelate transition progress
+      let pixelateFactor = 0;
+      if (pixelateProgressRef.current > 0) {
+        const prevProgress = pixelateProgressRef.current;
+        pixelateProgressRef.current += 0.035; // Speed of transition
+        
+        // Swap image content at the middle of the transition (0.50)
+        if (prevProgress < 0.50 && pixelateProgressRef.current >= 0.50 && nextImageLoadedRef.current) {
+          processImage(nextImageLoadedRef.current);
+          nextImageLoadedRef.current = null;
+        }
+        
+        if (pixelateProgressRef.current >= 1.0) {
+          pixelateProgressRef.current = 0;
+        } else {
+          // Calculate sine wave pixelation scale (peaks at 1.0 at progress=0.5)
+          pixelateFactor = Math.sin(pixelateProgressRef.current * Math.PI);
+        }
+      }
 
       // Calculate dynamic center of gravity relative to the canvas local coordinates
       const canvasBounds = canvasRef.current?.getBoundingClientRect();
@@ -631,12 +660,23 @@ export function AIPortraitHero() {
         const cg = Math.round(p.color.g);
         const cb = Math.round(p.color.b);
         
+        let px = p.x;
+        let py = p.y;
+        let pSize = p.size;
+        
+        if (pixelateFactor > 0) {
+          const gridSize = Math.round(1 + pixelateFactor * 21);
+          px = Math.round(px / gridSize) * gridSize;
+          py = Math.round(py / gridSize) * gridSize;
+          pSize = pSize * (1.0 + pixelateFactor * 2.8);
+        }
+
         if (resolvedTheme !== 'light') {
           ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${p.alpha * 0.35})`;
-          ctx.fillRect(p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
+          ctx.fillRect(px - pSize, py - pSize, pSize * 2, pSize * 2);
         }
         ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${p.alpha})`;
-        ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        ctx.fillRect(px - pSize / 2, py - pSize / 2, pSize, pSize);
       });
       ctx.restore();
 

@@ -12,32 +12,36 @@ if (!fs.existsSync(TARGET_DIR)) {
 
 async function processPortraits() {
   try {
-    const files = fs.readdirSync(SOURCE_DIR);
-    const jpegFiles = files.filter(f => f.toLowerCase().endsWith('.jpeg') || f.toLowerCase().endsWith('.jpg'));
+    const files = fs.readdirSync(SOURCE_DIR)
+      .filter((file) => /\.(png|jpe?g|webp|avif)$/i.test(file))
+      .sort((a, b) => a.localeCompare(b));
 
-    console.log(`Found ${jpegFiles.length} JPEGs to process...`);
+    console.log(`Found ${files.length} source images to process...`);
 
-    for (let i = 0; i < jpegFiles.length; i++) {
-      const sourceFile = path.join(SOURCE_DIR, jpegFiles[i]);
+    for (let i = 0; i < files.length; i++) {
+      const sourceFile = path.join(SOURCE_DIR, files[i]);
       const targetFileName = `portrait-${i + 1}.webp`;
       const targetFile = path.join(TARGET_DIR, targetFileName);
 
-      console.log(`Processing [${jpegFiles[i]}] -> [${targetFileName}]...`);
+      console.log(`Processing [${files[i]}] -> [${targetFileName}]...`);
 
       await sharp(sourceFile)
+        .rotate()
         .resize({
-          width: 800,
-          height: 1000,
+          width: 1400,
+          height: 1800,
           fit: 'cover',
-          position: 'center'
+          position: 'attention'
         })
-        .webp({ quality: 85 })
+        .sharpen({ sigma: 1.2, m1: 1.0, m2: 1.0 })
+        .modulate({ brightness: 1.02, saturation: 1.04 })
+        .webp({ quality: 92, effort: 6 })
         .toFile(targetFile);
 
       console.log(`Saved: ${targetFile}`);
     }
 
-    console.log('All portraits successfully optimized and converted to WebP!');
+    console.log('All portraits successfully optimized and converted to sharper WebP assets!');
   } catch (error) {
     console.error('Error processing portraits:', error);
     process.exit(1);
