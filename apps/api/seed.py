@@ -5,6 +5,7 @@ Uses a plain SQLAlchemy sync engine (psycopg2) so it never touches
 FastAPI's asyncio event loop.
 """
 import re
+import uuid
 from datetime import datetime, timedelta
 
 from argon2 import PasswordHasher
@@ -53,9 +54,10 @@ def _seed_users(session: Session):
     ).fetchone()
     if row is None:
         print("Creating test user: test@example.com / password123")
+        uid_val = str(uuid.uuid4())
         session.execute(
-            text("INSERT INTO users (email, password_hash) VALUES (:email, :pw)"),
-            {"email": "test@example.com", "pw": ph.hash("password123")},
+            text("INSERT INTO users (id, email, password_hash) VALUES (:id, :email, :pw)"),
+            {"id": uid_val, "email": "test@example.com", "pw": ph.hash("password123")},
         )
         session.flush()
         row = session.execute(
@@ -74,9 +76,10 @@ def _seed_users(session: Session):
     ).fetchone()
     if row_pj is None:
         print("Creating user: prakashjhadps@gmail.com / password123")
+        uid_pj_val = str(uuid.uuid4())
         session.execute(
-            text("INSERT INTO users (email, password_hash) VALUES (:email, :pw)"),
-            {"email": "prakashjhadps@gmail.com", "pw": ph.hash("password123")},
+            text("INSERT INTO users (id, email, password_hash) VALUES (:id, :email, :pw)"),
+            {"id": uid_pj_val, "email": "prakashjhadps@gmail.com", "pw": ph.hash("password123")},
         )
         session.flush()
         row_pj = session.execute(
@@ -111,9 +114,10 @@ def _seed_resources(session: Session, user_id: int):
             ("Entertainment", "expense"),
         ]
         for name, kind in default_categories:
+            cat_id = str(uuid.uuid4())
             session.execute(
-                text("INSERT INTO categories (name, kind, user_id) VALUES (:n, :k, :uid)"),
-                {"n": name, "k": kind, "uid": user_id},
+                text("INSERT INTO categories (id, name, kind, user_id) VALUES (:id, :n, :k, :uid)"),
+                {"id": cat_id, "n": name, "k": kind, "uid": user_id},
             )
         session.flush()
     else:
@@ -133,12 +137,13 @@ def _seed_resources(session: Session, user_id: int):
             ("Mutual Funds Portfolio", "investment", 120000.00),
         ]
         for name, atype, balance in accounts:
+            acc_id = str(uuid.uuid4())
             session.execute(
                 text(
-                    "INSERT INTO accounts (user_id, name, type, currency, opening_balance)"
-                    " VALUES (:uid, :name, :type, 'INR', :bal)"
+                    "INSERT INTO accounts (id, user_id, name, type, currency, opening_balance)"
+                    " VALUES (:id, :uid, :name, :type, 'INR', :bal)"
                 ),
-                {"uid": user_id, "name": name, "type": atype, "bal": balance},
+                {"id": acc_id, "uid": user_id, "name": name, "type": atype, "bal": balance},
             )
         session.flush()
 
@@ -166,12 +171,13 @@ def _seed_resources(session: Session, user_id: int):
         ]
         for acc_id, amount, cat_id, merchant, note, occurred_at in txns:
             if acc_id:
+                txn_id = str(uuid.uuid4())
                 session.execute(
                     text(
-                        "INSERT INTO transactions (account_id, amount, category_id, merchant, note, occurred_at, source)"
-                        " VALUES (:aid, :amt, :cid, :merchant, :note, :occ, 'manual')"
+                        "INSERT INTO transactions (id, account_id, amount, category_id, merchant, note, occurred_at, source)"
+                        " VALUES (:id, :aid, :amt, :cid, :merchant, :note, :occ, 'manual')"
                     ),
-                    {"aid": acc_id, "amt": amount, "cid": cat_id, "merchant": merchant, "note": note, "occ": occurred_at},
+                    {"id": txn_id, "aid": acc_id, "amt": amount, "cid": cat_id, "merchant": merchant, "note": note, "occ": occurred_at},
                 )
         session.flush()
     else:
@@ -194,12 +200,14 @@ def _seed_resources(session: Session, user_id: int):
              "https://images-na.ssl-images-amazon.com/images/I/41xSh45g7tL.jpg"),
         ]
         for title, author, status, rating, started_at, finished_at, cover_url in books:
+            book_id = str(uuid.uuid4())
             session.execute(
                 text(
-                    "INSERT INTO books (user_id, title, author, status, rating, started_at, finished_at, cover_url)"
-                    " VALUES (:uid, :title, :author, :status, :rating, :started_at, :finished_at, :cover_url)"
+                    "INSERT INTO books (id, user_id, title, author, status, rating, started_at, finished_at, cover_url)"
+                    " VALUES (:id, :uid, :title, :author, :status, :rating, :started_at, :finished_at, :cover_url)"
                 ),
                 {
+                    "id": book_id,
                     "uid": user_id,
                     "title": title,
                     "author": author,

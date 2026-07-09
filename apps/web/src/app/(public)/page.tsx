@@ -15,6 +15,7 @@ import { AIPortraitHero } from '@/components/ai-portrait-hero';
 import { AnimatedMissions } from '@/components/animated-missions';
 import { ScrollReveal } from '@/components/scroll-reveal';
 import { TerminalThumbnail } from '@/components/terminal-thumbnail';
+import { PremiumPixelBackground } from '@/components/premium-pixel-background';
 
 export default async function PublicHomePage() {
   const projects = getProjects().slice(0, 3);
@@ -38,7 +39,8 @@ export default async function PublicHomePage() {
   };
 
   return (
-    <div className="flex flex-col gap-0 w-full">
+    <div className="flex flex-col gap-0 w-full relative">
+      <PremiumPixelBackground />
       {/* 1. HERO SECTION (Interactive Portrait Centerpiece & Orbiting Stack) */}
       <AIPortraitHero />
       

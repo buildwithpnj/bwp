@@ -468,8 +468,11 @@ export function TerminalThumbnail({ index, slug = '', mode = 'projects' }: Termi
       className="w-full h-full p-3 sm:p-4 bg-background/95 flex flex-col justify-between select-none relative text-left border border-border/10 overflow-hidden rounded-lg"
     >
       {/* 1. Header Bar */}
-      <div className="flex items-center justify-between border-b border-border/20 pb-1.5 shrink-0">
-        <span className="font-mono text-[8px] font-bold tracking-widest text-muted-foreground uppercase leading-none">
+      <div className={cn(
+        "flex items-center justify-between border-b border-border/20 pb-1.5 shrink-0",
+        mode === 'projects' && "pr-24" // Leave space for overlaid status/category badges on the top right
+      )}>
+        <span className="font-mono text-[8px] font-bold tracking-widest text-muted-foreground uppercase leading-none truncate max-w-[50%]">
           {`// ${sim.title}`}
         </span>
         <span className={cn(

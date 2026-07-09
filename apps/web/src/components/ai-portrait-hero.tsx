@@ -79,11 +79,17 @@ export function AIPortraitHero() {
   
   const [portraits, setPortraits] = useState<string[]>([]);
   const [activePortrait, setActivePortrait] = useState<string>('/assets/images/portrait-1.webp');
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [hoveredNode, setHoveredNodeState] = useState<string | null>(null);
+  const hoveredNodeRef = useRef<string | null>(null);
+  const setHoveredNode = (val: string | null) => {
+    hoveredNodeRef.current = val;
+    setHoveredNodeState(val);
+  };
   
   const mouseRef = useRef({ x: -1000, y: -1000, rx: 0, ry: 0, targetRx: 0, targetRy: 0, inside: false });
   const particlesRef = useRef<Particle[]>([]);
   const bgParticlesRef = useRef<BGParticle[]>([]);
+
   const embersRef = useRef<Ember[]>([]);
   const layoutRef = useRef({ xOffset: 0, yOffset: 0, targetWidth: 0, targetHeight: 0 });
   const scanRef = useRef({ active: false, y: 0, progress: 0, timer: 0 });
@@ -192,6 +198,7 @@ export function AIPortraitHero() {
       }
       bgParticlesRef.current = bgParticles;
     };
+
     initBGParticles();
 
     // Resize handler
@@ -245,8 +252,8 @@ export function AIPortraitHero() {
       
       layoutRef.current = { xOffset, yOffset, targetWidth, targetHeight };
       
-      offscreenCanvas.width = 95; // Crisp high-density background grid
-      offscreenCanvas.height = Math.round(95 / targetAspect);
+      offscreenCanvas.width = 130; // Crisp high-density background grid
+      offscreenCanvas.height = Math.round(130 / targetAspect);
       
       offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
       offscreenCtx.drawImage(img, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
@@ -484,8 +491,28 @@ export function AIPortraitHero() {
       const gY = height * 0.5 + Math.cos(time * 0.5) * height * 0.2;
       const glowRad = Math.min(width, height) * 0.8;
       
-       // Smoothly interpolate towards the target portrait color profile
-       const targetColor = portraitColorRef.current;
+       // Smoothly interpolate towards the target portrait color profile (adjusted for brand node hovering)
+       let targetColor = { ...portraitColorRef.current };
+       const currentHoveredNode = hoveredNodeRef.current;
+       if (currentHoveredNode) {
+         const hoveredLabel = currentHoveredNode.split(':')[0].trim().toLowerCase();
+         if (hoveredLabel === 'python') {
+           targetColor = { h: 207, s: 82, l: isDark ? 65 : 45, r: 55, g: 118, b: 171 };
+         } else if (hoveredLabel === 'claude') {
+           targetColor = { h: 12, s: 65, l: isDark ? 62 : 48, r: 217, g: 119, b: 95 };
+         } else if (hoveredLabel === 'gemini') {
+           targetColor = { h: 235, s: 90, l: isDark ? 62 : 48, r: 99, g: 102, b: 241 };
+         } else if (hoveredLabel === 'openai') {
+           targetColor = { h: 164, s: 82, l: isDark ? 62 : 45, r: 16, g: 163, b: 127 };
+         } else if (hoveredLabel === 'fastapi') {
+           targetColor = { h: 174, s: 100, l: isDark ? 60 : 40, r: 0, g: 150, b: 136 };
+         } else if (hoveredLabel === 'postgresql') {
+           targetColor = { h: 207, s: 48, l: isDark ? 65 : 45, r: 51, g: 103, b: 145 };
+         } else if (hoveredLabel === 'langchain') {
+           targetColor = { h: 147, s: 82, l: isDark ? 60 : 40, r: 19, g: 193, b: 96 };
+         }
+       }
+
        activeColorRef.current.h += (targetColor.h - activeColorRef.current.h) * 0.045;
        activeColorRef.current.s += (targetColor.s - activeColorRef.current.s) * 0.045;
        activeColorRef.current.l += (targetColor.l - activeColorRef.current.l) * 0.045;
@@ -571,6 +598,7 @@ export function AIPortraitHero() {
         ctx.fill();
       });
       ctx.globalAlpha = 1.0;
+
 
       // Update scan line
       if (scanRef.current.active) {
@@ -810,9 +838,9 @@ export function AIPortraitHero() {
         const cg = Math.round(p.color.g);
         const cb = Math.round(p.color.b);
         
-        let px = p.x;
-        let py = p.y;
-        let pSize = p.size;
+        let px = Math.round(p.x);
+        let py = Math.round(p.y);
+        let pSize = Math.round(p.size);
         
         if (pixelateFactor > 0) {
           const gridSize = Math.round(1 + pixelateFactor * 21);
@@ -1393,7 +1421,7 @@ function EcosystemNode({
       onMouseEnter={() => setHoveredNode(`${label}: ${hoverLabel}`)}
       onMouseLeave={() => setHoveredNode(null)}
       className={cn(
-        "absolute p-1.5 px-2 sm:p-2 sm:px-3 rounded-lg border border-border/40 bg-card/75 backdrop-blur-sm font-mono text-[7.5px] sm:text-[8.5px] font-black text-foreground/80 hover:text-primary hover:border-primary/30 transition-all hover:scale-[1.06] duration-250 cursor-pointer shadow shadow-primary/2 shadow-lg select-none",
+        "absolute p-1.5 px-2 sm:p-2 sm:px-3 rounded-lg border border-primary/20 bg-primary/[0.04] dark:bg-primary/[0.06] backdrop-blur-sm font-mono text-[7.5px] sm:text-[8.5px] font-black text-primary/80 hover:text-primary hover:bg-primary/[0.09] hover:border-primary/40 transition-all hover:scale-[1.06] duration-250 cursor-pointer shadow shadow-primary/2 shadow-lg select-none",
         className
       )}
     >
