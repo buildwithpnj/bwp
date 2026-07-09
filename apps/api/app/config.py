@@ -13,6 +13,14 @@ class Settings(BaseSettings):
         "postgresql+asyncpg://personal_os:personal_os_dev@localhost:5432/personal_os"
     )
 
+    def __init__(self, **values):
+        super().__init__(**values)
+        if self.database_url:
+            if self.database_url.startswith("postgres://"):
+                self.database_url = self.database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif self.database_url.startswith("postgresql://"):
+                self.database_url = self.database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
     # Redis
     redis_url: str = "redis://localhost:6379/0"
 

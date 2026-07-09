@@ -14,6 +14,7 @@ import { Terminal } from '@/components/ui/terminal';
 import { AIPortraitHero } from '@/components/ai-portrait-hero';
 import { AnimatedMissions } from '@/components/animated-missions';
 import { ScrollReveal } from '@/components/scroll-reveal';
+import { TerminalThumbnail } from '@/components/terminal-thumbnail';
 
 export default async function PublicHomePage() {
   const projects = getProjects().slice(0, 3);
@@ -154,18 +155,22 @@ export default async function PublicHomePage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex overflow-x-auto gap-6 pb-4 scroll-smooth snap-x snap-mandatory scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 md:overflow-x-visible md:pb-0">
               {projects.map((project, i) => {
                 const isProd = project.status?.toLowerCase() === 'production' || project.status?.toLowerCase() === 'stable';
                 return (
-                  <ScrollReveal key={project.slug} delay={i * 100}>
+                  <ScrollReveal 
+                    key={project.slug} 
+                    delay={i * 100}
+                    className="snap-start min-w-[280px] md:min-w-0 w-[280px] md:w-auto shrink-0 flex flex-col"
+                  >
                     <Link
                       href={`/projects/${project.slug}`}
                       className="group p-5 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-sm flex flex-col gap-4 hover:border-primary/20 hover:shadow-[0_8px_30px_rgba(59,130,246,0.04)] transition-all duration-500 hover:-translate-y-[2px] h-full"
                     >
                       <div className="aspect-video w-full rounded-lg bg-background flex items-center justify-center relative overflow-hidden border border-border/40">
-                        <div className="absolute inset-0 grid-dots opacity-30" />
-                        {getProjectIcon(project.category)}
+                        <div className="absolute inset-0 grid-dots opacity-20" />
+                        <TerminalThumbnail index={i} slug={project.slug} />
                         
                         {/* Status Badge */}
                         <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-background/95 backdrop-blur border border-border/40 shadow-sm">
@@ -222,9 +227,13 @@ export default async function PublicHomePage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="flex overflow-x-auto gap-6 pb-4 scroll-smooth snap-x snap-mandatory scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 md:overflow-x-visible md:pb-0">
               {posts.map((post, i) => (
-                <ScrollReveal key={post.slug} delay={i * 100}>
+                <ScrollReveal 
+                  key={post.slug} 
+                  delay={i * 100}
+                  className="snap-start min-w-[280px] md:min-w-0 w-[280px] md:w-auto shrink-0 flex flex-col"
+                >
                   <Link
                     href={`/journal/${post.slug}`}
                     className="group p-5 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-sm flex flex-col justify-between gap-5 hover:border-primary/20 hover:shadow-[0_8px_30px_rgba(59,130,246,0.04)] transition-all duration-500 hover:-translate-y-[2px] h-full"
@@ -242,7 +251,7 @@ export default async function PublicHomePage() {
                         {post.excerpt}
                       </p>
                     </div>
-                    <div className="flex flex-wrap gap-1 pt-2 border-t border-border/40">
+                    <div className="flex flex-wrap gap-1 mt-auto pt-2 border-t border-border/40">
                       {post.tags.slice(0, 3).map((tag) => (
                         <span key={tag} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-primary/5 text-primary/80 border border-primary/10">
                           #{tag}
@@ -278,17 +287,22 @@ export default async function PublicHomePage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex overflow-x-auto gap-4 pb-4 scroll-smooth snap-x snap-mandatory scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-4 md:overflow-x-visible md:pb-0">
               {experiments.map((exp, i) => {
                 const isActive = exp.status?.toLowerCase() === 'active' || exp.status?.toLowerCase() === 'stable';
                 return (
-                  <ScrollReveal key={exp.slug} delay={i * 80}>
+                  <ScrollReveal 
+                    key={exp.slug} 
+                    delay={i * 80}
+                    className="snap-start min-w-[200px] md:min-w-0 w-[200px] md:w-auto shrink-0 flex flex-col"
+                  >
                     <Link
                       href={`/labs/${exp.slug}`}
                       className="p-5 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-sm hover:bg-secondary/40 hover:border-primary/20 flex flex-col gap-4 transition-all duration-500 group shadow-sm hover:-translate-y-[2px] hover:shadow-[0_8px_30px_rgba(59,130,246,0.04)] h-full"
                     >
-                      <div className="w-9 h-9 rounded-xl bg-background flex items-center justify-center border border-border/40">
-                        <FlaskConical className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                      <div className="aspect-video w-full rounded-lg bg-background flex items-center justify-center relative overflow-hidden border border-border/40">
+                        <div className="absolute inset-0 grid-dots opacity-20" />
+                        <TerminalThumbnail index={i} mode="labs" />
                       </div>
                       <div>
                         <h3 className="text-xs sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">

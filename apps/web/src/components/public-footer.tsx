@@ -38,9 +38,14 @@ export function PublicFooter() {
             <h4 className="font-pixel text-xs text-foreground uppercase tracking-wider">{"// CONNECT"}</h4>
             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
               <a href="https://github.com/buildwithpnj" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub ↗</a>
-              <a href="https://twitter.com/buildwithpnj" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Twitter / X ↗</a>
-              <a href="https://linkedin.com/in/pnj" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">LinkedIn ↗</a>
-              <a href="mailto:hello@buildwithpnj.com" className="hover:text-foreground transition-colors">Email ↗</a>
+              <a href="https://www.linkedin.com/in/buildwithpnj/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">LinkedIn ↗</a>
+              <a href="https://www.youtube.com/@buildwithPNJ" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">YouTube ↗</a>
+              <a href="https://www.instagram.com/buildwithpnj/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Instagram ↗</a>
+              <a href="https://www.threads.net/@buildwithpnj" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Threads ↗</a>
+              <a href="https://dev.to/buildwithpnj" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Dev.to ↗</a>
+              <a href="https://www.reddit.com/user/Diamond_1974/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Reddit ↗</a>
+              <a href="https://www.facebook.com/buildwithpnj/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Facebook ↗</a>
+              <a href="mailto:hello@buildwithpnj.in" className="hover:text-foreground transition-colors">Email ↗</a>
             </div>
           </div>
 
@@ -50,9 +55,6 @@ export function PublicFooter() {
         <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground text-center sm:text-left">
             © {currentYear} BuildWithPNJ. All rights reserved.
-          </p>
-          <p className="text-xs text-muted-foreground text-center sm:text-right">
-            Built with Next.js & Tailwind. Deployed on Vercel.
           </p>
         </div>
       </div>

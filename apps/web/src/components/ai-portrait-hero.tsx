@@ -503,8 +503,11 @@ export function AIPortraitHero() {
          const activeGlow = resolvedTheme === 'light'
            ? `hsla(${activeH}, ${activeS}%, 45%, 0.12)`
            : `hsla(${activeH}, ${activeS}%, 65%, 0.25)`;
+         const primaryL = resolvedTheme === 'light' ? '45%' : '65%';
+         
          root.style.setProperty('--hero-active-color', activeColor);
          root.style.setProperty('--hero-active-color-glow', activeGlow);
+         root.style.setProperty('--primary', `${activeH} ${activeS}% ${primaryL}`);
        }
 
        const ambientGlow = ctx.createRadialGradient(gX, gY, 10, gX, gY, glowRad);

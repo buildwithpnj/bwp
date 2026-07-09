@@ -321,7 +321,11 @@
 }
 
 /* ─── Global Dynamic Primary Theme Override ───────────────── */
-.text-primary, .group-hover\:text-primary:hover, .group\/card:hover .text-primary {
+.text-primary, 
+.group-hover\:text-primary, 
+.group:hover .group-hover\:text-primary, 
+.group\/card:hover .text-primary,
+.hover\:text-primary:hover {
   color: var(--hero-active-color, hsl(221.2 83.2% 53.3%)) !important;
 }
 
@@ -331,6 +335,19 @@
 
 .border-primary, .border-primary\/10, .border-primary\/15, .border-primary\/20, .border-primary\/30, .group-hover\/card:hover .border-primary\/20, .group\/card:hover .border-primary\/20 {
   border-color: var(--hero-active-color, hsl(221.2 83.2% 53.3%)) !important;
+}
+
+.border-l-primary {
+  border-left-color: var(--hero-active-color, hsl(221.2 83.2% 53.3%)) !important;
+}
+.border-t-primary {
+  border-top-color: var(--hero-active-color, hsl(221.2 83.2% 53.3%)) !important;
+}
+.border-r-primary {
+  border-right-color: var(--hero-active-color, hsl(221.2 83.2% 53.3%)) !important;
+}
+.border-b-primary {
+  border-bottom-color: var(--hero-active-color, hsl(221.2 83.2% 53.3%)) !important;
 }
 
 .bg-primary\/5, .bg-primary\/10, .group-hover\/card:hover .bg-primary\/8, .group-hover\/card:hover .bg-primary\/5 {
