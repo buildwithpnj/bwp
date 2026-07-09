@@ -14,7 +14,17 @@ export default function PublicLayout({
       <div className="scanlines" />
       <div className="absolute inset-0 grid-dots pointer-events-none" />
       <div className="ambient-glow" />
+      <div className="noise-overlay" />
 
+      {/* Floating gradient orbs for ambient depth */}
+      <div
+        className="floating-orb"
+        style={{ top: '10%', right: '15%', width: '400px', height: '400px', background: 'rgba(59, 130, 246, 0.03)' }}
+      />
+      <div
+        className="floating-orb"
+        style={{ bottom: '20%', left: '10%', width: '300px', height: '300px', background: 'rgba(139, 92, 246, 0.02)', animationDelay: '-10s' }}
+      />
       {/* Page shell */}
       <div className="relative z-10 flex flex-col min-h-screen justify-between">
         <div>
