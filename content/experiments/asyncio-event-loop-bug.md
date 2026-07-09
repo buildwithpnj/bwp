@@ -256,6 +256,36 @@ The debug output made the sequence clear. The startup lifespan ran `asyncio.run(
 **Q: Why does the closed loop error only manifest when a database connection is actually active?**
 * **A:** During local testing, if the database connection was refused (e.g., local Postgres down), the seeding code crashed immediately with a connection exception. This exception was caught at the outer try-catch block, bypassing the inner SQLAlchemy operations that associate the connection pool with the active event loop. On Render, where the database connection succeeded, the pool was fully initialized, which bound it to the worker thread's temporary loop. This binding made the subsequent loop closure fatal.
 
+**Q: What is Python's thread-local storage policy for asyncio event loops, and how did it fail to isolate the loop in our worker thread?**
+* **A:** In CPython, `asyncio` manages loops via a thread-local policy manager subclassing `AbstractEventLoopPolicy`. The default class is `DefaultEventLoopPolicy`. Under the hood, this policy utilizes `threading.local` state to host the reference of the event loop for each thread (`policy._local._loop`). When uvicorn initializes on the main thread, it bounds its running loop (Loop A) to the main thread's local storage. When we spawned a new worker thread via `ThreadPoolExecutor` and called `asyncio.run(seed())`, it invoked `asyncio.new_event_loop()`, set it locally as `policy._local._loop` for that thread (Loop B), and ran the coroutine. Isolation failed because `asyncio.run()`'s internal cleanup calls `set_event_loop(None)`. Under certain policies or when sharing cross-thread variables, if the engine connection pool resolved its loop using global mechanisms or if uvicorn shared context variables, clearing the default loop state left subsequent lookups in a state where `get_event_loop()` threw deprecation/runtime errors or retrieved the closed loop.
+
+**Q: Can you draw a sequence diagram showing Loop A and Loop B interactions during startup and runtime request handling?**
+* **A:** Yes, the lifecycle flow maps as follows:
+```
+Main Thread (uvicorn)                 Worker Thread (Executor)               Global Loop Policy
+---------------------                 ------------------------               ------------------
+1. Starts Loop A
+2. Sets Loop A as active -----------------------------------------------------> [Default = Loop A]
+3. Fires lifespan() hook
+4. Submits seed task to Executor ------> 5. Starts run_seed()
+                                         6. Calls asyncio.run(seed())
+                                         7. Creates Loop B
+                                         8. Sets Loop B active ---------------> [Default = Loop B]
+                                         9. Executes seed() coroutine
+                                            (DB Connection pool binds to Loop B)
+                                         10. Finally: closes Loop B
+                                         11. Resets active loop to None -------> [Default = None]
+                                         12. Worker thread exits
+13. Lifespan hook finishes
+14. Receives GET /POST requests
+15. Tries to run database session
+16. DB connection pool checks Loop ----> Matches Loop B (Closed!)
+17. Fails with RuntimeError <------------------------------------------------- [Raises "loop is closed"]
+```
+
+**Q: What are the exact mechanics of asyncpg connection pool creation, and why is binding a pool to a closed loop fatal?**
+* **A:** When `create_async_engine` is invoked, SQLAlchemy delegates connection handling to `asyncpg.connection.connect()` or `asyncpg.pool.create_pool()`. Inside asyncpg, a socket connection is opened via the active loop's `loop.create_connection()` API, which registers the socket's file descriptor (`fd`) to the loop's selector (e.g. `epoll` or `kqueue`). The resulting reader and writer abstractions are bound directly to this loop's event cycle. If this loop (Loop B) is closed via `loop.close()`, the selector is destroyed, the network transport layer is terminated, and the file descriptors are invalidated. When a request handler later tries to reuse the connection pool on Loop A, asyncpg attempts to read or execute commands on the socket using Loop B's defunct primitives, triggering the fatal `RuntimeError: Event loop is closed` error.
+
 ---
 
 ## The Root Cause

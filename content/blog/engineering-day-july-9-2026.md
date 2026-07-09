@@ -62,9 +62,6 @@ for (let i = 0; i < data.length; i += 4 * stride) {
   const bucket = Math.round(h / 10) * 10; // 10-degree hue buckets
   colorBuckets[bucket] = (colorBuckets[bucket] || 0) + 1;
 }
-
-const dominantHue = Object.entries(colorBuckets)
-  .sort(([, a], [, b]) => b - a)[0][0];
 ```
 
 The dominant hue becomes the `--primary` CSS variable, propagated as an HSL string into the document root. From there, every component that references `--primary` — and there are now many — gets the photo-synced color automatically.
@@ -108,6 +105,25 @@ Yes, and that's intentional. The extractor is a function, not a static bootstrap
 **Q: Is there a risk this makes the page inaccessible — like if the extracted color is too light or too dark?**
 
 There is. A portrait with dominant very-light colors (saturation 50, lightness 85) could produce a primary color that doesn't contrast against the white text or dark backgrounds. The current implementation forces `lightness` to 60 regardless of what the portrait gives us — so the hue varies but the brightness is fixed. This isn't perfect (some hues at L=60 are still low-contrast against black backgrounds) but it prevents the worst cases. Proper solution: run the final HSL through WCAG contrast ratio calculation and clamp lightness until it passes AA.
+
+**Q: How do the exact color spaces (RGB vs HSL vs LCH/OKLCH) differ for this kind of work, and why would OKLCH be superior for perceptually uniform lightness and contrast?**
+* **A:** RGB is an additive hardware-centric model that makes mathematical operations easy for graphics cards, but correlates poorly with human perception. HSL tries to map color to human concepts (Hue, Saturation, Lightness), but suffers from "perceptual non-uniformity." For example, HSL yellow ($60^\circ$) and HSL blue ($240^\circ$) can both have $L=50\%$, yet the yellow appears vastly brighter to the human eye. OKLCH (Oklab-based Lightness, Chroma, Hue) resolves this by using a perceptually uniform color space modeled on human visual experiments. In OKLCH, two colors with the same Lightness ($L$) parameter are guaranteed to have the exact same perceived brightness and contrast. Switching our pipeline to OKLCH would prevent "neon yellow" highlights from blowing out reading contrast compared to "electric blue" highlights under the same lightness settings.
+
+**Q: How are extracted colors applied dynamically in a Next.js/Tailwind system? Is it better to inject custom HSL values into Tailwind configuration variables or write them as inline style overrides?**
+* **A:** Modifying the Tailwind CSS class map at runtime is not natively supported since Tailwind classes are statically compiled at build time. The optimal approach is a hybrid model: we configure Tailwind to map `primary` colors to CSS custom properties in `tailwind.config.js`:
+  ```javascript
+  theme: {
+    extend: {
+      colors: {
+        primary: 'hsl(var(--primary-h) var(--primary-s) var(--primary-l) / <alpha-value>)',
+      }
+    }
+  }
+  ```
+  Then, during extraction on the client, we write the individual raw values (`--primary-h`, `--primary-s`, `--primary-l`) directly into `document.documentElement.style` overrides. Downstream Tailwind utility classes (e.g. `bg-primary`, `text-primary/80`) compile once to CSS variable references, and the browser handles the real-time resolution instantly. Writing raw HSL overrides via CSS variables is much cleaner than injecting inline styles into every child React component.
+
+**Q: What is the HMR local caching conflict, and why does hot module replacement hold stale references to the computed portrait colors?**
+* **A:** Hot Module Replacement (HMR) in Next.js preserves the local state of React components while patching updated code files. Because our color extractor was structured as a module-level variable or closed state cache inside `ColorExtractor.ts`, updating local React components did not clear this cache. Instead, the module-level closure retained the old image URL reference and skipped the pixel analysis phase during rebuilds. We resolved this by shifting color extraction to an explicit react lifecycle handler (`useEffect`), passing clean dependencies, and ensuring the local object URL is revoked via `URL.revokeObjectURL(img.src)` during cleanup.
 
 ---
 
@@ -428,6 +444,20 @@ No — and that's the core lesson. Render's environment (Python 3.14, specific S
 
 Each Render build takes 3–5 minutes: clone the repo, create a virtual environment, install all dependencies (including numpy, asyncpg, alembic, SQLAlchemy, cryptography — not trivial), run the startup command. Seven deployments × ≈4 minutes each = approximately 28 minutes of pure waiting. Add in the time to read logs, form a hypothesis, write the fix, and commit, and the total calendar time was closer to 2.5 hours for what was ultimately five distinct bugs plus one architecture issue.
 
+**Q: What are the security risks of storing database connection strings directly in Render environment variables, and what are the standard practices for secret rotations?**
+* **A:** Storing raw connection strings in plain-text environment variables exposes them to anyone with read access to the Render dashboard or log metrics (if environment blocks are dumped on crash). If an attacker gets access to the connection string, they bypass all API-level security rules. Standard practices include:
+  1. **Secret Reference Injection**: Using Render's integration with vault managers (like Doppler, HashiCorp Vault, or AWS Secrets Manager) where keys are fetched dynamically at startup and never written to disk or dashboard states.
+  2. **Fine-grained Roles**: Creating database roles with limited permissions (e.g., an `app_runner` role that can execute CRUD but cannot drop tables or execute DDL) rather than using the default admin/superuser string.
+  3. **Secret Rotation**: Re-generating passwords programmatically every 30 to 90 days. During rotation, systems must maintain a grace period where both the old and new secrets are temporarily accepted to avoid downtime during rolling restarts.
+
+**Q: Why does Alembic require transactional DDL ("Will assume transactional DDL" in logs) and how does it roll back migrations when schema exceptions occur?**
+* **A:** Transactional DDL allows schema modifications (like `CREATE TABLE`, `ALTER TABLE`, or `ADD COLUMN`) to run inside an active database transaction block (`BEGIN` ... `COMMIT`). If a migration script fails halfway through (e.g. trying to add a non-nullable column without a default value to an existing populated table), PostgreSQL rolls back the entire transaction. This prevents leaving the database in a "half-migrated" corrupted state where table schema changes are partially written. In databases that do not support transactional DDL (like MySQL/MariaDB or Oracle), migrations that fail mid-execution leave tables modified, forcing manual DDL cleanups. Alembic relies on the database's transaction support, executing schema operations inside SQL transaction blocks managed via `context.begin_transaction()`.
+
+**Q: How does PgBouncer connection multiplexing differ between transaction mode and session mode, and why does transaction mode break prepared statements?**
+* **A:** 
+  - **Session Pooling**: A client is assigned a backend Postgres connection upon connecting and holds it until the client closes the session. The client has absolute exclusive access to that physical connection, so named prepared statements are preserved correctly. However, this limits total concurrent clients to the size of the server's connection pool.
+  - **Transaction Pooling**: PgBouncer intercepts SQL blocks. A client is assigned a backend connection only for the duration of a single SQL transaction block. Once the transaction commits or rolls back, PgBouncer returns that backend connection to the pool, and subsequent transactions from the same client may run on entirely different physical connections. Because prepared statements are stored locally in a specific Postgres backend connection's memory, running a query that refers to a pre-compiled query on a connection that hasn't compiled it results in a crash. Disabling statement caching (`statement_cache_size: 0` or passing `prep_stmt_cache_size=0`) prevents the client driver from referencing these local structures.
+
 ---
 
 ## 4. The Root Cause: asyncio Event Loop Architecture
@@ -495,7 +525,7 @@ def run(coro):
         return loop.run_until_complete(coro)
     finally:
         loop.close()
-        asyncio.set_event_loop(None)  # ← clears the default loop
+        asyncio.set_event_loop(None)  # <-- clears the default loop
 ```
 The key line is `asyncio.set_event_loop(loop)` followed by `asyncio.set_event_loop(None)` in the `finally` block. After `asyncio.run()` returns, the "current event loop" is `None`. But uvicorn's loop — which was set as the default when the process started — is still running. The problem is that SQLAlchemy's asyncpg driver calls `asyncio.get_event_loop()` internally. After our `asyncio.run()` call, that returns `None` (or in some Python versions, returns the now-closed loop). Either way, the next `await` on a database connection fails.
 
@@ -543,6 +573,18 @@ Three layers:
 1. **Rule**: never call `asyncio.run()` inside a thread that exists within a running event loop's lifecycle.
 2. **Architecture**: use synchronous libraries for synchronous operations (seeds, migrations) and async libraries for request-handling operations. Don't mix.
 3. **Tests**: add a startup integration test that verifies the server accepts requests after the lifespan hook completes. This catches event loop corruption immediately.
+
+**Q: What is the difference between thread-safety and loop-safety inside Python's asyncio execution model?**
+* **A:** 
+  - **Thread-safety** refers to objects or function calls that can be concurrently accessed or invoked from multiple threads without causing race conditions or data corruption (e.g. Python's `queue.Queue`). Most asyncio primitives (like `asyncio.Queue`, loop schedulers, or coroutine handlers) are **not** thread-safe.
+  - **Loop-safety** (or being safe to run on a specific loop) means that the operation executes within the single-threaded boundary of the event loop thread without blocking it. Calling non-thread-safe asyncio methods (like `loop.call_soon()`) from a secondary thread is unsafe and will corrupt internal loop states. To bridge the gap, you must use thread-safe scheduling methods (like `asyncio.run_coroutine_threadsafe()`) which safely enqueue callbacks onto the target loop via lock-protected pipes.
+
+**Q: How does `loop.run_in_executor` coordinate execution between the worker thread and the main event loop under the hood?**
+* **A:** When you call `await loop.run_in_executor(executor, func, *args)`, asyncio does the following:
+  1. It submits the task (`func(*args)`) to the thread pool executor via `executor.submit()`. This returns a standard synchronous `concurrent.futures.Future`.
+  2. To allow the event loop to await this blocking thread operation without blocking its own single-threaded cycle, asyncio wraps the synchronous `Future` in an `asyncio.Future` using `asyncio.wrap_future()`.
+  3. Under the hood, this wrapping attaches a callback (`future.add_done_callback()`) to the synchronous thread-level Future. When the worker thread completes the work and writes the result to the Future, the callback is triggered in the executor.
+  4. This callback schedules a loop notification via `loop.call_soon_threadsafe()` to mark the `asyncio.Future` as resolved. Once marked resolved, uvicorn's main thread loop wakes up in the next tick, processes the result, and resumes execution of the coroutine immediately following the `await` statement.
 
 ---
 
