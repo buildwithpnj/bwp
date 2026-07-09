@@ -128,7 +128,7 @@ export default function PublicAboutPage() {
               During this journey, I noticed a persistent gap: most tutorials stopped at simple notebook scripts or toy chat interfaces. They hid the messy reality of production systems—rate limits, async task queues, memory context leaks, and vector similarity tuning.
             </p>
             <blockquote className="border-l-2 border-primary pl-4 my-2 italic text-foreground/90 font-medium">
-              "BuildWithPNJ is a commitment to building production-ready, self-hostable tools that power operations—and sharing every blueprint along the way."
+              &ldquo;BuildWithPNJ is a commitment to building production-ready, self-hostable tools that power operations&mdash;and sharing every blueprint along the way.&rdquo;
             </blockquote>
             <p>
               By documenting every schema decision, pipeline failure, and performance patch, I hope to demystify complex AI agent deployments for other product builders.
