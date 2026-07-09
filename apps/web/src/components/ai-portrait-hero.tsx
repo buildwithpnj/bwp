@@ -93,7 +93,22 @@ export function AIPortraitHero() {
   const neuralPulseRef = useRef({ progress: 0 });
   const portraitColorRef = useRef({ h: 221, s: 83, l: 53, r: 59, g: 130, b: 246 });
   const activeColorRef = useRef({ h: 221, s: 83, l: 53 });
-  
+  const [tickerIndex, setTickerIndex] = useState(0);
+  const tickerPhrases = [
+    "Integrating Autonomous AI Agents",
+    "Configuring Real-Time Voice AI",
+    "Engineering Intelligent Workflows",
+    "Deploying Complex AI Integrations",
+    "Building High-End Enterprise Automation"
+  ];
+
+  useEffect(() => {
+    const tickerInterval = setInterval(() => {
+      setTickerIndex((prev) => (prev + 1) % tickerPhrases.length);
+    }, 3200);
+    return () => clearInterval(tickerInterval);
+  }, []);
+
   // Parallax rotation states for heading and elements
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
 
@@ -1144,63 +1159,25 @@ export function AIPortraitHero() {
               </span>
             </h1>
 
-            {/* Premium capability subheadline listing */}
-            <div className="font-mono text-xs sm:text-sm text-muted-foreground/80 flex flex-wrap items-center gap-x-3 gap-y-1.5 select-none py-1">
-              <div className="flex items-center gap-1.5">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span 
-                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))', animationDuration: '2.4s', animationDelay: '0s' }}
-                  />
-                  <span 
-                    className="relative inline-flex rounded-full h-1.5 w-1.5"
-                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
-                  />
-                </span>
-                <span>AI Agents</span>
-              </div>
-              <span className="text-border/60">|</span>
-              <div className="flex items-center gap-1.5">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span 
-                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))', animationDuration: '2.4s', animationDelay: '0.6s' }}
-                  />
-                  <span 
-                    className="relative inline-flex rounded-full h-1.5 w-1.5"
-                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
-                  />
-                </span>
-                <span>Voice AI</span>
-              </div>
-              <span className="text-border/60">|</span>
-              <div className="flex items-center gap-1.5">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span 
-                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))', animationDuration: '2.4s', animationDelay: '1.2s' }}
-                  />
-                  <span 
-                    className="relative inline-flex rounded-full h-1.5 w-1.5"
-                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
-                  />
-                </span>
-                <span>Business Automation</span>
-              </div>
-              <span className="text-border/60">|</span>
-              <div className="flex items-center gap-1.5">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span 
-                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))', animationDuration: '2.4s', animationDelay: '1.8s' }}
-                  />
-                  <span 
-                    className="relative inline-flex rounded-full h-1.5 w-1.5"
-                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
-                  />
-                </span>
-                <span>Intelligent Systems</span>
-              </div>
+            {/* Premium capability subheadline listing - Dynamic Rotator */}
+            <div className="font-mono text-xs sm:text-sm text-muted-foreground/80 flex items-center gap-2 select-none py-1 h-6">
+              <span className="relative flex h-1.5 w-1.5 shrink-0">
+                <span 
+                  className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                  style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))', animationDuration: '1.8s' }}
+                />
+                <span 
+                  className="relative inline-flex rounded-full h-1.5 w-1.5"
+                  style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
+                />
+              </span>
+              <span className="text-[10px] text-border/60 uppercase tracking-widest font-black shrink-0">SYS_OPER:</span>
+              <span 
+                key={tickerIndex}
+                className="animate-ticker-slide font-semibold truncate text-foreground/95"
+              >
+                {tickerPhrases[tickerIndex]}
+              </span>
             </div>
 
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed select-text">

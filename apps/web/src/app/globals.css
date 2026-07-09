@@ -302,3 +302,20 @@
 .light .noise-overlay {
   opacity: 0.025;
 }
+
+/* ─── Telemetry Text Ticker Animation ────────────────── */
+@keyframes tickerSlideIn {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-ticker-slide {
+  display: inline-block;
+  animation: tickerSlideIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
