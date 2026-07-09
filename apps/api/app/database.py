@@ -14,6 +14,9 @@ try:
         echo=False,
         pool_size=5,
         max_overflow=10,
+        connect_args={
+            "statement_cache_size": 0,
+        }
     )
 except Exception as e:
     print(f"DEBUG: create_async_engine failed. Error: {e}", file=sys.stderr)
