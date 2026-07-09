@@ -31,6 +31,12 @@ class Settings(BaseSettings):
         # Clean trailing/leading whitespace and quotes
         url = url.strip().strip('"').strip("'")
         
+        # Strip literal prefixes like "DATABASE_URL=" or "DATABASE_PRIVATE_URL="
+        for prefix in ("database_url=", "database_private_url="):
+            if url.lower().startswith(prefix):
+                url = url[len(prefix):]
+                url = url.strip().strip('"').strip("'")
+        
         from urllib.parse import urlparse, urlunparse, quote, unquote
         try:
             parsed = urlparse(url)
