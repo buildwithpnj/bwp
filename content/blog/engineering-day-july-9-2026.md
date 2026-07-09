@@ -336,9 +336,7 @@ def database_url(self) -> str:
 
 Deployed. Failed. Next layer.
 
-### Failure 2 — Password Special Character
-
-The database password is `dobbie@KAP1`. The `@` character in a URL signals the start of the host segment. Python's `urllib.parse.urlparse` treats everything after the last `@` as the host, splitting the password mid-string. The connection string was being parsed as a malformed URL, giving SQLAlchemy a garbled hostname.
+The database password contained a special character (an `@` sign, e.g. `password@123`). The `@` character in a URL signals the start of the host segment. Python's `urllib.parse.urlparse` treats everything after the last `@` as the host, splitting the password mid-string. The connection string was being parsed as a malformed URL, giving SQLAlchemy a garbled hostname.
 
 Fix: URL-encode the password using `urllib.parse.quote(password, safe='')`. This requires parsing the URL into components, encoding just the password field, and reassembling. Added in `da78343`.
 

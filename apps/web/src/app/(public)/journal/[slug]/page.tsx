@@ -19,6 +19,25 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: `${post.title} — BuildWithPNJ`,
     description: post.excerpt,
+    alternates: {
+      canonical: `/journal/${post.slug}`,
+    },
+    openGraph: {
+      title: `${post.title} — BuildWithPNJ`,
+      description: post.excerpt,
+      url: `https://buildwithpnj.in/journal/${post.slug}`,
+      type: 'article',
+      publishedTime: post.publishDate,
+      authors: ['Prakash Nandan Jha (PNJ)'],
+      tags: post.tags,
+      siteName: 'BuildWithPNJ',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${post.title} — BuildWithPNJ`,
+      description: post.excerpt,
+      creator: '@buildwithpnj',
+    },
   };
 }
 
@@ -62,7 +81,7 @@ export default async function PublicJournalDetailPage({ params }: PageProps) {
     .slice(0, 3);
 
   // Article URL for sharing
-  const articleUrl = `https://buildwithpnj.com/journal/${post.slug}`;
+  const articleUrl = `https://buildwithpnj.in/journal/${post.slug}`;
 
   return (
     <div className="flex flex-col gap-10 text-left">

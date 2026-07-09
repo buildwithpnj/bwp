@@ -128,13 +128,11 @@ def database_url(self) -> str:
     return url.replace("postgresql://", "postgresql+asyncpg://", 1)
 ```
 
-### Deployment 2 — Password Special Character
-
-The database password is `dobbie@KAP1`. The `@` character is the URL authority delimiter. Python's `urlparse` sees:
+The database password contained a special character (an `@` sign, e.g. `password@123`). The `@` character is the URL authority delimiter. Python's `urlparse` sees:
 
 ```
-postgresql+asyncpg://user:dobbie  <-- split here
-KAP1@db.host.supabase.co/dbname   <-- treated as host
+postgresql+asyncpg://user:password  <-- split here
+123@db.host.supabase.co/dbname      <-- treated as host
 ```
 
 The connection string was being handed to asyncpg with a mangled hostname.

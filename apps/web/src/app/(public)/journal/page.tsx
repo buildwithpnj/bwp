@@ -3,7 +3,7 @@ import { getBlogPosts } from '@/lib/content';
 import { JournalList } from '@/components/journal-list';
 
 export const metadata = {
-  title: 'Engineering Journal — BuildWithPNJ',
+  title: 'Journal',
   description: 'Technical writing on AI systems architecture, building in public updates, monorepos, and FastAPI backend engineering.',
 };
 

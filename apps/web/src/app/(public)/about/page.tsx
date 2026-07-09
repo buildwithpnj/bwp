@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 export const metadata = {
-  title: 'About — BuildWithPNJ',
+  title: 'About',
   description: 'Prakash Nandan Jha (buildwithpnj), AI Engineer building production-grade tools, voice agents, and RAG systems in public.',
 };
 

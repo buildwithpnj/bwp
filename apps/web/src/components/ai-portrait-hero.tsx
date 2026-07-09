@@ -1218,10 +1218,10 @@ export function AIPortraitHero() {
               <a href="https://twitter.com/buildwithpnj" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl border border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-primary/20 transition-all hover:scale-[1.05]">
                 <Twitter className="h-4.5 w-4.5" strokeWidth={1.8} />
               </a>
-              <a href="https://linkedin.com/in/pnj" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl border border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-primary/20 transition-all hover:scale-[1.05]">
+              <a href="https://www.linkedin.com/in/buildwithpnj/" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl border border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-primary/20 transition-all hover:scale-[1.05]">
                 <Linkedin className="h-4.5 w-4.5" strokeWidth={1.8} />
               </a>
-              <a href="mailto:hello@buildwithpnj.com" className="p-2.5 rounded-xl border border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-primary/20 transition-all hover:scale-[1.05]">
+              <a href="mailto:hello@buildwithpnj.in" className="p-2.5 rounded-xl border border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-primary/20 transition-all hover:scale-[1.05]">
                 <Mail className="h-4.5 w-4.5" strokeWidth={1.8} />
               </a>
             </div>

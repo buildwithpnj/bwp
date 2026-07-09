@@ -162,11 +162,11 @@ export function Terminal({ title = 'warborn_telemetry.log', lines, className, sh
         const p2 = (Math.random() * 3 + 10).toFixed(1);
         const p3 = (Math.random() * 3 + 12).toFixed(1);
         return [
-          'PING api.buildwithpnj.com (104.21.3.112): 56 data bytes',
+          'PING api.buildwithpnj.in (104.21.3.112): 56 data bytes',
           `64 bytes from 104.21.3.112: icmp_seq=0 ttl=56 time=${p1} ms`,
           `64 bytes from 104.21.3.112: icmp_seq=1 ttl=56 time=${p2} ms`,
           `64 bytes from 104.21.3.112: icmp_seq=2 ttl=56 time=${p3} ms`,
-          '--- api.buildwithpnj.com ping statistics ---',
+          '--- api.buildwithpnj.in ping statistics ---',
           '3 packets transmitted, 3 received, 0% packet loss'
         ];
       case 'telemetry':

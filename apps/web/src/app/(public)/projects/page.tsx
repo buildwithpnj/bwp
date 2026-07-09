@@ -3,7 +3,7 @@ import { getProjects } from '@/lib/content';
 import { ProjectsList } from '@/components/projects-list';
 
 export const metadata = {
-  title: 'Projects — BuildWithPNJ',
+  title: 'Projects',
   description: 'Technical project showcase of Prakash Nandan Jha (PNJ), AI Engineer building production-grade tools in public.',
 };
 

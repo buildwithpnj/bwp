@@ -29,14 +29,14 @@ export const metadata: Metadata = {
   },
   description:
     'Architecting autonomous AI products, context-aware systems, and production-ready agentic workflows. Discover verified system designs and active product blueprints.',
-  metadataBase: new URL('https://buildwithpnj.com'),
+  metadataBase: new URL('https://buildwithpnj.in'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: 'BuildWithPNJ | AI Engineering Lab & Products',
     description: 'Architecting autonomous AI products, context-aware systems, and production-ready agentic workflows.',
-    url: 'https://buildwithpnj.com',
+    url: 'https://buildwithpnj.in',
     siteName: 'BuildWithPNJ',
     type: 'website',
     locale: 'en_US',

@@ -17,6 +17,22 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: `${project.title} — BuildWithPNJ`,
     description: project.tagline,
+    alternates: {
+      canonical: `/projects/${project.slug}`,
+    },
+    openGraph: {
+      title: `${project.title} — BuildWithPNJ`,
+      description: project.tagline,
+      url: `https://buildwithpnj.in/projects/${project.slug}`,
+      type: 'website',
+      siteName: 'BuildWithPNJ',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${project.title} — BuildWithPNJ`,
+      description: project.tagline,
+      creator: '@buildwithpnj',
+    },
   };
 }
 

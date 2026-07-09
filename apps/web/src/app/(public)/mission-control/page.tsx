@@ -7,7 +7,7 @@ import fs from 'fs';
 import path from 'path';
 
 export const metadata = {
-  title: 'Mission Control — BuildWithPNJ',
+  title: 'Mission Control',
   description: 'Live telemetry command center of BuildWithPNJ. Track real-time developer metrics, GitHub commits heatmap, and roadmap milestones.',
 };
 
@@ -242,7 +242,7 @@ export default function PublicMissionControlPage() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-positive">☑</span>
-              <span>Live login working: prakashjhadps@gmail.com</span>
+              <span>Live login verified for admin account</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">☐</span>
