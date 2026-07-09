@@ -11,15 +11,46 @@ import {
   ShieldCheck, 
   CheckCircle2, 
   Circle,
-  Code2
+  Youtube,
+  Instagram,
+  Linkedin,
+  Github,
+  Facebook,
+  Globe,
+  Share2,
+  BookOpen
 } from 'lucide-react';
 
 export const metadata = {
   title: 'About — BuildWithPNJ',
-  description: 'Prakash Nandan Jha (PNJ), AI Engineer building production-ready tools in public. Read about my origin story, values, and targets.',
+  description: 'Prakash Nandan Jha (buildwithpnj), AI Engineer building production-grade tools, voice agents, and RAG systems in public.',
 };
 
 export default function PublicAboutPage() {
+  const skillsData = [
+    { category: 'Programming', items: ['Python', 'JavaScript', 'TypeScript', 'SQL', 'HTML5', 'CSS3'] },
+    { category: 'Backend', items: ['FastAPI', 'Flask', 'Node.js', 'Express'] },
+    { category: 'Frontend', items: ['React', 'Next.js', 'Tailwind CSS', 'shadcn/ui'] },
+    { category: 'Databases & Cache', items: ['PostgreSQL', 'MongoDB', 'Redis'] },
+    { category: 'Machine Learning', items: ['PyTorch', 'TensorFlow', 'scikit-learn', 'Transformers', 'LoRA/QLoRA', 'ONNX Runtime', 'YOLOv8'] },
+    { category: 'LLMs & GenAI', items: ['GPT-4/4o', 'Claude', 'Gemini', 'Mistral', 'LLaMA', 'DeepSeek'] },
+    { category: 'RAG & Vector DBs', items: ['Qdrant', 'Pinecone', 'FAISS', 'Chroma', 'Hybrid RAG'] },
+    { category: 'Agents & Workflows', items: ['LangChain', 'LangGraph', 'Multi-Agent Workflows', 'Tool-calling'] },
+    { category: 'Cloud & DevOps', items: ['Azure', 'GCP', 'Docker', 'Kubernetes', 'GitHub Actions', 'MLflow'] },
+    { category: 'Security & Audit', items: ['RLS', 'RBAC', 'DPDP Awareness', 'CSP Headers', 'Rate Limiting', 'Secrets Management'] }
+  ];
+
+  const profiles = [
+    { name: 'Website', url: 'https://www.buildwithpnj.in', icon: <Globe className="h-4 w-4" /> },
+    { name: 'LinkedIn', url: 'https://www.linkedin.com/in/buildwithpnj/', icon: <Linkedin className="h-4 w-4" /> },
+    { name: 'GitHub', url: 'https://github.com/buildwithpnj', icon: <Github className="h-4 w-4" /> },
+    { name: 'YouTube', url: 'https://www.youtube.com/@buildwithPNJ', icon: <Youtube className="h-4 w-4" /> },
+    { name: 'Instagram', url: 'https://www.instagram.com/buildwithpnj/', icon: <Instagram className="h-4 w-4" /> },
+    { name: 'Threads', url: 'https://www.threads.net/@buildwithpnj', icon: <Share2 className="h-4 w-4" /> },
+    { name: 'Dev.to', url: 'https://dev.to/buildwithpnj', icon: <BookOpen className="h-4 w-4" /> },
+    { name: 'Facebook', url: 'https://www.facebook.com/buildwithpnj/', icon: <Facebook className="h-4 w-4" /> }
+  ];
+
   return (
     <div className="flex flex-col gap-16 md:gap-24 text-left max-w-5xl mx-auto py-8">
       
@@ -31,17 +62,14 @@ export default function PublicAboutPage() {
           <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-primary to-purple-600 opacity-20 blur group-hover:opacity-40 transition duration-300" />
           
           <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-2xl border border-border/50 bg-card/40 backdrop-blur overflow-hidden flex flex-col items-center justify-center shadow-2xl group-hover:border-primary/40 transition-all duration-300">
-            {/* The Pixelated Portrait Image */}
             <img 
               src="/assets/images/portrait-1.webp" 
               alt="Prakash Nandan Jha" 
               className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 group-hover:scale-105"
               style={{ imageRendering: 'pixelated' }}
             />
-            {/* Ambient Dark Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-80" />
             
-            {/* Active Scanning Laser Line */}
             <div className="absolute left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_8px_rgba(34,211,238,0.8)]" 
                  style={{
                    animation: 'scanLine 3s linear infinite',
@@ -49,7 +77,6 @@ export default function PublicAboutPage() {
                  }} 
             />
 
-            {/* LED Status Overlay */}
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between font-mono text-[8px] text-primary-foreground bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded border border-border/30">
               <span className="font-pixel flex items-center gap-1">
                 <span className="h-1 w-1 rounded-full bg-emerald-400 animate-ping inline-block" />
@@ -69,13 +96,12 @@ export default function PublicAboutPage() {
             Prakash Nandan Jha
           </h1>
           <p className="text-sm font-mono text-muted-foreground -mt-2">
-            Principal AI Product Engineer @ BuildWithPNJ
+            Principal AI Product Engineer @ buildwithpnj
           </p>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-2">
-            I architect autonomous AI agents, stateful vector search pipelines, and local-first workflow engines. My focus is on deploying secure, database-driven systems that solve daily operational bottlenecks—then publishing the complete architectural designs in public.
+            I am Prakash Nandan Jha, known online as **buildwithpnj**. I have 2+ years of production software and AI engineering experience. My focus is shipping production-grade AI systems, multilingual voice agents, robust RAG engines, and operational dashboards for local service businesses and global clients.
           </p>
           
-          {/* Quick Hardware/Stack Telemetry HUD */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 p-4 rounded-xl border border-border/30 bg-card/25 backdrop-blur-sm font-mono text-[9px]">
             <div className="flex flex-col gap-0.5">
               <span className="text-muted-foreground uppercase text-[8px]">LOCAL CORE</span>
@@ -92,7 +118,7 @@ export default function PublicAboutPage() {
             <div className="flex flex-col gap-0.5">
               <span className="text-muted-foreground uppercase text-[8px]">SERVER FRAME</span>
               <span className="text-foreground font-black flex items-center gap-1">
-                <Server className="h-3 w-3 text-primary" /> FastAPI/Celery
+                <Server className="h-3 w-3 text-primary" /> FastAPI/Redis
               </span>
             </div>
             <div className="flex flex-col gap-0.5">
@@ -106,10 +132,8 @@ export default function PublicAboutPage() {
 
       </section>
 
-      {/* 2. STORY & CORE VALUES SECTION */}
+      {/* 2. CHRONICLES & MISSION */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-        
-        {/* Story Content */}
         <div className="lg:col-span-7 flex flex-col gap-6">
           <div className="flex items-center gap-2">
             <span className="font-mono text-[10px] tracking-[0.25em] text-primary/80 uppercase">
@@ -136,117 +160,105 @@ export default function PublicAboutPage() {
           </div>
         </div>
 
-        {/* Core Values Sidebar */}
         <div className="lg:col-span-5 p-6 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-md flex flex-col gap-6 h-fit shadow-lg shadow-black/5">
           <div className="flex items-center gap-2">
             <span className="font-mono text-[9px] tracking-[0.25em] text-primary/80 uppercase font-bold">
-              {"// OPERATIONAL PRINCIPLES"}
+              {"// MISSION STATEMENT"}
             </span>
           </div>
-          
-          <div className="flex flex-col gap-4 text-xs">
-            {/* Value 1 */}
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border/20">
-              <Terminal className="h-4.5 w-4.5 text-primary shrink-0 mt-0.5" />
-              <div className="flex flex-col gap-0.5">
-                <span className="font-bold text-foreground">Local-First Vector Compute</span>
-                <p className="text-muted-foreground leading-relaxed text-[11px]">
-                  Keep user data local. Embedding models and vector stores should remain fully self-hostable to guarantee privacy.
-                </p>
-              </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Building a strong AI engineering brand as **buildwithpnj** while shipping revenue-generating verticals and production systems. We skip theoretical delay and focus on shipping working software.
+          </p>
+          <div className="flex flex-col gap-3">
+            <div className="text-[10px] font-pixel text-muted-foreground tracking-widest uppercase">
+              {"// WHAT I'VE BUILT"}
             </div>
-
-            {/* Value 2 */}
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border/20">
-              <Lightbulb className="h-4.5 w-4.5 text-primary shrink-0 mt-0.5" />
-              <div className="flex flex-col gap-0.5">
-                <span className="font-bold text-foreground">Open-Source Blueprints</span>
-                <p className="text-muted-foreground leading-relaxed text-[11px]">
-                  Show the errors, warnings, and migration blocks. Publishing full schema specifications builds collective developer trust.
-                </p>
-              </div>
-            </div>
-
-            {/* Value 3 */}
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border/20">
-              <Compass className="h-4.5 w-4.5 text-primary shrink-0 mt-0.5" />
-              <div className="flex flex-col gap-0.5">
-                <span className="font-bold text-foreground">Cognitive Flow Design</span>
-                <p className="text-muted-foreground leading-relaxed text-[11px]">
-                  High information density combined with keyboard-first shortcuts and clean, responsive typography maximizes builder flow.
-                </p>
-              </div>
-            </div>
+            <ul className="text-xs text-foreground font-mono flex flex-col gap-2">
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                AI growth agents for local businesses.
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                Production voice agent systems.
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                RAG-based business assistants.
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                Internal operating systems and dashboards.
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                Bespoke client and demo websites.
+              </li>
+            </ul>
           </div>
         </div>
-
       </section>
 
-      {/* 3. TIMELINE SECTION */}
+      {/* 3. CORE SKILL MATRIX GRID */}
       <section className="flex flex-col gap-8 border-t border-border/40 pt-16">
         <div className="flex flex-col gap-1.5">
           <span className="font-mono text-[10px] tracking-[0.25em] text-primary/80 uppercase">
-            {"// ARCHITECTURE MILESTONES"}
+            {"// CAPABILITY MATRIX"}
           </span>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">
-            Development Timeline
+            Technical Skill Set
           </h2>
         </div>
-        
-        <div className="flex flex-col border-l border-border/40 pl-6 ml-3 gap-8">
-          
-          {/* Milestone 1 */}
-          <div className="relative group">
-            <span className="absolute -left-[29px] top-1.5 w-3 h-3 rounded-full bg-primary border-2 border-background shadow-[0_0_10px_rgba(59,130,246,0.5)] animate-pulse" />
-            <div className="flex flex-col gap-1.5">
-              <span className="font-mono text-[9px] text-primary/80 uppercase font-black">
-                JULY 2026
-              </span>
-              <h4 className="font-bold text-foreground text-sm">
-                BuildWithPNJ Command Center Launch
-              </h4>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                Released the unified dashboard, connecting live GitHub commits telemetry, weekly targets metrics, and local R&D experiments to public developers.
-              </p>
-            </div>
-          </div>
-          
-          {/* Milestone 2 */}
-          <div className="relative group">
-            <span className="absolute -left-[29px] top-1.5 w-3 h-3 rounded-full bg-primary border-2 border-background" />
-            <div className="flex flex-col gap-1.5">
-              <span className="font-mono text-[9px] text-muted-foreground/80 uppercase font-bold">
-                MAY 2026
-              </span>
-              <h4 className="font-bold text-foreground text-sm">
-                Warborn OS Core Alpha Shipped
-              </h4>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                Deployed a secure, self-hosted workspace instance containing double-entry ledgers, automated habits checking, and Google Drive metadata folder sync.
-              </p>
-            </div>
-          </div>
 
-          {/* Milestone 3 */}
-          <div className="relative group">
-            <span className="absolute -left-[29px] top-1.5 w-3 h-3 rounded-full bg-primary border-2 border-background" />
-            <div className="flex flex-col gap-1.5">
-              <span className="font-mono text-[9px] text-muted-foreground/80 uppercase font-bold">
-                JANUARY 2026
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {skillsData.map((skillGroup, idx) => (
+            <div key={idx} className="p-5 rounded-2xl border border-border/40 bg-card/25 backdrop-blur-sm flex flex-col gap-3 shadow-sm hover:border-primary/20 transition-all">
+              <span className="font-mono text-[10px] text-primary uppercase font-bold tracking-wider">
+                {skillGroup.category}
               </span>
-              <h4 className="font-bold text-foreground text-sm">
-                AI Orchestration R&D Init
-              </h4>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                Conducted consensus protocol evaluations inside LangGraph and custom state machines to minimize logic loop errors in multi-agent routing systems.
-              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {skillGroup.items.map((item, itemIdx) => (
+                  <span key={itemIdx} className="text-[10px] font-mono px-2 py-0.5 rounded bg-secondary/80 text-muted-foreground border border-border/30">
+                    {item}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-
+          ))}
         </div>
       </section>
 
-      {/* 4. CURRENT TARGETS SECTION */}
+      {/* 4. PUBLIC PROFILES SECTION */}
+      <section className="flex flex-col gap-8 border-t border-border/40 pt-16">
+        <div className="flex flex-col gap-1.5">
+          <span className="font-mono text-[10px] tracking-[0.25em] text-primary/80 uppercase">
+            {"// SOCIAL ROUTING"}
+          </span>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            Public Connections
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {profiles.map((profile, idx) => (
+            <a 
+              key={idx}
+              href={profile.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group p-4 rounded-xl border border-border/40 bg-card/25 hover:bg-secondary/40 hover:border-primary/20 flex items-center justify-between gap-3 transition-all duration-300 hover:-translate-y-[2px] shadow-sm font-mono text-xs"
+            >
+              <div className="flex items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
+                {profile.icon}
+                <span>{profile.name}</span>
+              </div>
+              <ArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+            </a>
+          ))}
+        </div>
+      </section>
+
+      {/* 5. CURRENT TARGETS SECTION */}
       <section className="flex flex-col gap-8 border-t border-border/40 pt-16">
         <div className="flex flex-col gap-1.5">
           <span className="font-mono text-[10px] tracking-[0.25em] text-primary/80 uppercase">
@@ -258,7 +270,6 @@ export default function PublicAboutPage() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] font-mono">
-          {/* Target 1 */}
           <div className="p-4 rounded-xl border border-border/40 bg-card/25 backdrop-blur-sm flex items-center justify-between gap-4 shadow-sm hover:border-primary/20 transition-all">
             <div className="flex items-center gap-3 text-muted-foreground">
               <CheckCircle2 className="h-4.5 w-4.5 text-emerald-400 shrink-0" />
@@ -269,7 +280,6 @@ export default function PublicAboutPage() {
             </span>
           </div>
 
-          {/* Target 2 */}
           <div className="p-4 rounded-xl border border-border/40 bg-card/25 backdrop-blur-sm flex items-center justify-between gap-4 shadow-sm hover:border-primary/20 transition-all">
             <div className="flex items-center gap-3 text-muted-foreground">
               <CheckCircle2 className="h-4.5 w-4.5 text-emerald-400 shrink-0" />
@@ -280,7 +290,6 @@ export default function PublicAboutPage() {
             </span>
           </div>
 
-          {/* Target 3 */}
           <div className="p-4 rounded-xl border border-border/40 bg-card/25 backdrop-blur-sm flex items-center justify-between gap-4 shadow-sm hover:border-primary/20 transition-all">
             <div className="flex items-center gap-3 text-muted-foreground">
               <Circle className="h-4.5 w-4.5 text-primary shrink-0" />
@@ -291,7 +300,6 @@ export default function PublicAboutPage() {
             </span>
           </div>
 
-          {/* Target 4 */}
           <div className="p-4 rounded-xl border border-border/40 bg-card/25 backdrop-blur-sm flex items-center justify-between gap-4 shadow-sm hover:border-primary/20 transition-all">
             <div className="flex items-center gap-3 text-muted-foreground">
               <Circle className="h-4.5 w-4.5 text-primary shrink-0" />

@@ -1,6 +1,6 @@
 ---
 title: "The Open Source Archives: Retrospective Part 2 (May 2026 - Jul 2026)"
-excerpt: "Analyzing 3D RAG Portfolios, Dialora AI receptionists, payment timeouts, browser PDF editors (PDFSeva), and the Unified Personal OS."
+excerpt: "Analyzing 3D RAG Portfolios, production voice agent systems, payment timeouts, browser PDF editors (PDFSeva), and the Unified Personal OS."
 publishDate: "2026-07-06"
 tags: ["retrospective", "nextjs", "webrtc", "pdfjs", "fastapi"]
 featured: true
@@ -13,9 +13,9 @@ In this second part of our historical engineering review, we document the system
 
 ## 🛠️ Project Retrospective
 
-### 1. Dialora AI Receptionist
-*   **Purpose**: AI voice agent managing customer phone calls, bookings, and CRM logs.
-*   **Local Location**: `C:\Users\praka\my-github-projects\DialoraAI`
+### 1. Production Voice Agent System
+*   **Purpose**: AI voice agent managing inbound customer calls, routing intents, and logging interactions.
+*   **Local Location**: `C:\Users\praka\my-github-projects\voice-agent-system`
 *   **Key Tech**: Next.js 16 (App Router), TS, Tailwind v4, Framer Motion, Recharts.
 *   **Key Commit Records**:
     *   `4c7dc10 - feat: add ROICalculator widget to root homepage /app/page.tsx (2026-06-12)`

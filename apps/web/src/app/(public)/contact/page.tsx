@@ -1,101 +1,256 @@
-import React from 'react';
-import { Mail, Github, Twitter, Linkedin } from 'lucide-react';
+'use client';
 
-export const metadata = {
-  title: 'Contact — BuildWithPNJ',
-  description: 'Connect with Prakash Nandan Jha (PNJ). Contact details for collaborations, consulting, and questions.',
-};
+import React, { useState } from 'react';
+import { 
+  Mail, 
+  Github, 
+  Linkedin, 
+  Youtube, 
+  Instagram, 
+  Share2, 
+  BookOpen, 
+  Send, 
+  CheckCircle2,
+  AlertCircle,
+  Facebook
+} from 'lucide-react';
 
 export default function PublicContactPage() {
+  const [formData, setFormData] = useState({
+    name: '',
+    company: '',
+    useCase: 'Production Voice Agent',
+    budgetRange: 'Startup / Discovery Phase',
+    message: '',
+    altContact: ''
+  });
+
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.message || !formData.altContact) {
+      setStatus('error');
+      return;
+    }
+
+    setStatus('submitting');
+    
+    // Simulate API request processing
+    setTimeout(() => {
+      setStatus('success');
+      setFormData({
+        name: '',
+        company: '',
+        useCase: 'Production Voice Agent',
+        budgetRange: 'Startup / Discovery Phase',
+        message: '',
+        altContact: ''
+      });
+    }, 1200);
+  };
+
+  const socialLinks = [
+    { name: 'LinkedIn', url: 'https://www.linkedin.com/in/buildwithpnj/', icon: <Linkedin className="h-4 w-4 text-muted-foreground" /> },
+    { name: 'GitHub', url: 'https://github.com/buildwithpnj', icon: <Github className="h-4 w-4 text-muted-foreground" /> },
+    { name: 'YouTube', url: 'https://www.youtube.com/@buildwithPNJ', icon: <Youtube className="h-4 w-4 text-muted-foreground" /> },
+    { name: 'Instagram', url: 'https://www.instagram.com/buildwithpnj/', icon: <Instagram className="h-4 w-4 text-muted-foreground" /> },
+    { name: 'Threads', url: 'https://www.threads.net/@buildwithpnj', icon: <Share2 className="h-4 w-4 text-muted-foreground" /> },
+    { name: 'Dev.to', url: 'https://dev.to/buildwithpnj', icon: <BookOpen className="h-4 w-4 text-muted-foreground" /> },
+    { name: 'Facebook', url: 'https://www.facebook.com/buildwithpnj/', icon: <Facebook className="h-4 w-4 text-muted-foreground" /> }
+  ];
+
   return (
-    <div className="min-h-[60vh] flex flex-col justify-center items-center py-10 px-4">
+    <div className="flex flex-col gap-12 text-left max-w-5xl mx-auto py-8">
       
-      <div className="w-full max-w-md flex flex-col gap-8 text-center sm:text-left">
+      {/* Title */}
+      <div className="flex flex-col gap-2">
+        <div className="font-mono text-[10px] text-primary tracking-[0.25em] uppercase font-bold">{"// PIPELINE INGESTION"}</div>
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">Initiate System Design</h1>
+        <p className="text-base text-muted-foreground max-w-xl leading-relaxed mt-2">
+          Tell us what you are trying to automate — voice, RAG, or a custom agentic workflow — and we will respond with a technical brief within 48 hours.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         
-        {/* Title */}
-        <div className="flex flex-col gap-2 text-center">
-          <div className="font-pixel text-[11px] text-primary tracking-wider uppercase">{"// CONTACT"}</div>
-          <h1 className="text-3xl sm:text-4xl font-pixel text-foreground">{"Let's Connect"}</h1>
-          <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-            Got a system design question, an open-source idea, or want to collaborate?
-          </p>
+        {/* Left Side: Contact Form */}
+        <div className="lg:col-span-7 p-6 sm:p-8 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-md relative overflow-hidden shadow-lg shadow-black/5">
+          {status === 'success' ? (
+            <div className="flex flex-col items-center text-center py-12 gap-4">
+              <div className="h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <h3 className="text-lg font-bold text-foreground">System Intent Ingested</h3>
+                <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
+                  Your requirements brief has been submitted successfully to the pipeline. We will follow up via your alt contact details.
+                </p>
+              </div>
+              <button 
+                onClick={() => setStatus('idle')}
+                className="mt-4 px-4 py-2 rounded-xl text-xs font-mono border border-border/40 bg-secondary/80 hover:bg-accent text-muted-foreground hover:text-foreground transition-all"
+              >
+                Submit another request
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Name */}
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="name" className="font-mono text-[10px] text-muted-foreground uppercase font-bold">Your Name *</label>
+                  <input
+                    type="text"
+                    id="name"
+                    required
+                    placeholder="Prakash"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="h-10 px-3 rounded-xl border border-border/40 bg-background/50 focus:border-primary/50 focus:outline-none transition-colors"
+                  />
+                </div>
+
+                {/* Company */}
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="company" className="font-mono text-[10px] text-muted-foreground uppercase font-bold">Company</label>
+                  <input
+                    type="text"
+                    id="company"
+                    placeholder="AI Lab"
+                    value={formData.company}
+                    onChange={(e) => setFormData({...formData, company: e.target.value})}
+                    className="h-10 px-3 rounded-xl border border-border/40 bg-background/50 focus:border-primary/50 focus:outline-none transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Use Case Dropdown */}
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="useCase" className="font-mono text-[10px] text-muted-foreground uppercase font-bold">Use Case *</label>
+                  <select
+                    id="useCase"
+                    value={formData.useCase}
+                    onChange={(e) => setFormData({...formData, useCase: e.target.value})}
+                    className="h-10 px-3 rounded-xl border border-border/40 bg-background/50 focus:border-primary/50 focus:outline-none transition-colors font-sans text-xs cursor-pointer"
+                  >
+                    <option>Production Voice Agent</option>
+                    <option>RAG Business Assistant</option>
+                    <option>Custom Agentic Workflow</option>
+                    <option>Core Software Automation</option>
+                  </select>
+                </div>
+
+                {/* Budget Dropdown */}
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="budgetRange" className="font-mono text-[10px] text-muted-foreground uppercase font-bold">Budget Range *</label>
+                  <select
+                    id="budgetRange"
+                    value={formData.budgetRange}
+                    onChange={(e) => setFormData({...formData, budgetRange: e.target.value})}
+                    className="h-10 px-3 rounded-xl border border-border/40 bg-background/50 focus:border-primary/50 focus:outline-none transition-colors font-sans text-xs cursor-pointer"
+                  >
+                    <option>Startup / Discovery Phase</option>
+                    <option>SMB Automation Scale</option>
+                    <option>Enterprise Pipeline</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Message */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="message" className="font-mono text-[10px] text-muted-foreground uppercase font-bold">Message Details *</label>
+                <textarea
+                  id="message"
+                  required
+                  rows={4}
+                  placeholder="Outline your target automation requirements and constraints..."
+                  value={formData.message}
+                  onChange={(e) => setFormData({...formData, message: e.target.value})}
+                  className="p-3 rounded-xl border border-border/40 bg-background/50 focus:border-primary/50 focus:outline-none transition-colors resize-none"
+                />
+              </div>
+
+              {/* Alternate Contact / Email */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="altContact" className="font-mono text-[10px] text-muted-foreground uppercase font-bold">Primary Contact Info *</label>
+                <input
+                  type="text"
+                  id="altContact"
+                  required
+                  placeholder="Email, X (@handle), or LinkedIn url"
+                  value={formData.altContact}
+                  onChange={(e) => setFormData({...formData, altContact: e.target.value})}
+                  className="h-10 px-3 rounded-xl border border-border/40 bg-background/50 focus:border-primary/50 focus:outline-none transition-colors"
+                />
+              </div>
+
+              {status === 'error' && (
+                <div className="flex items-center gap-2 text-xs text-rose-500 bg-rose-500/5 border border-rose-500/10 p-3 rounded-xl">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>Please fill in all required fields marked with *</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={status === 'submitting'}
+                className="mt-2 flex items-center justify-center gap-2 h-11 px-5 rounded-xl font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-all active:scale-[0.98] shadow-md shadow-primary/10 disabled:opacity-50"
+              >
+                {status === 'submitting' ? 'Submitting...' : 'Submit System Request'} <Send className="h-3.5 w-3.5" />
+              </button>
+            </form>
+          )}
         </div>
 
-        {/* Minimal Directory Card */}
-        <div className="p-6 rounded-2xl border border-border bg-card flex flex-col gap-5 text-left relative overflow-hidden card-glow-hover">
-          {/* Status badge */}
-          <div className="flex items-center justify-between pb-3 border-b border-border text-xs">
-            <span className="text-muted-foreground font-mono">STATUS:</span>
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-semibold bg-positive/10 text-positive">
-              <span className="w-1.5 h-1.5 rounded-full bg-positive" />
-              Open to Collabs & Consulting
-            </span>
-          </div>
-
-          {/* Email link */}
-          <a
-            href="mailto:hello@buildwithpnj.com"
-            className="flex items-center gap-4 p-3 rounded-xl border border-border bg-background hover:bg-accent group transition-all duration-200"
-          >
-            <div className="h-10 w-10 rounded-lg bg-card border border-border flex items-center justify-center text-primary group-hover:text-primary/80">
-              <Mail className="h-4 w-4" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground font-mono leading-none">EMAIL DIRECT</span>
-              <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors mt-1">hello@buildwithpnj.com</span>
-            </div>
-          </a>
-
-          {/* Social connections */}
-          <div className="flex flex-col gap-2.5">
-            <div className="text-[10px] font-pixel text-muted-foreground tracking-widest uppercase mb-1">{"// SOCIAL NETWORKS"}</div>
+        {/* Right Side: Directory & Direct Connections */}
+        <div className="lg:col-span-5 flex flex-col gap-6">
+          
+          {/* Email Card */}
+          <div className="p-6 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-md flex flex-col gap-4 text-left shadow-sm">
+            <div className="font-mono text-[9px] text-primary/80 tracking-[0.25em] uppercase font-bold">{"// DIRECT ROUTING"}</div>
             
             <a
-              href="https://github.com/buildwithpnj"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between p-2 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+              href="mailto:hello@buildwithpnj.in"
+              className="flex items-center gap-4 p-3 rounded-xl border border-border/45 bg-background/80 hover:bg-accent group transition-all"
             >
-              <div className="flex items-center gap-3">
-                <Github className="h-4 w-4 text-muted-foreground" />
-                <span>GitHub Profile</span>
+              <div className="h-10 w-10 rounded-lg bg-card border border-border flex items-center justify-center text-primary group-hover:text-primary/80">
+                <Mail className="h-4 w-4" />
               </div>
-              <span className="text-[10px] font-mono text-muted-foreground">@buildwithpnj</span>
-            </a>
-
-            <a
-              href="https://twitter.com/buildwithpnj"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between p-2 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <Twitter className="h-4 w-4 text-muted-foreground" />
-                <span>Twitter / X</span>
+              <div className="flex flex-col">
+                <span className="text-[8px] text-muted-foreground font-mono leading-none">EMAIL</span>
+                <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors mt-1 font-mono">
+                  hello@buildwithpnj.in
+                </span>
               </div>
-              <span className="text-[10px] font-mono text-muted-foreground">@buildwithpnj</span>
-            </a>
-
-            <a
-              href="https://linkedin.com/in/pnj"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between p-2 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <Linkedin className="h-4 w-4 text-muted-foreground" />
-                <span>LinkedIn Workspace</span>
-              </div>
-              <span className="text-[10px] font-mono text-muted-foreground">in/pnj</span>
             </a>
           </div>
 
-        </div>
+          {/* Social Profiles Grid */}
+          <div className="p-6 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-md flex flex-col gap-4 text-left shadow-sm">
+            <div className="font-mono text-[9px] text-primary/80 tracking-[0.25em] uppercase font-bold">{"// NETWORK CHANNELS"}</div>
+            
+            <div className="grid grid-cols-1 gap-2 text-xs">
+              {socialLinks.map((social, idx) => (
+                <a
+                  key={idx}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-xl border border-border/30 bg-background/50 hover:bg-accent hover:border-primary/20 transition-all font-mono"
+                >
+                  <div className="flex items-center gap-2.5">
+                    {social.icon}
+                    <span>{social.name}</span>
+                  </div>
+                  <span className="text-[9px] text-muted-foreground hover:text-primary">Connect</span>
+                </a>
+              ))}
+            </div>
+          </div>
 
-        {/* Info text */}
-        <p className="text-center text-xs text-muted-foreground leading-relaxed max-w-xs mx-auto">
-          Typically responds within 48 hours for engineering inquiries and open-source coordination.
-        </p>
+        </div>
 
       </div>
 
