@@ -1,3 +1,4 @@
+import { MetadataRoute } from 'next';
 import { getBlogPosts, getProjects, getExperiments } from '@/lib/content';
 
 export default function sitemap(): MetadataRoute.Sitemap {
