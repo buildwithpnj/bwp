@@ -1,4 +1,4 @@
-import os
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -7,12 +7,67 @@ class Settings(BaseSettings):
         env_file=(".env", "../../.env"),
         env_file_encoding="utf-8",
         extra="ignore",
+        populate_by_name=True,
     )
 
     # Database
-    database_url: str = (
-        "postgresql+asyncpg://personal_os:personal_os_dev@localhost:5432/personal_os"
+    database_url_env: str = Field(
+        default="postgresql+asyncpg://personal_os:personal_os_dev@localhost:5432/personal_os",
+        validation_alias="database_url",
     )
+
+    @property
+    def database_url(self) -> str:
+        # Fallback to direct environment check
+        url = (
+            os.environ.get("DATABASE_URL") or 
+            os.environ.get("DATABASE_PRIVATE_URL") or 
+            self.database_url_env
+        )
+        if not url:
+            return url
+
+        # Clean trailing/leading whitespace and quotes
+        url = url.strip().strip('"').strip("'")
+        
+        from urllib.parse import urlparse, urlunparse, quote, unquote
+        try:
+            parsed = urlparse(url)
+            scheme = parsed.scheme
+            
+            # Standardize scheme for asyncpg
+            if scheme in ("postgres", "postgresql"):
+                scheme = "postgresql+asyncpg"
+                
+            netloc = parsed.netloc
+            if '@' in netloc:
+                userinfo, hostinfo = netloc.rsplit('@', 1)
+                if ':' in userinfo:
+                    username, password = userinfo.split(':', 1)
+                    # URL-encode username and password safely
+                    username = quote(unquote(username))
+                    password = quote(unquote(password))
+                    userinfo = f"{username}:{password}"
+                else:
+                    userinfo = quote(unquote(userinfo))
+                netloc = f"{userinfo}@{hostinfo}"
+                
+            # Reconstruct standardized URL
+            return urlunparse((
+                scheme,
+                netloc,
+                parsed.path,
+                parsed.params,
+                parsed.query,
+                parsed.fragment
+            ))
+        except Exception:
+            # Fallback simple replacement if parsing fails
+            if url.startswith("postgres://"):
+                return url.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif url.startswith("postgresql://"):
+                return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            return url
 
 
 
