@@ -242,6 +242,22 @@ The debug output made the sequence clear. The startup lifespan ran `asyncio.run(
 
 ---
 
+## Detailed Q&A: asyncio Event Loop Failure Dynamics
+
+**Q: If the thread ran in the background, why did it overwrite the event loop of the main thread?**
+* **A:** By default, Python's `asyncio` policy keeps a thread-local map of event loops. However, in child threads created via standard libraries (like `threading.Thread` or `ThreadPoolExecutor`), calling `asyncio.run()` forces the loop setup code to execute. This code changes the event loop policy state globally for the active loop registry if not guarded. In CPython, if the main thread has already set up uvicorn's event loop, the child thread's execution of `set_event_loop(None)` in the `finally` block of `asyncio.run()` resets the default loop provider reference back to `None` for the parent context. When SQLAlchemy tries to resolve the event loop in the request handlers, it calls `asyncio.get_event_loop()` which delegates to the now-cleared default policy, resulting in the closed loop error.
+
+**Q: Could we have solved this by using `asyncio.get_event_loop().create_task(seed())` instead?**
+* **A:** Yes! Running `asyncio.create_task(seed())` inside the main thread's lifespan context works because it schedules the task directly on the active, running uvicorn event loop. The reason this was not originally done was due to Alembic. Alembic is synchronous and performs blocking I/O, which *must* be run in a thread pool to avoid freezing the main loop. When we grouped both migrations (sync) and seeding (async) into a single worker thread, we introduced the need to execute async code from a sync thread context, which led to the misuse of `asyncio.run()`.
+
+**Q: Why didn't `loop.run_until_complete(seed())` inside the thread fix it?**
+* **A:** Calling `run_until_complete` requires a reference to the active loop. If we created a new loop in the thread (`loop = asyncio.new_event_loop()`), we still had to close it. Closing that loop didn't corrupt the main loop's reference, but it created a secondary problem: SQLAlchemy's async connection pool is bound to the loop that created it. If the pool was initialized on the thread's loop during seeding, subsequent request handlers on the main loop threw errors because the connection file descriptors belonged to the closed thread loop.
+
+**Q: Why does the closed loop error only manifest when a database connection is actually active?**
+* **A:** During local testing, if the database connection was refused (e.g., local Postgres down), the seeding code crashed immediately with a connection exception. This exception was caught at the outer try-catch block, bypassing the inner SQLAlchemy operations that associate the connection pool with the active event loop. On Render, where the database connection succeeded, the pool was fully initialized, which bound it to the worker thread's temporary loop. This binding made the subsequent loop closure fatal.
+
+---
+
 ## The Root Cause
 
 `asyncio.run()` is specified by PEP 3156 and documented in the Python stdlib. What the documentation says:
