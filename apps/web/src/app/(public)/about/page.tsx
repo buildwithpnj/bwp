@@ -30,12 +30,33 @@ export default function PublicAboutPage() {
         <div className="relative group shrink-0 select-none">
           <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-primary to-purple-600 opacity-20 blur group-hover:opacity-40 transition duration-300" />
           
-          <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-2xl border border-border/50 bg-card/40 backdrop-blur flex flex-col items-center justify-center p-6 shadow-2xl">
-            <div className="w-16 h-16 rounded-xl bg-primary/5 flex items-center justify-center border border-primary/10 mb-3 group-hover:scale-105 transition-transform">
-              <Code2 className="h-8 w-8 text-primary" />
+          <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-2xl border border-border/50 bg-card/40 backdrop-blur overflow-hidden flex flex-col items-center justify-center shadow-2xl group-hover:border-primary/40 transition-all duration-300">
+            {/* The Pixelated Portrait Image */}
+            <img 
+              src="/assets/images/portrait-1.webp" 
+              alt="Prakash Nandan Jha" 
+              className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 group-hover:scale-105"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            {/* Ambient Dark Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-80" />
+            
+            {/* Active Scanning Laser Line */}
+            <div className="absolute left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_8px_rgba(34,211,238,0.8)]" 
+                 style={{
+                   animation: 'scanLine 3s linear infinite',
+                   top: '0%'
+                 }} 
+            />
+
+            {/* LED Status Overlay */}
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between font-mono text-[8px] text-primary-foreground bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded border border-border/30">
+              <span className="font-pixel flex items-center gap-1">
+                <span className="h-1 w-1 rounded-full bg-emerald-400 animate-ping inline-block" />
+                PNJ.SYS
+              </span>
+              <span className="text-[7px] text-cyan-400/95 font-bold uppercase tracking-wider">ONLINE</span>
             </div>
-            <span className="font-pixel text-xl text-foreground tracking-widest">PNJ</span>
-            <span className="font-mono text-[8px] text-primary mt-1 tracking-wider uppercase">{"// HOST CORE ACTIVE"}</span>
           </div>
         </div>
 

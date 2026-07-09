@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
 import { Providers } from './providers';
+import { SystemTelemetryTicker } from '@/components/system-telemetry-ticker';
 
 const geistSans = Geist({
   subsets: ['latin'],
@@ -66,8 +67,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${pixelOperator.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-background text-foreground antialiased font-sans">
-        <Providers>{children}</Providers>
+      <body className="min-h-screen bg-background text-foreground antialiased font-sans pb-7">
+        <Providers>
+          {children}
+          <SystemTelemetryTicker />
+        </Providers>
       </body>
     </html>
   );
