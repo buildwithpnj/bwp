@@ -1,214 +1,220 @@
-import asyncio
+"""
+Synchronous database seeding — safe to call from any thread.
+
+Uses a plain SQLAlchemy sync engine (psycopg2) so it never touches
+FastAPI's asyncio event loop.
+"""
+import re
 from datetime import datetime, timedelta
 
 from argon2 import PasswordHasher
-from sqlalchemy import select
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import Session, sessionmaker
 
-from app.database import async_session_factory
-from app.models.books import Book
-from app.models.finance import Account, Category, Transaction
-from app.models.user import User
+from app.config import settings
 
 ph = PasswordHasher()
 
 
-async def seed_user_resources(session, user):
-    # Seed categories if none exist for user
-    cat_result = await session.execute(
-        select(Category).where(Category.user_id == user.id).limit(1)
-    )
-    if not cat_result.scalar_one_or_none():
-        print(f"Creating default categories for {user.email}...")
-        categories = [
-            Category(name="Salary", kind="income", user_id=user.id),
-            Category(name="Freelance", kind="income", user_id=user.id),
-            Category(name="Groceries", kind="expense", user_id=user.id),
-            Category(name="Rent", kind="expense", user_id=user.id),
-            Category(name="Utilities", kind="expense", user_id=user.id),
-            Category(name="Dining Out", kind="expense", user_id=user.id),
-            Category(name="Entertainment", kind="expense", user_id=user.id),
-        ]
-        session.add_all(categories)
-        await session.flush()
+def _sync_url(async_url: str) -> str:
+    """Convert postgresql+asyncpg://... → postgresql+psycopg2://..."""
+    return re.sub(r"^postgresql\+asyncpg://", "postgresql+psycopg2://", async_url)
 
-        # Cache categories by name
-        cat_map = {c.name: c for c in categories}
+
+def seed_sync():
+    """
+    Idempotent seed: creates default users & sample data if they don't exist.
+    Safe to call from any thread — uses a sync engine that is created and
+    destroyed entirely within this function.
+    """
+    sync_url = _sync_url(settings.database_url)
+    engine = create_engine(sync_url, echo=False)
+    SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+
+    with SessionLocal() as session:
+        try:
+            _seed_users(session)
+            session.commit()
+            print("Database successfully seeded for all users!")
+        except Exception as e:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    engine.dispose()
+
+
+def _seed_users(session: Session):
+    # 1. test@example.com
+    row = session.execute(
+        text("SELECT id FROM users WHERE email = :email"),
+        {"email": "test@example.com"},
+    ).fetchone()
+    if row is None:
+        print("Creating test user: test@example.com / password123")
+        session.execute(
+            text("INSERT INTO users (email, password_hash) VALUES (:email, :pw)"),
+            {"email": "test@example.com", "pw": ph.hash("password123")},
+        )
+        session.flush()
+        row = session.execute(
+            text("SELECT id FROM users WHERE email = :email"),
+            {"email": "test@example.com"},
+        ).fetchone()
+        print("Test user created.")
     else:
-        print(f"Categories already exist for {user.email}.")
-        cat_res = await session.execute(select(Category).where(Category.user_id == user.id))
-        cat_map = {c.name: c for c in cat_res.scalars().all()}
+        print("Test user already exists.")
+    user_id = row[0]
 
-    # Seed accounts if none exist
-    acc_result = await session.execute(
-        select(Account).where(Account.user_id == user.id).limit(1)
-    )
-    if not acc_result.scalar_one_or_none():
-        print(f"Creating default accounts for {user.email}...")
+    # 2. prakashjhadps@gmail.com
+    row_pj = session.execute(
+        text("SELECT id FROM users WHERE email = :email"),
+        {"email": "prakashjhadps@gmail.com"},
+    ).fetchone()
+    if row_pj is None:
+        print("Creating user: prakashjhadps@gmail.com / password123")
+        session.execute(
+            text("INSERT INTO users (email, password_hash) VALUES (:email, :pw)"),
+            {"email": "prakashjhadps@gmail.com", "pw": ph.hash("password123")},
+        )
+        session.flush()
+        row_pj = session.execute(
+            text("SELECT id FROM users WHERE email = :email"),
+            {"email": "prakashjhadps@gmail.com"},
+        ).fetchone()
+        print("prakashjhadps@gmail.com user created.")
+    else:
+        print("prakashjhadps@gmail.com user already exists.")
+    user_pj_id = row_pj[0]
+
+    # Seed resources for both users
+    for uid in [user_id, user_pj_id]:
+        _seed_resources(session, uid)
+
+
+def _seed_resources(session: Session, user_id: int):
+    # Categories
+    cat_count = session.execute(
+        text("SELECT COUNT(*) FROM categories WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).scalar()
+    if cat_count == 0:
+        print(f"Creating default categories for user {user_id}...")
+        default_categories = [
+            ("Salary", "income"),
+            ("Freelance", "income"),
+            ("Groceries", "expense"),
+            ("Rent", "expense"),
+            ("Utilities", "expense"),
+            ("Dining Out", "expense"),
+            ("Entertainment", "expense"),
+        ]
+        for name, kind in default_categories:
+            session.execute(
+                text("INSERT INTO categories (name, kind, user_id) VALUES (:n, :k, :uid)"),
+                {"n": name, "k": kind, "uid": user_id},
+            )
+        session.flush()
+    else:
+        print(f"Categories already exist for user {user_id}.")
+
+    # Accounts
+    acc_count = session.execute(
+        text("SELECT COUNT(*) FROM accounts WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).scalar()
+    if acc_count == 0:
+        print(f"Creating default accounts for user {user_id}...")
         accounts = [
-            Account(
-                user_id=user.id,
-                name="Main Checking Account",
-                type="bank",
-                currency="INR",
-                opening_balance=50000.00,
-            ),
-            Account(
-                user_id=user.id,
-                name="Cash Wallet",
-                type="cash",
-                currency="INR",
-                opening_balance=2500.00,
-            ),
-            Account(
-                user_id=user.id,
-                name="Credit Card",
-                type="card",
-                currency="INR",
-                opening_balance=0.00,
-            ),
-            Account(
-                user_id=user.id,
-                name="Mutual Funds Portfolio",
-                type="investment",
-                currency="INR",
-                opening_balance=120000.00,
-            ),
+            ("Main Checking Account", "bank", 50000.00),
+            ("Cash Wallet", "cash", 2500.00),
+            ("Credit Card", "card", 0.00),
+            ("Mutual Funds Portfolio", "investment", 120000.00),
         ]
-        session.add_all(accounts)
-        await session.flush()
+        for name, atype, balance in accounts:
+            session.execute(
+                text(
+                    "INSERT INTO accounts (user_id, name, type, currency, opening_balance)"
+                    " VALUES (:uid, :name, :type, 'INR', :bal)"
+                ),
+                {"uid": user_id, "name": name, "type": atype, "bal": balance},
+            )
+        session.flush()
 
-        # Seed transactions
-        print(f"Creating default transactions for {user.email}...")
-        transactions = [
-            # Checking account income/expense
-            Transaction(
-                account_id=accounts[0].id,
-                amount=85000.00,
-                category_id=cat_map.get("Salary").id if "Salary" in cat_map else None,
-                merchant="Company Inc",
-                note="Monthly Salary Credit",
-                occurred_at=datetime.now() - timedelta(days=15),
-                source="manual",
-            ),
-            Transaction(
-                account_id=accounts[0].id,
-                amount=-18000.00,
-                category_id=cat_map.get("Rent").id if "Rent" in cat_map else None,
-                merchant="Landlord",
-                note="Apartment Rent",
-                occurred_at=datetime.now() - timedelta(days=14),
-                source="manual",
-            ),
-            Transaction(
-                account_id=accounts[0].id,
-                amount=-4200.00,
-                category_id=cat_map.get("Utilities").id if "Utilities" in cat_map else None,
-                merchant="Power Grid",
-                note="Electricity Bill",
-                occurred_at=datetime.now() - timedelta(days=10),
-                source="manual",
-            ),
-            # Credit Card expenses
-            Transaction(
-                account_id=accounts[2].id,
-                amount=-3500.00,
-                category_id=cat_map.get("Groceries").id if "Groceries" in cat_map else None,
-                merchant="Supermarket",
-                note="Weekly Groceries",
-                occurred_at=datetime.now() - timedelta(days=5),
-                source="manual",
-            ),
-            Transaction(
-                account_id=accounts[2].id,
-                amount=-1200.00,
-                category_id=cat_map.get("Dining Out").id if "Dining Out" in cat_map else None,
-                merchant="Pizzeria",
-                note="Dinner with friends",
-                occurred_at=datetime.now() - timedelta(days=2),
-                source="manual",
-            ),
+        # Get account ids for transactions
+        acc_rows = session.execute(
+            text("SELECT id, name FROM accounts WHERE user_id = :uid ORDER BY id"),
+            {"uid": user_id},
+        ).fetchall()
+        acc_map = {row[1]: row[0] for row in acc_rows}
+
+        # Get category ids
+        cat_rows = session.execute(
+            text("SELECT id, name FROM categories WHERE user_id = :uid"),
+            {"uid": user_id},
+        ).fetchall()
+        cat_map = {row[1]: row[0] for row in cat_rows}
+
+        now = datetime.now()
+        txns = [
+            (acc_map.get("Main Checking Account"), 85000.00, cat_map.get("Salary"), "Company Inc", "Monthly Salary Credit", now - timedelta(days=15)),
+            (acc_map.get("Main Checking Account"), -18000.00, cat_map.get("Rent"), "Landlord", "Apartment Rent", now - timedelta(days=14)),
+            (acc_map.get("Main Checking Account"), -4200.00, cat_map.get("Utilities"), "Power Grid", "Electricity Bill", now - timedelta(days=10)),
+            (acc_map.get("Credit Card"), -3500.00, cat_map.get("Groceries"), "Supermarket", "Weekly Groceries", now - timedelta(days=5)),
+            (acc_map.get("Credit Card"), -1200.00, cat_map.get("Dining Out"), "Pizzeria", "Dinner with friends", now - timedelta(days=2)),
         ]
-        session.add_all(transactions)
+        for acc_id, amount, cat_id, merchant, note, occurred_at in txns:
+            if acc_id:
+                session.execute(
+                    text(
+                        "INSERT INTO transactions (account_id, amount, category_id, merchant, note, occurred_at, source)"
+                        " VALUES (:aid, :amt, :cid, :merchant, :note, :occ, 'manual')"
+                    ),
+                    {"aid": acc_id, "amt": amount, "cid": cat_id, "merchant": merchant, "note": note, "occ": occurred_at},
+                )
+        session.flush()
     else:
-        print(f"Accounts/transactions already exist for {user.email}.")
+        print(f"Accounts/transactions already exist for user {user_id}.")
 
-    # Seed books if none exist
-    book_result = await session.execute(select(Book).where(Book.user_id == user.id).limit(1))
-    if not book_result.scalar_one_or_none():
-        print(f"Creating default books for {user.email}...")
+    # Books
+    book_count = session.execute(
+        text("SELECT COUNT(*) FROM books WHERE user_id = :uid"),
+        {"uid": user_id},
+    ).scalar()
+    if book_count == 0:
+        print(f"Creating default books for user {user_id}...")
+        now = datetime.now()
         books = [
-            Book(
-                user_id=user.id,
-                title="Atomic Habits",
-                author="James Clear",
-                status="reading",
-                rating=None,
-                started_at=datetime.now() - timedelta(days=7),
-                cover_url="https://images-na.ssl-images-amazon.com/images/I/91bYsX41hL.jpg",
-            ),
-            Book(
-                user_id=user.id,
-                title="Deep Work",
-                author="Cal Newport",
-                status="finished",
-                rating=5,
-                started_at=datetime.now() - timedelta(days=20),
-                finished_at=datetime.now() - timedelta(days=10),
-                cover_url="https://images-na.ssl-images-amazon.com/images/I/41757vP4k4L.jpg",
-            ),
-            Book(
-                user_id=user.id,
-                title="Clean Code",
-                author="Robert C. Martin",
-                status="to-read",
-                rating=None,
-                cover_url="https://images-na.ssl-images-amazon.com/images/I/41xSh45g7tL.jpg",
-            ),
+            ("Atomic Habits", "James Clear", "reading", None, now - timedelta(days=7), None,
+             "https://images-na.ssl-images-amazon.com/images/I/91bYsX41hL.jpg"),
+            ("Deep Work", "Cal Newport", "finished", 5, now - timedelta(days=20), now - timedelta(days=10),
+             "https://images-na.ssl-images-amazon.com/images/I/41757vP4k4L.jpg"),
+            ("Clean Code", "Robert C. Martin", "to-read", None, None, None,
+             "https://images-na.ssl-images-amazon.com/images/I/41xSh45g7tL.jpg"),
         ]
-        session.add_all(books)
+        for title, author, status, rating, started_at, finished_at, cover_url in books:
+            session.execute(
+                text(
+                    "INSERT INTO books (user_id, title, author, status, rating, started_at, finished_at, cover_url)"
+                    " VALUES (:uid, :title, :author, :status, :rating, :started_at, :finished_at, :cover_url)"
+                ),
+                {
+                    "uid": user_id,
+                    "title": title,
+                    "author": author,
+                    "status": status,
+                    "rating": rating,
+                    "started_at": started_at,
+                    "finished_at": finished_at,
+                    "cover_url": cover_url,
+                },
+            )
+        session.flush()
     else:
-        print(f"Books already exist for {user.email}.")
+        print(f"Books already exist for user {user_id}.")
 
 
-async def seed_data():
-    async with async_session_factory() as session:
-        # 1. Seed test@example.com
-        result = await session.execute(select(User).where(User.email == "test@example.com"))
-        user = result.scalar_one_or_none()
-
-        if not user:
-            print("Creating test user: test@example.com / password123")
-            user = User(
-                email="test@example.com",
-                password_hash=ph.hash("password123"),
-            )
-            session.add(user)
-            await session.flush()
-        else:
-            print("Test user already exists.")
-
-        # 2. Seed prakashjhadps@gmail.com
-        result_pj = await session.execute(select(User).where(User.email == "prakashjhadps@gmail.com"))
-        user_pj = result_pj.scalar_one_or_none()
-
-        if not user_pj:
-            print("Creating user: prakashjhadps@gmail.com / password123")
-            user_pj = User(
-                email="prakashjhadps@gmail.com",
-                password_hash=ph.hash("password123"),
-            )
-            session.add(user_pj)
-            await session.flush()
-        else:
-            print("prakashjhadps@gmail.com user already exists.")
-
-        # Seed resources for both users
-        await seed_user_resources(session, user)
-        await seed_user_resources(session, user_pj)
-
-        await session.commit()
-        print("Database successfully seeded for all users!")
-
-
+# Allow running directly: python seed.py
 if __name__ == "__main__":
-    asyncio.run(seed_data())
+    seed_sync()

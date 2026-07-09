@@ -1,7 +1,10 @@
+import sys
+import traceback
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.routers import (
@@ -32,18 +35,19 @@ async def lifespan(app: FastAPI):
             alembic_cfg = Config("alembic.ini")
             command.upgrade(alembic_cfg, "head")
             print("DEBUG: Database migrations applied successfully in thread!", file=sys.stderr)
-            
-            # Run async seed_data in this clean thread event loop
-            import asyncio
-            from seed import seed_data
-            asyncio.run(seed_data())
+
+            # Use synchronous seeding — no asyncio, no event loop conflicts.
+            from seed import seed_sync
+            seed_sync()
             print("DEBUG: Database seeding complete in thread!", file=sys.stderr)
         except Exception as e:
             print(f"DEBUG: Thread migrations/seeding failed: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc(file=sys.stderr)
 
-    thread = threading.Thread(target=run_migrations_and_seed)
+    thread = threading.Thread(target=run_migrations_and_seed, daemon=True)
     thread.start()
-    thread.join() # Wait for database initialization to finish before starting API
+    thread.join()  # Wait for database initialization before starting API
     
     yield
     # Shutdown
@@ -59,14 +63,27 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS
+# CORS - include live domain alongside localhost
+cors_origins = settings.cors_origins.split(",")
+if "https://buildwithpnj.in" not in cors_origins:
+    cors_origins.append("https://buildwithpnj.in")
+if "https://www.buildwithpnj.in" not in cors_origins:
+    cors_origins.append("https://www.buildwithpnj.in")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins.split(","),
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"UNHANDLED 500 ERROR on {request.method} {request.url}", file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
+    return JSONResponse(status_code=500, content={"detail": str(exc)})
 
 # Mount routers
 app.include_router(auth.router)
