@@ -48,6 +48,8 @@ export default async function PublicHomePage() {
         <ScrollReveal>
           <AnimatedMissions />
         </ScrollReveal>
+
+        <div className="section-divider" />
  
         {/* 3. DEDICATED WARBORN OS SECTION */}
         <ScrollReveal delay={80}>
@@ -130,6 +132,8 @@ export default async function PublicHomePage() {
           </section>
         </ScrollReveal>
 
+        <div className="section-divider" />
+
         {/* 4. FEATURED PROJECTS SECTION */}
         <ScrollReveal delay={80}>
           <section className="flex flex-col gap-10">
@@ -196,6 +200,8 @@ export default async function PublicHomePage() {
           </section>
         </ScrollReveal>
 
+        <div className="section-divider" />
+
         {/* 5. ENGINEERING JOURNAL PREVIEW */}
         <ScrollReveal delay={80}>
           <section className="flex flex-col gap-10">
@@ -250,6 +256,8 @@ export default async function PublicHomePage() {
           </section>
         </ScrollReveal>
 
+        <div className="section-divider" />
+
         {/* 6. LABS PREVIEW SECTION */}
         <ScrollReveal delay={80}>
           <section className="flex flex-col gap-10">
@@ -303,6 +311,8 @@ export default async function PublicHomePage() {
             </div>
           </section>
         </ScrollReveal>
+
+        <div className="section-divider" />
 
         {/* 7. MISSION CONTROL SUMMARY */}
         <ScrollReveal delay={80}>
