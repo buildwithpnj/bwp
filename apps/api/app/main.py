@@ -20,7 +20,23 @@ from app.routers import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Startup: Run database migrations and seeding
+    import sys
+    print("DEBUG: Running database migrations...", file=sys.stderr)
+    try:
+        from alembic.config import Config
+        from alembic import command
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+        print("DEBUG: Database migrations applied successfully!", file=sys.stderr)
+        
+        # Programmatically seed default user & resources
+        from seed import seed_data
+        await seed_data()
+        print("DEBUG: Database seeding complete!", file=sys.stderr)
+    except Exception as e:
+        print(f"DEBUG: Startup migrations/seeding failed: {e}", file=sys.stderr)
+        
     yield
     # Shutdown
     from app.database import engine
