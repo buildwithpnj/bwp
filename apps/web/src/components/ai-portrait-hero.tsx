@@ -1147,34 +1147,58 @@ export function AIPortraitHero() {
             {/* Premium capability subheadline listing */}
             <div className="font-mono text-xs sm:text-sm text-muted-foreground/80 flex flex-wrap items-center gap-x-3 gap-y-1.5 select-none py-1">
               <div className="flex items-center gap-1.5">
-                <span 
-                  className="w-1.5 h-1.5 rounded-full transition-all duration-300 ease-out"
-                  style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
-                />
+                <span className="relative flex h-1.5 w-1.5">
+                  <span 
+                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))', animationDuration: '2.4s', animationDelay: '0s' }}
+                  />
+                  <span 
+                    className="relative inline-flex rounded-full h-1.5 w-1.5"
+                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
+                  />
+                </span>
                 <span>AI Agents</span>
               </div>
               <span className="text-border/60">|</span>
               <div className="flex items-center gap-1.5">
-                <span 
-                  className="w-1.5 h-1.5 rounded-full transition-all duration-300 ease-out"
-                  style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
-                />
+                <span className="relative flex h-1.5 w-1.5">
+                  <span 
+                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))', animationDuration: '2.4s', animationDelay: '0.6s' }}
+                  />
+                  <span 
+                    className="relative inline-flex rounded-full h-1.5 w-1.5"
+                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
+                  />
+                </span>
                 <span>Voice AI</span>
               </div>
               <span className="text-border/60">|</span>
               <div className="flex items-center gap-1.5">
-                <span 
-                  className="w-1.5 h-1.5 rounded-full transition-all duration-300 ease-out"
-                  style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
-                />
+                <span className="relative flex h-1.5 w-1.5">
+                  <span 
+                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))', animationDuration: '2.4s', animationDelay: '1.2s' }}
+                  />
+                  <span 
+                    className="relative inline-flex rounded-full h-1.5 w-1.5"
+                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
+                  />
+                </span>
                 <span>Business Automation</span>
               </div>
               <span className="text-border/60">|</span>
               <div className="flex items-center gap-1.5">
-                <span 
-                  className="w-1.5 h-1.5 rounded-full transition-all duration-300 ease-out"
-                  style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
-                />
+                <span className="relative flex h-1.5 w-1.5">
+                  <span 
+                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))', animationDuration: '2.4s', animationDelay: '1.8s' }}
+                  />
+                  <span 
+                    className="relative inline-flex rounded-full h-1.5 w-1.5"
+                    style={{ backgroundColor: 'var(--hero-active-color, hsl(var(--primary)))' }}
+                  />
+                </span>
                 <span>Intelligent Systems</span>
               </div>
             </div>
