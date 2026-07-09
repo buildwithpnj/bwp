@@ -472,8 +472,8 @@ export function AIPortraitHero() {
       mouseRef.current.ry += (mouseRef.current.targetRy - mouseRef.current.ry) * 0.08;
       
       setParallax({
-        x: mouseRef.current.rx * 2.2,
-        y: mouseRef.current.ry * 2.2
+        x: mouseRef.current.rx * 0.4,
+        y: mouseRef.current.ry * 0.4
       });
 
       const isDark = resolvedTheme === 'dark';
@@ -527,8 +527,8 @@ export function AIPortraitHero() {
       ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.015)' : 'rgba(0, 0, 0, 0.02)';
       ctx.lineWidth = 1;
       const gridSize = 45;
-      const gridParallaxX = mouseRef.current.rx * 12;
-      const gridParallaxY = mouseRef.current.ry * 12;
+      const gridParallaxX = mouseRef.current.rx * 2.0;
+      const gridParallaxY = mouseRef.current.ry * 2.0;
       
       ctx.save();
       ctx.translate(gridParallaxX, gridParallaxY);
@@ -557,10 +557,10 @@ export function AIPortraitHero() {
           const dx = bp.x - mouseRef.current.x;
           const dy = bp.y - mouseRef.current.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 150) {
-            const force = (150 - dist) / 150;
-            bp.x += (dx / dist) * force * 1.5;
-            bp.y += (dy / dist) * force * 1.5;
+          if (dist < 80) {
+            const force = (80 - dist) / 80;
+            bp.x += (dx / dist) * force * 0.6;
+            bp.y += (dy / dist) * force * 0.6;
           }
         }
         
@@ -747,8 +747,8 @@ export function AIPortraitHero() {
           
           const breatheTargetX = rx * breathScale + cx;
           const breatheTargetY = ry * breathScale + cy;
-          const parallaxOffsetX = mouseRef.current.rx * 8;
-          const parallaxOffsetY = mouseRef.current.ry * 8;
+          const parallaxOffsetX = mouseRef.current.rx * 1.5;
+          const parallaxOffsetY = mouseRef.current.ry * 1.5;
           
           targetX = baseOx + (breatheTargetX - baseOx + parallaxOffsetX) * stabilityFactor;
           targetY = baseOy + (breatheTargetY - baseOy + parallaxOffsetY) * stabilityFactor;
