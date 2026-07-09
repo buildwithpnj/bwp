@@ -244,6 +244,7 @@ export function AIPortraitHero() {
       const cellHeight = targetHeight / offscreenCanvas.height;
       
       let totalR = 0, totalG = 0, totalB = 0, pixelCount = 0;
+      let accentR = 0, accentG = 0, accentB = 0, accentCount = 0;
 
       // Center-relative starting coordinates
       const gridStartX = -targetWidth / 2;
@@ -263,6 +264,15 @@ export function AIPortraitHero() {
             totalG += g;
             totalB += b;
             pixelCount++;
+
+            // Convert to HSL to check if this is a highly saturated cybernetic lighting/clothes pixel
+            const pixelHsl = rgbToHsl(r, g, b);
+            if (pixelHsl.s > 48) {
+              accentR += r;
+              accentG += g;
+              accentB += b;
+              accentCount++;
+            }
 
             let pSize = Math.random() * 1.5 + 2.5;
             let pAlpha = Math.random() * 0.35 + 0.65;
@@ -306,22 +316,26 @@ export function AIPortraitHero() {
       }
 
       if (pixelCount > 0) {
-        const avgR = Math.round(totalR / pixelCount);
-        const avgG = Math.round(totalG / pixelCount);
-        const avgB = Math.round(totalB / pixelCount);
-        const hsl = rgbToHsl(avgR, avgG, avgB);
+        // If we have enough vibrant accent pixels, use them to compute the active color tone.
+        // This filters out natural skin tones and dark hair, capturing the cybernetic neon glow.
+        const useAccent = accentCount > (pixelCount * 0.03);
+        const finalR = useAccent ? Math.round(accentR / accentCount) : Math.round(totalR / pixelCount);
+        const finalG = useAccent ? Math.round(accentG / accentCount) : Math.round(totalG / pixelCount);
+        const finalB = useAccent ? Math.round(accentB / accentCount) : Math.round(totalB / pixelCount);
+        
+        const hsl = rgbToHsl(finalR, finalG, finalB);
         
         // Boost saturation/lightness for aesthetic neon glow profiles
-        const sBoost = Math.max(75, hsl.s);
+        const sBoost = Math.max(80, hsl.s);
         const lBoost = resolvedTheme === 'light' ? 48 : 62;
         
         portraitColorRef.current = {
           h: hsl.h,
           s: sBoost,
           l: lBoost,
-          r: avgR,
-          g: avgG,
-          b: avgB
+          r: finalR,
+          g: finalG,
+          b: finalB
         };
       }
 
@@ -480,11 +494,11 @@ export function AIPortraitHero() {
        const ambientGlow = ctx.createRadialGradient(gX, gY, 10, gX, gY, glowRad);
        if (isDark) {
          ambientGlow.addColorStop(0, `hsla(${activeH}, ${activeS}%, 45%, 0.05)`);
-         ambientGlow.addColorStop(0.35, `hsla(${(activeH + 120) % 360}, ${activeS}%, 45%, 0.02)`);
+         ambientGlow.addColorStop(0.35, `hsla(${activeH}, ${activeS}%, 45%, 0.015)`);
          ambientGlow.addColorStop(1, 'rgba(3, 4, 8, 1)'); // Deep black/graphite core
        } else {
          ambientGlow.addColorStop(0, `hsla(${activeH}, ${activeS}%, 45%, 0.03)`);
-         ambientGlow.addColorStop(0.5, `hsla(${(activeH + 180) % 360}, ${activeS}%, 45%, 0.015)`);
+         ambientGlow.addColorStop(0.5, `hsla(${activeH}, ${activeS}%, 45%, 0.01)`);
          ambientGlow.addColorStop(1, 'rgba(255, 255, 255, 1)');
        }
       ctx.fillStyle = ambientGlow;
