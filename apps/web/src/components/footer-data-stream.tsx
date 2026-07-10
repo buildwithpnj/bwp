@@ -11,6 +11,7 @@ interface DataNode {
   xPct: number;
   yPct: number;
   desc: string;
+  connected?: boolean;
 }
 
 // ViewBox dimensions — we use a fixed logical canvas that scales
@@ -28,12 +29,12 @@ const NODES: DataNode[] = [
   { id: 'cpu',       label: 'CPU',       xPct: 71.7, yPct: 22,  desc: 'Task orchestrator & CPU scheduling grid' },
   { id: 'tools',     label: 'TOOLS',     xPct: 80,   yPct: 39,  desc: 'Dynamic agentic tools execution framework' },
   { id: 'voice',     label: 'VOICE',     xPct: 88.3, yPct: 57,  desc: 'Low-latency Realtime multilingual voice pipelines' },
-  { id: 'mcp',       label: 'MCP',       xPct: 94.2, yPct: 39,  desc: 'Model Context Protocol server integrations' },
-  { id: 'node',      label: 'NODE',      xPct: 84.2, yPct: 75,  desc: 'Distributed microservice runtime nodes' },
+  { id: 'mcp',       label: 'MCP',       xPct: 94.2, yPct: 39,  desc: 'Model Context Protocol server integrations', connected: false },
+  { id: 'node',      label: 'NODE',      xPct: 84.2, yPct: 75,  desc: 'Distributed microservice runtime nodes', connected: false },
   { id: 'token',     label: 'TOKEN',     xPct: 74.2, yPct: 75,  desc: 'Context token streaming & rate limiting' },
   { id: 'vector',    label: 'VECTOR',    xPct: 60,   yPct: 75,  desc: 'Vector database similarity indexing' },
   { id: 'memory',    label: 'MEMORY',    xPct: 41.7, yPct: 75,  desc: 'Persistent chat state & episodic memory structures' },
-  { id: 'embedding', label: 'EMBEDDING', xPct: 16.7, yPct: 75,  desc: 'High-dimensional text representation model' },
+  { id: 'embedding', label: 'EMBEDDING', xPct: 16.7, yPct: 75,  desc: 'High-dimensional text representation model', connected: false },
 ];
 
 // Convert percentage nodes to absolute SVG coordinates
@@ -41,10 +42,12 @@ function nodeToXY(n: DataNode) {
   return { x: (n.xPct / 100) * VW, y: (n.yPct / 100) * VH };
 }
 
-// Build a smooth path through all nodes in order (top row L→R, then bottom row R→L looping back)
+// Build a smooth path through connected nodes in order (top row L→R, then bottom row R→L looping back)
 function buildCircuitPath(): string {
-  const topRow  = [NODES[0], NODES[1], NODES[2], NODES[3], NODES[4], NODES[5], NODES[6], NODES[7], NODES[8], NODES[9], NODES[10]];
-  const botRow  = [NODES[11], NODES[12], NODES[13], NODES[14], NODES[15]];
+  const connectedNodes = NODES.filter(n => n.connected !== false);
+  
+  const topRow = connectedNodes.filter(n => n.yPct < 60);
+  const botRow = connectedNodes.filter(n => n.yPct >= 60);
 
   const pts = [
     ...topRow.map(nodeToXY),
@@ -143,7 +146,7 @@ export function FooterDataStream() {
     if (!path) return;
 
     const totalLength = path.getTotalLength();
-    const speed = 2.2;
+    const speed = 0.7;
 
     const animate = () => {
       progressRef.current = (progressRef.current + speed) % totalLength;
@@ -168,13 +171,15 @@ export function FooterDataStream() {
 
       // Node collision check (in SVG coordinate space)
       NODES.forEach(node => {
+        if (node.connected === false) return;
         const { x, y } = nodeToXY(node);
         const dx = head.x - x;
         const dy = head.y - y;
         if (dx * dx + dy * dy < 196 && !collected[node.id]) {
           setCollected(prev => {
             const next = { ...prev, [node.id]: true };
-            if (NODES.every(n => next[n.id])) {
+            const connectedNodesOnly = NODES.filter(n => n.connected !== false);
+            if (connectedNodesOnly.every(n => next[n.id])) {
               setShowSyncMessage(true);
               setStatusText('COMPILING KNOWLEDGE...');
               setTimeout(() => {
@@ -243,15 +248,16 @@ export function FooterDataStream() {
           viewBox={`0 0 ${VW} ${VH}`}
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Base dashed track */}
+          {/* Base dotted track */}
           <path
             ref={pathRef}
             d={CIRCUIT_PATH}
             fill="none"
             stroke="currentColor"
             className="text-border/30 dark:text-border/15"
-            strokeWidth="1.2"
-            strokeDasharray="5 5"
+            strokeWidth="3.2"
+            strokeDasharray="0 15"
+            strokeLinecap="round"
           />
 
           {/* Glowing colour-synced underlay */}
@@ -259,8 +265,10 @@ export function FooterDataStream() {
             d={CIRCUIT_PATH}
             fill="none"
             stroke={glow}
-            strokeWidth="3"
-            opacity="0.12"
+            strokeWidth="6"
+            strokeDasharray="0 15"
+            strokeLinecap="round"
+            opacity="0.1"
           />
 
           {/* Node hit areas + anchors (rendered in SVG for perfect scaling) */}
@@ -269,16 +277,18 @@ export function FooterDataStream() {
             const isCollected = collected[node.id];
             const isPulsing   = pulseNode === node.id;
             const isHovered   = activeNode?.id === node.id;
+            const isConnected = node.connected !== false;
+
             return (
               <g
                 key={node.id}
                 transform={`translate(${x},${y})`}
-                onMouseEnter={() => setActiveNode(node)}
-                onMouseLeave={() => setActiveNode(null)}
-                className="cursor-pointer"
+                onMouseEnter={() => isConnected && setActiveNode(node)}
+                onMouseLeave={() => isConnected && setActiveNode(null)}
+                className={isConnected ? "cursor-pointer" : "pointer-events-none"}
               >
                 {/* Outer pulse ring on collect */}
-                {isPulsing && (
+                {isPulsing && isConnected && (
                   <circle r="12" fill="none" stroke={glow} strokeWidth="1" opacity="0.6">
                     <animate attributeName="r" from="6" to="20" dur="0.4s" fill="freeze" />
                     <animate attributeName="opacity" from="0.8" to="0" dur="0.4s" fill="freeze" />
@@ -288,16 +298,16 @@ export function FooterDataStream() {
                 {/* Anchor square */}
                 <rect
                   x="-5" y="-5" width="10" height="10" rx="2"
-                  fill={isCollected ? `${glow}33` : 'var(--card)'}
-                  stroke={isCollected || isHovered ? glow : 'var(--border)'}
+                  fill={!isConnected ? '#111111' : (isCollected ? `${glow}33` : 'var(--card)')}
+                  stroke={!isConnected ? '#333333' : (isCollected || isHovered ? glow : 'var(--border)')}
                   strokeWidth="0.8"
-                  style={{ filter: (isCollected || isHovered) ? `drop-shadow(0 0 4px ${glow})` : 'none',
+                  style={{ filter: (isConnected && (isCollected || isHovered)) ? `drop-shadow(0 0 4px ${glow})` : 'none',
                            transition: 'all 0.3s' }}
                 />
                 <rect
                   x="-2.5" y="-2.5" width="5" height="5" rx="1"
-                  fill={isCollected ? glow : '#888888'}
-                  opacity={isCollected ? 1 : 0.5}
+                  fill={!isConnected ? '#333333' : (isCollected ? glow : '#888888')}
+                  opacity={!isConnected ? 0.2 : (isCollected ? 1 : 0.5)}
                 />
 
                 {/* Label */}
@@ -306,7 +316,7 @@ export function FooterDataStream() {
                   fontSize="7"
                   fontFamily="monospace"
                   fontWeight="700"
-                  fill={isCollected || isHovered ? glow : 'currentColor'}
+                  fill={!isConnected ? '#444444' : (isCollected || isHovered ? glow : 'currentColor')}
                   style={{ transition: 'fill 0.3s' }}
                   className="select-none"
                 >
@@ -314,7 +324,7 @@ export function FooterDataStream() {
                 </text>
 
                 {/* Hover tooltip */}
-                {isHovered && (
+                {isHovered && isConnected && (
                   <g>
                     <rect x="-60" y="-38" width="120" height="26" rx="4"
                       fill="var(--popover)" stroke="var(--border)" strokeWidth="0.5" opacity="0.96" />
