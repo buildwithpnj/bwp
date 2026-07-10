@@ -19,22 +19,23 @@ const VW = 1200;
 const VH = 140;
 
 const NODES: DataNode[] = [
-  { id: 'api',       label: 'API',       xPct: 10,   yPct: 22,  desc: 'REST & gRPC Integration Endpoints' },
-  { id: 'llm',       label: 'LLM',       xPct: 20,   yPct: 22,  desc: 'Large Language Model Router & Cost Optimization' },
-  { id: 'rag',       label: 'RAG',       xPct: 28.3, yPct: 39,  desc: 'Retrieval-Augmented Generation context pipeline' },
-  { id: 'json',      label: 'JSON',      xPct: 36.7, yPct: 57,  desc: 'Structured schema serialization layers' },
-  { id: 'sql',       label: 'SQL',       xPct: 45.8, yPct: 57,  desc: 'Relational transaction databases & query planners' },
-  { id: 'cache',     label: 'CACHE',     xPct: 53.3, yPct: 39,  desc: 'Redis cache synchronization layer' },
-  { id: 'gpu',       label: 'GPU',       xPct: 61.7, yPct: 22,  desc: 'Hardware inference acceleration cluster' },
-  { id: 'cpu',       label: 'CPU',       xPct: 71.7, yPct: 22,  desc: 'Task orchestrator & CPU scheduling grid' },
-  { id: 'tools',     label: 'TOOLS',     xPct: 80,   yPct: 39,  desc: 'Dynamic agentic tools execution framework' },
-  { id: 'voice',     label: 'VOICE',     xPct: 88.3, yPct: 57,  desc: 'Low-latency Realtime multilingual voice pipelines' },
-  { id: 'mcp',       label: 'MCP',       xPct: 94.2, yPct: 39,  desc: 'Model Context Protocol server integrations' },
-  { id: 'node',      label: 'NODE',      xPct: 84.2, yPct: 75,  desc: 'Distributed microservice runtime nodes' },
-  { id: 'token',     label: 'TOKEN',     xPct: 74.2, yPct: 75,  desc: 'Context token streaming & rate limiting' },
-  { id: 'vector',    label: 'VECTOR',    xPct: 60,   yPct: 75,  desc: 'Vector database similarity indexing' },
-  { id: 'memory',    label: 'MEMORY',    xPct: 41.7, yPct: 75,  desc: 'Persistent chat state & episodic memory structures' },
-  { id: 'embedding', label: 'EMBEDDING', xPct: 16.7, yPct: 75,  desc: 'High-dimensional text representation model' },
+  { id: 'api',       label: 'API',       xPct: 10,   yPct: 25,  desc: 'REST & gRPC Integration Endpoints' },
+  { id: 'llm',       label: 'LLM',       xPct: 22,   yPct: 25,  desc: 'Large Language Model Router & Cost Optimization' },
+  { id: 'rag',       label: 'RAG',       xPct: 34,   yPct: 25,  desc: 'Retrieval-Augmented Generation context pipeline' },
+  { id: 'json',      label: 'JSON',      xPct: 46,   yPct: 25,  desc: 'Structured schema serialization layers' },
+  { id: 'sql',       label: 'SQL',       xPct: 58,   yPct: 25,  desc: 'Relational transaction databases & query planners' },
+  { id: 'cache',     label: 'CACHE',     xPct: 70,   yPct: 25,  desc: 'Redis cache synchronization layer' },
+  { id: 'gpu',       label: 'GPU',       xPct: 82,   yPct: 25,  desc: 'Hardware inference acceleration cluster' },
+  { id: 'cpu',       label: 'CPU',       xPct: 94,   yPct: 25,  desc: 'Task orchestrator & CPU scheduling grid' },
+  
+  { id: 'mcp',       label: 'MCP',       xPct: 94,   yPct: 75,  desc: 'Model Context Protocol server integrations' },
+  { id: 'voice',     label: 'VOICE',     xPct: 82,   yPct: 75,  desc: 'Low-latency Realtime multilingual voice pipelines' },
+  { id: 'tools',     label: 'TOOLS',     xPct: 70,   yPct: 75,  desc: 'Dynamic agentic tools execution framework' },
+  { id: 'node',      label: 'NODE',      xPct: 58,   yPct: 75,  desc: 'Distributed microservice runtime nodes' },
+  { id: 'token',     label: 'TOKEN',     xPct: 46,   yPct: 75,  desc: 'Context token streaming & rate limiting' },
+  { id: 'vector',    label: 'VECTOR',    xPct: 34,   yPct: 75,  desc: 'Vector database similarity indexing' },
+  { id: 'memory',    label: 'MEMORY',    xPct: 22,   yPct: 75,  desc: 'Persistent chat state & episodic memory structures' },
+  { id: 'embedding', label: 'EMBEDDING', xPct: 10,   yPct: 75,  desc: 'High-dimensional text representation model' },
 ];
 
 // Convert percentage nodes to absolute SVG coordinates
@@ -85,7 +86,6 @@ export function FooterDataStream() {
   const [pulseNode,       setPulseNode]        = useState<string | null>(null);
   const [statusText,      setStatusText]       = useState('SYSTEM ONLINE');
   const [showSyncMessage, setShowSyncMessage]  = useState(false);
-  const [trailLength,     setTrailLength]      = useState(8);
   const [inViewport,      setInViewport]       = useState(false);
 
   // heroColor: read from CSS variable and subscribe to changes
@@ -129,10 +129,7 @@ export function FooterDataStream() {
 
   // Packet state refs (for 60fps without react re-renders)
   const progressRef   = useRef(0);
-  const trailRef      = useRef<{ x: number; y: number }[]>([]);
   const animationRef  = useRef<number | null>(null);
-  const trailLenRef   = useRef(trailLength);
-  trailLenRef.current = trailLength;
 
   // Animation loop
   useEffect(() => {
@@ -152,10 +149,6 @@ export function FooterDataStream() {
       progressRef.current = (progressRef.current + speed) % totalLength;
       const head = path.getPointAtLength(progressRef.current);
 
-      // Update trail array
-      trailRef.current.push({ x: head.x, y: head.y });
-      if (trailRef.current.length > trailLenRef.current) trailRef.current.shift();
-
       // Move DOM elements directly — no react state = zero jank
       const headEl = document.getElementById('ds-packet-head');
       if (headEl) {
@@ -164,9 +157,10 @@ export function FooterDataStream() {
 
       const trailEls = document.querySelectorAll<HTMLElement>('.ds-trail-dot');
       trailEls.forEach((el, i) => {
-        const idx = Math.max(0, trailRef.current.length - 1 - i);
-        const pt = trailRef.current[idx];
-        if (pt) el.style.transform = `translate(${pt.x}px, ${pt.y}px)`;
+        // Space each trail dot exactly 14px behind the preceding one
+        const dotOffset = (progressRef.current - (i + 1) * 14 + totalLength) % totalLength;
+        const pt = path.getPointAtLength(dotOffset);
+        el.style.transform = `translate(${pt.x}px, ${pt.y}px)`;
       });
 
       // Node collision check (in SVG coordinate space)
@@ -333,15 +327,15 @@ export function FooterDataStream() {
             );
           })}
 
-          {/* ── Packet trail (SVG foreignObject for glow effect) ── */}
+          {/* ── Packet trail (Pixel trace dots) ── */}
           {/* Trail dots */}
-          {Array.from({ length: 30 }).map((_, i) => (
+          {Array.from({ length: 6 }).map((_, i) => (
             <rect
               key={i}
               className="ds-trail-dot"
-              width="4" height="4" rx="1"
+              width="4.2" height="4.2"
               fill={glow}
-              opacity={Math.max(0.04, 0.65 - i * 0.05)}
+              opacity={0.55 - i * 0.08}
               style={{ transform: 'translate(0px,0px)', transformBox: 'fill-box', transformOrigin: 'center',
                        transition: 'opacity 0.1s' }}
             />
@@ -350,10 +344,10 @@ export function FooterDataStream() {
           {/* Head packet */}
           <rect
             id="ds-packet-head"
-            width="7" height="7" rx="1.5"
+            width="6.5" height="6.5"
             fill={glow}
             style={{
-              filter: `drop-shadow(0 0 5px ${glow}) drop-shadow(0 0 10px ${glow})`,
+              filter: `drop-shadow(0 0 4px ${glow})`,
               transform: 'translate(0px,0px)',
             }}
           />
