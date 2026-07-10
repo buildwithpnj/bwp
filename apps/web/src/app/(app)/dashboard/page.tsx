@@ -14,7 +14,8 @@ import {
   MessageSquare,
   Sparkles,
   ArrowUpRight,
-  Target
+  Target,
+  Globe
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
@@ -42,12 +43,51 @@ interface Addiction {
   id: string;
   name: string;
   current_streak_days: number;
+  money_saved?: number;
+  time_saved_hours?: number;
 }
 
 interface CoachInsight {
   content: string;
   completion_rate: number;
 }
+
+interface GeoInfo {
+  country_name: string;
+  country_code: string;
+  currency: string;
+  timezone: string;
+}
+
+const currencySymbols: Record<string, string> = {
+  USD: '$',
+  INR: '₹',
+  GBP: '£',
+  JPY: '¥',
+  EUR: '€',
+};
+
+const getBrowserGeo = (): GeoInfo => {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  let code = 'US';
+  let name = 'United States';
+  let curr = 'USD';
+  
+  if (tz.includes('Kolkata') || tz.includes('India') || tz.includes('Asia/Calcutta')) {
+    code = 'IN';
+    name = 'India';
+    curr = 'INR';
+  } else if (tz.includes('London') || tz.includes('Europe/London')) {
+    code = 'GB';
+    name = 'United Kingdom';
+    curr = 'GBP';
+  } else if (tz.includes('Tokyo') || tz.includes('Asia/Tokyo')) {
+    code = 'JP';
+    name = 'Japan';
+    curr = 'JPY';
+  }
+  return { country_name: name, country_code: code, currency: curr, timezone: tz };
+};
 
 export default function MissionControlPage() {
   const [time, setTime] = useState<string>('');
@@ -56,17 +96,50 @@ export default function MissionControlPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [addictions, setAddictions] = useState<Addiction[]>([]);
   const [insight, setInsight] = useState<CoachInsight | null>(null);
+  const [geo, setGeo] = useState<GeoInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Time ticker
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      setTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      const options: Intl.DateTimeFormatOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      };
+      if (geo?.timezone) {
+        options.timeZone = geo.timezone;
+      }
+      setTime(now.toLocaleTimeString([], options));
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
+  }, [geo]);
+
+  // Geo detection API
+  useEffect(() => {
+    async function detectGeo() {
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        if (res.ok) {
+          const data = await res.json();
+          setGeo({
+            country_name: data.country_name || 'United States',
+            country_code: data.country_code || 'US',
+            currency: data.currency || 'USD',
+            timezone: data.timezone || 'America/New_York',
+          });
+        } else {
+          setGeo(getBrowserGeo());
+        }
+      } catch {
+        setGeo(getBrowserGeo());
+      }
+    }
+    detectGeo();
   }, []);
 
   const loadData = async () => {
@@ -133,6 +206,18 @@ export default function MissionControlPage() {
 
         {/* Telemetry readouts */}
         <div className="flex items-center gap-6 text-xs font-mono">
+          {geo && (
+            <>
+              <div className="hidden md:flex flex-col text-right">
+                <span className="text-3xs uppercase text-muted-foreground tracking-wider">Regional Node</span>
+                <span className="text-sm font-semibold text-primary flex items-center gap-1.5 justify-end">
+                  <Globe className="h-3.5 w-3.5 text-primary" />
+                  <span>{geo.country_code} Node</span>
+                </span>
+              </div>
+              <div className="h-8 w-px bg-border hidden md:block" />
+            </>
+          )}
           <div className="hidden sm:flex flex-col text-right">
             <span className="text-3xs uppercase text-muted-foreground tracking-wider">System Clock</span>
             <span className="text-sm font-semibold tabular-nums text-foreground">{time || '--:--:--'}</span>
@@ -240,8 +325,13 @@ export default function MissionControlPage() {
             ) : (
               addictions.map((add) => (
                 <div key={add.id} className="p-3.5 rounded-xl border border-border/60 bg-muted/20 flex justify-between items-center text-xs font-semibold">
-                  <span>{add.name}</span>
-                  <span className="text-primary font-mono text-sm font-bold">{add.current_streak_days} days</span>
+                  <div className="min-w-0">
+                    <span className="block truncate">{add.name}</span>
+                    <span className="text-3xs text-muted-foreground font-mono">
+                      Saved: {currencySymbols[geo?.currency || 'USD'] || '$'}{add.money_saved || 0}
+                    </span>
+                  </div>
+                  <span className="text-primary font-mono text-sm font-bold ml-2 shrink-0">{add.current_streak_days}d</span>
                 </div>
               ))
             )}
