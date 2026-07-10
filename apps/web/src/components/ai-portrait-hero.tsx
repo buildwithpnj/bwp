@@ -117,10 +117,40 @@ export function AIPortraitHero() {
   const [activePortrait, setActivePortrait] = useState<string>('/assets/images/portrait-1.webp');
   const [hoveredNode, setHoveredNodeState] = useState<string | null>(null);
   const hoveredNodeRef = useRef<string | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const setHoveredNode = (val: string | null) => {
-    hoveredNodeRef.current = val;
-    setHoveredNodeState(val);
+    if (val) {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+      hoveredNodeRef.current = val;
+      setHoveredNodeState(val);
+    } else {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = setTimeout(() => {
+        hoveredNodeRef.current = null;
+        setHoveredNodeState(null);
+        hoverTimeoutRef.current = null;
+      }, 15000); // 15 seconds delay
+    }
   };
+
+  // Listen for global custom events to trigger color changes from other components/pages
+  useEffect(() => {
+    const handleSyncColor = (e: Event) => {
+      const customEvent = e as CustomEvent<{ key: string | null }>;
+      if (customEvent.detail) {
+        setHoveredNode(customEvent.detail.key);
+      }
+    };
+    window.addEventListener('pnj-sync-color', handleSyncColor);
+    return () => {
+      window.removeEventListener('pnj-sync-color', handleSyncColor);
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
+  }, []);
   
   const mouseRef = useRef({ x: -1000, y: -1000, rx: 0, ry: 0, targetRx: 0, targetRy: 0, inside: false });
   const particlesRef = useRef<Particle[]>([]);
@@ -543,7 +573,9 @@ export function AIPortraitHero() {
        const currentHoveredNode = hoveredNodeRef.current;
        if (currentHoveredNode) {
          const hoveredLabel = currentHoveredNode.split(':')[0].trim().toLowerCase();
-         if (hoveredLabel === 'python' || hoveredLabel === 'postgresql' || hoveredLabel === 'gemini') {
+         if (hoveredLabel === 'red' || hoveredLabel === 'blue' || hoveredLabel === 'muted') {
+           targetColorKey = hoveredLabel as 'blue' | 'red' | 'muted';
+         } else if (hoveredLabel === 'python' || hoveredLabel === 'postgresql' || hoveredLabel === 'gemini') {
            targetColorKey = 'blue';
          } else if (hoveredLabel === 'claude' || hoveredLabel === 'openai') {
            targetColorKey = 'red';

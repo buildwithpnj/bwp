@@ -209,15 +209,25 @@ export function Terminal({ title = 'warborn_telemetry.log', lines, className, sh
   const promptInput = isDarkTerminal ? 'text-white' : 'text-[#090b10]';
   const cursorColor = isDarkTerminal ? 'bg-[#06b6d4]' : 'bg-[#0891b2]';
 
-  // Dynamic synchronized glow styles
-  const glowIntensity = isDarkTerminal ? 0.38 : 0.30;
-  const borderIntensity = isDarkTerminal ? 0.48 : 0.38;
-  const shadowGlow = `0 0 25px hsla(${hue}, 85%, 55%, ${glowIntensity})`;
-  const borderColor = `hsla(${hue}, 85%, 55%, ${borderIntensity})`;
+  // Dynamic synchronized glow styles using premium 3-color variables
+  const shadowGlow = isDarkTerminal
+    ? `0 0 25px var(--hero-active-color-glow, rgba(59, 130, 246, 0.25))`
+    : `0 0 20px var(--hero-active-color-glow, rgba(59, 130, 246, 0.15))`;
+  const borderColor = `var(--hero-active-color, #3B82F6)`;
+
+  const handleMouseEnter = () => {
+    window.dispatchEvent(new CustomEvent('pnj-sync-color', { detail: { key: 'red' } }));
+  };
+
+  const handleMouseLeave = () => {
+    window.dispatchEvent(new CustomEvent('pnj-sync-color', { detail: { key: null } }));
+  };
 
   return (
     <div 
       onClick={handleTerminalClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       style={{
         boxShadow: shadowGlow,
         borderColor: borderColor

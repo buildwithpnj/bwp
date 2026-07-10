@@ -450,8 +450,27 @@ export function TerminalThumbnail({ index, slug = '', mode = 'projects' }: Termi
     const parentCard = el.closest('a');
     if (!parentCard) return;
 
-    const handleEnter = () => setPaused(true);
-    const handleLeave = () => setPaused(false);
+    const handleEnter = () => {
+      setPaused(true);
+      // Resolve sync color for this thumbnail card and dispatch global event
+      let targetColor: 'blue' | 'red' | 'muted' = 'blue';
+      if (mode === 'labs') {
+        const colors: ('blue' | 'red' | 'muted')[] = ['blue', 'red', 'muted'];
+        targetColor = colors[index % 3];
+      } else if (mode === 'projects') {
+        const colors: ('blue' | 'red' | 'muted')[] = ['red', 'muted', 'blue'];
+        targetColor = colors[index % 3];
+      } else {
+        const colors: ('blue' | 'red' | 'muted')[] = ['muted', 'blue', 'red'];
+        targetColor = colors[index % 3];
+      }
+      window.dispatchEvent(new CustomEvent('pnj-sync-color', { detail: { key: targetColor } }));
+    };
+    
+    const handleLeave = () => {
+      setPaused(false);
+      window.dispatchEvent(new CustomEvent('pnj-sync-color', { detail: { key: null } }));
+    };
 
     parentCard.addEventListener('mouseenter', handleEnter);
     parentCard.addEventListener('mouseleave', handleLeave);
@@ -460,7 +479,7 @@ export function TerminalThumbnail({ index, slug = '', mode = 'projects' }: Termi
       parentCard.removeEventListener('mouseenter', handleEnter);
       parentCard.removeEventListener('mouseleave', handleLeave);
     };
-  }, []);
+  }, [index, mode]);
 
   return (
     <div 

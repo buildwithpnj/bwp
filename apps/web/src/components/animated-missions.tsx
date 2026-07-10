@@ -153,6 +153,12 @@ export function AnimatedMissions() {
   const activeSignal = missionSignals[activeIndex];
 
   useEffect(() => {
+    const colors: ('red' | 'blue' | 'muted')[] = ['red', 'blue', 'muted'];
+    const activeColor = colors[activeIndex % colors.length];
+    window.dispatchEvent(new CustomEvent('pnj-sync-color', { detail: { key: activeColor } }));
+  }, [activeIndex]);
+
+  useEffect(() => {
     const interval = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % missionSignals.length);
     }, 4500); // 4.5 seconds for comfortable reading
