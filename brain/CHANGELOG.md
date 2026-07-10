@@ -7,7 +7,9 @@ All notable changes to the BuildWithPNJ Dashboard are documented here.
 ## [Unreleased] — 2026-07-10
 
 ### Summary
-This release focused on a complete visual overhaul of the public-facing homepage and its interactive elements — including the hero section, circuit/data-stream background system, mission animations, about page, and footer.
+This release focused on:
+1. **Google Drive Multi-Account Storage Provider Subsystem**: Complete production-ready implementation of storage virtualization with automatic extension-based routing, dynamic fallback mechanisms (>= 90% drive capacity limit), OAuth 2.0 token exchanges, cryptographic Fernet AES token encryption, and non-blocking uvicorn-thread execution.
+2. **Visual Refinements**: Complete visual overhaul of the public-facing homepage and its interactive elements — including the navbar alignment to Hero Pixel Portrait, circuit/data-stream background systems, sitemap globe favicon replacement, and footer telemetry streams.
 
 ---
 

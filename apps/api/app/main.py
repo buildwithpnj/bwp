@@ -97,6 +97,9 @@ app.include_router(notes.router)
 app.include_router(books.router)
 app.include_router(habits.router)
 
+from app.storage.routes import router as storage_router
+app.include_router(storage_router)
+
 
 @app.get("/api/health")
 async def health():

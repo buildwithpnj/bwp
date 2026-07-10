@@ -7,6 +7,7 @@ from app.models.notes import Embedding, Note, NoteLink
 from app.models.staging import StagingEntry
 from app.models.tools import Automation, ToolRecord, ToolSchema
 from app.models.user import User
+from app.models.storage_provider import StorageProvider
 
 __all__ = [
     "Base",
@@ -30,4 +31,5 @@ __all__ = [
     "ToolRecord",
     "Automation",
     "StagingEntry",
+    "StorageProvider",
 ]
