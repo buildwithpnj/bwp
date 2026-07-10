@@ -29,12 +29,12 @@ const NODES: DataNode[] = [
   { id: 'cpu',       label: 'CPU',       xPct: 71.7, yPct: 22,  desc: 'Task orchestrator & CPU scheduling grid' },
   { id: 'tools',     label: 'TOOLS',     xPct: 80,   yPct: 39,  desc: 'Dynamic agentic tools execution framework' },
   { id: 'voice',     label: 'VOICE',     xPct: 88.3, yPct: 57,  desc: 'Low-latency Realtime multilingual voice pipelines' },
-  { id: 'mcp',       label: 'MCP',       xPct: 94.2, yPct: 39,  desc: 'Model Context Protocol server integrations', connected: false },
-  { id: 'node',      label: 'NODE',      xPct: 84.2, yPct: 75,  desc: 'Distributed microservice runtime nodes', connected: false },
+  { id: 'mcp',       label: 'MCP',       xPct: 94.2, yPct: 39,  desc: 'Model Context Protocol server integrations' },
+  { id: 'node',      label: 'NODE',      xPct: 84.2, yPct: 75,  desc: 'Distributed microservice runtime nodes' },
   { id: 'token',     label: 'TOKEN',     xPct: 74.2, yPct: 75,  desc: 'Context token streaming & rate limiting' },
   { id: 'vector',    label: 'VECTOR',    xPct: 60,   yPct: 75,  desc: 'Vector database similarity indexing' },
   { id: 'memory',    label: 'MEMORY',    xPct: 41.7, yPct: 75,  desc: 'Persistent chat state & episodic memory structures' },
-  { id: 'embedding', label: 'EMBEDDING', xPct: 16.7, yPct: 75,  desc: 'High-dimensional text representation model', connected: false },
+  { id: 'embedding', label: 'EMBEDDING', xPct: 16.7, yPct: 75,  desc: 'High-dimensional text representation model' },
 ];
 
 // Convert percentage nodes to absolute SVG coordinates
@@ -85,7 +85,7 @@ export function FooterDataStream() {
   const [pulseNode,       setPulseNode]        = useState<string | null>(null);
   const [statusText,      setStatusText]       = useState('SYSTEM ONLINE');
   const [showSyncMessage, setShowSyncMessage]  = useState(false);
-  const [trailLength,     setTrailLength]      = useState(6);
+  const [trailLength,     setTrailLength]      = useState(8);
   const [inViewport,      setInViewport]       = useState(false);
 
   // heroColor: read from CSS variable and subscribe to changes
@@ -176,24 +176,19 @@ export function FooterDataStream() {
         const dx = head.x - x;
         const dy = head.y - y;
         if (dx * dx + dy * dy < 196 && !collected[node.id]) {
-          setCollected(prev => {
-            const next = { ...prev, [node.id]: true };
-            const connectedNodesOnly = NODES.filter(n => n.connected !== false);
-            if (connectedNodesOnly.every(n => next[n.id])) {
-              setShowSyncMessage(true);
-              setStatusText('COMPILING KNOWLEDGE...');
-              setTimeout(() => {
-                setShowSyncMessage(false);
-                setCollected({});
-                setTrailLength(6);
-                setStatusText('SYSTEM ONLINE');
-              }, 3000);
-            }
-            return next;
-          });
+          setCollected(prev => ({ ...prev, [node.id]: true }));
+          
+          const nodeId = node.id;
+          setTimeout(() => {
+            setCollected(prev => {
+              const next = { ...prev };
+              delete next[nodeId];
+              return next;
+            });
+          }, 1500);
+
           setPulseNode(node.id);
           setTimeout(() => setPulseNode(null), 400);
-          setTrailLength(prev => Math.min(prev + 1, 30));
           setStatusText(STATUS_LABELS[Math.floor(Math.random() * STATUS_LABELS.length)]);
         }
       });
