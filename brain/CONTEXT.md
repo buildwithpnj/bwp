@@ -34,3 +34,10 @@ Maintain consistency using the existing typeface configurations:
 - All circuit backgrounds and line paths MUST snap to the **32px blueprint grid system**.
 - Symmetrical packet lines must always align horizontally.
 - Layout vertical margins (`leftTrunkX` and `rightTrunkX`) are calculated relative to viewport constraints (`width > 1280px ? (width - 1280)/2 : width * 0.08`) to ensure background elements never bleed over the main grid layout.
+
+## Symmetrical Telemetry Layout & Pixel Composites
+
+- **Nodes Parallelism**: Telemetry ribbon nodes must always align horizontally at flat Y coordinates (e.g. `yPct: 25` and `yPct: 75` in SVG layouts), avoiding wavy loops or crossings.
+- **Pixel Consistency**: All dynamic elements — including the uvicorn online indicator, SVG data packet headers, collision pulses, and trailing dots — must be rendered as sharp square shapes (rectangles/squares with `rx="0"` or `rounded-sm`) to match the pixel-art design system. Circular visualizers are prohibited.
+- **Automatic Fade-Outs**: Visual node collection signals must automatically fade out back to grey after exactly 1.5 seconds.
+

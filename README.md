@@ -15,6 +15,8 @@ personal-os/
 │   └── web/          # Next.js 15 frontend (TypeScript)
 ├── packages/
 │   └── shared-types/ # Shared TypeScript type definitions
+├── docs/             # Technical guides and brand roadmaps
+├── brain/            # Active project memory & architectural specifications
 ├── docker-compose.yml
 └── turbo.json
 ```

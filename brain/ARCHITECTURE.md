@@ -70,3 +70,18 @@ The `StorageManager` acts as a facade, exposing clean file methods (`upload`, `d
 - **Provider Registry**: The database stores multiple credential keys (`storage_providers`).
 - **Failover Queue**: Uploads execute sequentially along active providers. If one throws an error (e.g. invalid credentials or capacity limits reached), the upload is redirected to the fallback provider without interrupting the frontend client session.
 - **Background Synchronization**: Integrates background tasks to sync note attachments and daily logs without blocking requests response times.
+
+---
+
+## 4. Calendar Sync Cache Layer
+To handle latency issues when fetching remote Google Calendar events, we implement a bi-directional local cache database table:
+- **Write Path**: Inserts/updates write to the local PostgreSQL table first, then propagate asynchronously to Google Calendar using thread executors.
+- **Read Path**: The frontend queries the local cache, avoiding external API latency. An offline sync worker fetches remote changes periodically using Google's event identifiers (`google_event_id`) to reconcile updates and prevent duplicates.
+
+---
+
+## 5. Client Geo-IP & Timezone Sync
+We implement an automatic IP geolocation middleware on frontend initialization:
+- **Geo Fetching**: The dashboard queries the geo-IP service to determine the user's current regional node.
+- **Regional Clock & Currency**: Automatically formats the system dashboard clock according to the localized timezone, and applies local currency symbols (e.g. `₹`, `$`) dynamically to financial calculations.
+

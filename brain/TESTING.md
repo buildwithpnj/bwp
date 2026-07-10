@@ -31,6 +31,7 @@ To prevent layout regressions or type errors:
   npm run build --workspace=apps/web
   ```
 - **Prerender Audits**: Next.js compiles page routes statically. Any dynamic components (e.g. callback search param readers) are audited for `<Suspense>` wrapper boundaries.
+- **Compiler Warnings Gates**: All source code components are audited for hook dependencies and state hoistings, ensuring `✓ Compiled successfully` contains 0 linter warnings.
 
 ---
 
@@ -39,3 +40,6 @@ To prevent layout regressions or type errors:
 - **Bi-Directional Calendar Sync**:
   1. Add event inside Warborn OS, verify it is cached in `calendar_events` and pushed to Google Calendar.
   2. Create event on Google Calendar client, pull events from dashboard, verify no duplicate items are created locally.
+- **IP Locale Synchronization**: Verify dashboard clock displays local regional time (India timezone versus USA timezone) and active metrics load localized currency prefixes (`₹`, `$`) based on detected client IP.
+- **Telemetry Loop Validation**: Verify the footer ribbon data packet traverses the 16 parallel nodes in a clockwise flow, highlighting each node and fading the trace cleanly within 1.5 seconds.
+

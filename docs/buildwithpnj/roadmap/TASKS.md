@@ -86,7 +86,16 @@ _Nothing critical right now. Ship steady._
 | Create WEBSITE_PRD.md | 2026-07-04 |
 | Create TASKS.md | 2026-07-04 |
 | Create CHANGELOG.md | 2026-07-04 |
+| Set up website project and home page layouts | 2026-07-09 |
+| Sync navigation bar colors and brand assets | 2026-07-09 |
+| Multi-account Google Drive storage providers | 2026-07-10 |
+| Bi-directional Google Calendar caching | 2026-07-10 |
+| Habits tracker Routines checklist | 2026-07-10 |
+| Quit Addiction Sobriety module | 2026-07-10 |
+| Symmetrical parallel data nodes layout | 2026-07-10 |
+| Compiler dependency warnings resolutions | 2026-07-10 |
 
 ---
 
-*Last updated: 2026-07-04*
+*Last updated: 2026-07-10*
+

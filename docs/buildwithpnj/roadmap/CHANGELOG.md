@@ -5,16 +5,22 @@
 
 ---
 
-## [Unreleased]
+## [0.2.0] — 2026-07-10
 
-### Personal OS
-- Agent Inbox module (in progress)
-- Tools Builder module (in progress)
-- Storage module (in progress)
-- Comprehensive test suite
+### 🎉 Multi-Provider Google Storage, Life OS, & Telemetry Refinement
 
-### Website
-- Brand website at `buildwithpnj.com` (planned)
+This version completes the multi-account virtual storage failover, bi-directional calendar caching, routines check-in splits, and reaches compiler zero warnings.
+
+### Added
+- **Multi-Account Storage Manager** — Supports registering multiple independent Google Drive accounts, encrypting credentials, and performing auto-failover on capacity limits.
+- **Bi-Directional Calendar Cache** — Implemented postgres calendar events caching to eliminate API lookup latency.
+- **Cognitive Recovery Interrupter** — Integrated 102 prompts content library and 7s slide-fade queues overlays.
+- **Symmetrical Telemetry Layout** — Aligned data stream nodes in parallel rows, replacing round circles with sharp pixels.
+- **IP Locale clock sync** — Automated currency symbols and timezone format changes based on client IP geolocations.
+
+### Fixed
+- **Next.js Compile Warnings** — Resolved linter warnings inside habits checklists, hero status bar, background vectors, and terminals.
+
 
 ---
 
@@ -70,4 +76,4 @@ The official launch of the BuildWithPNJ workspace as a structured brand headquar
 
 ---
 
-*Last updated: 2026-07-04*
+*Last updated: 2026-07-10*
