@@ -93,7 +93,7 @@ export default function NotesPage() {
       if (data && data.length > 0 && !selectedNoteId && !selectId) {
         // Auto-select first note on initial load
         selectNote(data[0].id);
-      } else if (selectId) {
+      } else if (selectId && selectId !== selectedNoteId) {
         selectNote(selectId);
       }
     } catch (error) {
