@@ -18,7 +18,12 @@ import { TerminalThumbnail } from '@/components/terminal-thumbnail';
 import { PremiumPixelBackground } from '@/components/premium-pixel-background';
 
 export default async function PublicHomePage() {
-  const projects = getProjects().slice(0, 3);
+  const allProjects = getProjects();
+  // Move cockroach-watch-india to the end — no front-page advertising
+  const projects = [
+    ...allProjects.filter(p => p.slug !== 'cockroach-watch-india'),
+    ...allProjects.filter(p => p.slug === 'cockroach-watch-india'),
+  ].slice(0, 3);
   const posts = getBlogPosts().slice(0, 3);
   const experiments = getExperiments().slice(0, 4);
 
