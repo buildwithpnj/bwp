@@ -143,8 +143,9 @@ export function PremiumPixelBackground() {
                       : node.sectionId === 'section-solutions' ? 0.3
                       : node.sectionId === 'section-projects' ? 0.45
                       : node.sectionId === 'section-labs' ? 0.6
-                      : node.sectionId === 'section-control' ? 0.72
-                      : node.sectionId === 'section-newsletter' ? 0.85
+                      : node.sectionId === 'section-journal' ? 0.68
+                      : node.sectionId === 'section-control' ? 0.76
+                      : node.sectionId === 'section-newsletter' ? 0.86
                       : 0.95;
           heights[node.sectionId] = docHeight * ratio;
         }
@@ -229,50 +230,61 @@ export function PremiumPixelBackground() {
     // Left Trunk down to Solutions section
     masterSegments.push({ x1: leftTrunkX, y1: startY, x2: leftTrunkX, y2: secPositions[2] + GRID });
     
-    // 1. Solutions Section: Zig-zag to avoid "Autonomous Systems Backend" header
+    // 1. Solutions Section (Left-to-Right, full-width elevated)
     const ySolutionBase = secPositions[2] + GRID;
-    masterSegments.push({ x1: leftTrunkX, y1: ySolutionBase, x2: leftTrunkX + GRID * 2, y2: ySolutionBase });
-    masterSegments.push({ x1: leftTrunkX + GRID * 2, y1: ySolutionBase, x2: leftTrunkX + GRID * 4, y2: ySolutionBase - GRID * 2 });
-    masterSegments.push({ x1: leftTrunkX + GRID * 4, y1: ySolutionBase - GRID * 2, x2: centerX - GRID * 1, y2: ySolutionBase - GRID * 2 });
-    masterSegments.push({ x1: centerX - GRID * 1, y1: ySolutionBase - GRID * 2, x2: centerX + GRID * 1, y2: ySolutionBase });
-    masterSegments.push({ x1: centerX + GRID * 1, y1: ySolutionBase, x2: rightTrunkX, y2: ySolutionBase });
+    masterSegments.push({ x1: leftTrunkX, y1: ySolutionBase, x2: leftTrunkX + GRID * 1, y2: ySolutionBase });
+    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: ySolutionBase, x2: leftTrunkX + GRID * 3, y2: ySolutionBase - GRID * 2 });
+    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: ySolutionBase - GRID * 2, x2: rightTrunkX - GRID * 3, y2: ySolutionBase - GRID * 2 });
+    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: ySolutionBase - GRID * 2, x2: rightTrunkX - GRID * 1, y2: ySolutionBase });
+    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: ySolutionBase, x2: rightTrunkX, y2: ySolutionBase });
     
     // Right Trunk down to Projects section
     masterSegments.push({ x1: rightTrunkX, y1: ySolutionBase, x2: rightTrunkX, y2: secPositions[3] + GRID });
     
-    // 2. Projects Section: Zig-zag to avoid "Active Builds" header
+    // 2. Projects Section (Right-to-Left, full-width elevated)
     const yProjectBase = secPositions[3] + GRID;
-    masterSegments.push({ x1: rightTrunkX, y1: yProjectBase, x2: centerX + GRID * 1, y2: yProjectBase });
-    masterSegments.push({ x1: centerX + GRID * 1, y1: yProjectBase, x2: centerX - GRID * 1, y2: yProjectBase - GRID * 2 });
-    masterSegments.push({ x1: centerX - GRID * 1, y1: yProjectBase - GRID * 2, x2: leftTrunkX + GRID * 4, y2: yProjectBase - GRID * 2 });
-    masterSegments.push({ x1: leftTrunkX + GRID * 4, y1: yProjectBase - GRID * 2, x2: leftTrunkX + GRID * 2, y2: yProjectBase });
-    masterSegments.push({ x1: leftTrunkX + GRID * 2, y1: yProjectBase, x2: leftTrunkX, y2: yProjectBase });
+    masterSegments.push({ x1: rightTrunkX, y1: yProjectBase, x2: rightTrunkX - GRID * 1, y2: yProjectBase });
+    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: yProjectBase, x2: rightTrunkX - GRID * 3, y2: yProjectBase - GRID * 2 });
+    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: yProjectBase - GRID * 2, x2: leftTrunkX + GRID * 3, y2: yProjectBase - GRID * 2 });
+    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yProjectBase - GRID * 2, x2: leftTrunkX + GRID * 1, y2: yProjectBase });
+    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yProjectBase, x2: leftTrunkX, y2: yProjectBase });
 
     // Left Trunk down to R&D Labs section
     masterSegments.push({ x1: leftTrunkX, y1: yProjectBase, x2: leftTrunkX, y2: secPositions[4] + GRID });
 
-    // 3. R&D Labs Section: Zig-zag to avoid R&D Labs header
+    // 3. R&D Labs Section (Left-to-Right, full-width elevated)
     const yLabsBase = secPositions[4] + GRID;
-    masterSegments.push({ x1: leftTrunkX, y1: yLabsBase, x2: leftTrunkX + GRID * 2, y2: yLabsBase });
-    masterSegments.push({ x1: leftTrunkX + GRID * 2, y1: yLabsBase, x2: leftTrunkX + GRID * 4, y2: yLabsBase - GRID * 2 });
-    masterSegments.push({ x1: leftTrunkX + GRID * 4, y1: yLabsBase - GRID * 2, x2: centerX - GRID * 1, y2: yLabsBase - GRID * 2 });
-    masterSegments.push({ x1: centerX - GRID * 1, y1: yLabsBase - GRID * 2, x2: centerX + GRID * 1, y2: yLabsBase });
-    masterSegments.push({ x1: centerX + GRID * 1, y1: yLabsBase, x2: rightTrunkX, y2: yLabsBase });
+    masterSegments.push({ x1: leftTrunkX, y1: yLabsBase, x2: leftTrunkX + GRID * 1, y2: yLabsBase });
+    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yLabsBase, x2: leftTrunkX + GRID * 3, y2: yLabsBase - GRID * 2 });
+    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yLabsBase - GRID * 2, x2: rightTrunkX - GRID * 3, y2: yLabsBase - GRID * 2 });
+    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: yLabsBase - GRID * 2, x2: rightTrunkX - GRID * 1, y2: yLabsBase });
+    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: yLabsBase, x2: rightTrunkX, y2: yLabsBase });
 
-    // Right Trunk down to Articles/Newsletter section
-    masterSegments.push({ x1: rightTrunkX, y1: yLabsBase, x2: rightTrunkX, y2: secPositions[6] + GRID });
+    // Right Trunk down to Journal (Recent Articles) section
+    masterSegments.push({ x1: rightTrunkX, y1: yLabsBase, x2: rightTrunkX, y2: secPositions[5] + GRID });
 
-    // 4. Articles Section: Zig-zag to avoid Articles header
-    const yArticlesBase = secPositions[6] + GRID;
-    masterSegments.push({ x1: rightTrunkX, y1: yArticlesBase, x2: centerX + GRID * 1, y2: yArticlesBase });
-    masterSegments.push({ x1: centerX + GRID * 1, y1: yArticlesBase, x2: centerX - GRID * 1, y2: yArticlesBase - GRID * 2 });
-    masterSegments.push({ x1: centerX - GRID * 1, y1: yArticlesBase - GRID * 2, x2: leftTrunkX + GRID * 4, y2: yArticlesBase - GRID * 2 });
-    masterSegments.push({ x1: leftTrunkX + GRID * 4, y1: yArticlesBase - GRID * 2, x2: leftTrunkX + GRID * 2, y2: yArticlesBase });
-    masterSegments.push({ x1: leftTrunkX + GRID * 2, y1: yArticlesBase, x2: leftTrunkX, y2: yArticlesBase });
+    // 4. Technical Journal Section (Right-to-Left, full-width elevated)
+    const yJournalBase = secPositions[5] + GRID;
+    masterSegments.push({ x1: rightTrunkX, y1: yJournalBase, x2: rightTrunkX - GRID * 1, y2: yJournalBase });
+    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: yJournalBase, x2: rightTrunkX - GRID * 3, y2: yJournalBase - GRID * 2 });
+    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: yJournalBase - GRID * 2, x2: leftTrunkX + GRID * 3, y2: yJournalBase - GRID * 2 });
+    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yJournalBase - GRID * 2, x2: leftTrunkX + GRID * 1, y2: yJournalBase });
+    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yJournalBase, x2: leftTrunkX, y2: yJournalBase });
 
-    // Left Trunk down to Footer section
-    masterSegments.push({ x1: leftTrunkX, y1: yArticlesBase, x2: leftTrunkX, y2: secPositions[7] + GRID });
-    masterSegments.push({ x1: leftTrunkX, y1: secPositions[7] + GRID, x2: centerX, y2: secPositions[7] + GRID });
+    // Left Trunk down to Newsletter (Subscribe) section
+    masterSegments.push({ x1: leftTrunkX, y1: yJournalBase, x2: leftTrunkX, y2: secPositions[7] + GRID });
+
+    // 5. Newsletter Section (Left-to-Right, full-width elevated)
+    const yNewsletterBase = secPositions[7] + GRID;
+    masterSegments.push({ x1: leftTrunkX, y1: yNewsletterBase, x2: leftTrunkX + GRID * 1, y2: yNewsletterBase });
+    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yNewsletterBase, x2: leftTrunkX + GRID * 3, y2: yNewsletterBase - GRID * 2 });
+    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yNewsletterBase - GRID * 2, x2: rightTrunkX - GRID * 3, y2: yNewsletterBase - GRID * 2 });
+    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: yNewsletterBase - GRID * 2, x2: rightTrunkX - GRID * 1, y2: yNewsletterBase });
+    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: yNewsletterBase, x2: rightTrunkX, y2: yNewsletterBase });
+
+    // Right Trunk down to Footer section
+    masterSegments.push({ x1: rightTrunkX, y1: yNewsletterBase, x2: rightTrunkX, y2: secPositions[8] + GRID });
+    masterSegments.push({ x1: rightTrunkX, y1: secPositions[8] + GRID, x2: centerX, y2: secPositions[8] + GRID });
 
     paths.push({
       id: 'master-data-flow',
