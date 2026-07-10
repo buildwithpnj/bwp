@@ -43,7 +43,7 @@ function nodeToXY(n: DataNode) {
   return { x: (n.xPct / 100) * VW, y: (n.yPct / 100) * VH };
 }
 
-// Build a smooth path through connected nodes in order (top row L→R, then bottom row R→L looping back)
+// Build a sharp rectangular track directly through all node centers (L→R top row, then R→L bottom row, closing back)
 function buildCircuitPath(): string {
   const connectedNodes = NODES.filter(n => n.connected !== false);
   
@@ -55,17 +55,11 @@ function buildCircuitPath(): string {
     ...botRow.map(nodeToXY),
   ];
 
-  // Smooth polyline using simple quadratic bezier at each corner
   let d = `M ${pts[0].x},${pts[0].y}`;
   for (let i = 1; i < pts.length; i++) {
-    const prev = pts[i - 1];
-    const curr = pts[i];
-    const mx = (prev.x + curr.x) / 2;
-    const my = (prev.y + curr.y) / 2;
-    d += ` Q ${prev.x},${prev.y} ${mx},${my}`;
+    d += ` L ${pts[i].x},${pts[i].y}`;
   }
-  // close back to start smoothly
-  d += ` Q ${pts[pts.length - 1].x},${pts[pts.length - 1].y} ${pts[0].x},${pts[0].y} Z`;
+  d += ' Z';
   return d;
 }
 
