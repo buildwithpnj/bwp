@@ -12,16 +12,16 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const project = getProjectBySlug(slug);
-  if (!project) return { title: 'Project Not Found — BuildWithPNJ' };
+  if (!project) return { title: 'Project Not Found' };
 
   return {
-    title: `${project.title} — BuildWithPNJ`,
+    title: project.title,
     description: project.tagline,
     alternates: {
       canonical: `/projects/${project.slug}`,
     },
     openGraph: {
-      title: `${project.title} — BuildWithPNJ`,
+      title: project.title,
       description: project.tagline,
       url: `https://buildwithpnj.in/projects/${project.slug}`,
       type: 'website',
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps) {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${project.title} — BuildWithPNJ`,
+      title: project.title,
       description: project.tagline,
       creator: '@buildwithpnj',
     },

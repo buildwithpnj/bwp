@@ -14,16 +14,16 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const post = getBlogPostBySlug(slug);
-  if (!post) return { title: 'Article Not Found — BuildWithPNJ' };
+  if (!post) return { title: 'Article Not Found' };
 
   return {
-    title: `${post.title} — BuildWithPNJ`,
+    title: post.title,
     description: post.excerpt,
     alternates: {
       canonical: `/journal/${post.slug}`,
     },
     openGraph: {
-      title: `${post.title} — BuildWithPNJ`,
+      title: post.title,
       description: post.excerpt,
       url: `https://buildwithpnj.in/journal/${post.slug}`,
       type: 'article',
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps) {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${post.title} — BuildWithPNJ`,
+      title: post.title,
       description: post.excerpt,
       creator: '@buildwithpnj',
     },

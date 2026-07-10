@@ -11,6 +11,13 @@ export const metadata = {
   description: 'Live telemetry command center of BuildWithPNJ. Track real-time developer metrics, GitHub commits heatmap, and roadmap milestones.',
 };
 
+function sanitizeSubject(subject: string): string {
+  if (!subject) return 'No commit message';
+  let sanitized = subject.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[email redacted]');
+  sanitized = sanitized.replace(/(pass|password|pwd|secret|key|token|cred|credential)(s)?(\s*[:=]\s*)([^\s\)]+)/gi, '$1$3[redacted]');
+  return sanitized;
+}
+
 export default function PublicMissionControlPage() {
   const projects = getProjects();
   const posts = getBlogPosts();
@@ -68,7 +75,7 @@ export default function PublicMissionControlPage() {
                 const timestamp = parseInt(timestampStr, 10) || 0;
                 allCommits.push({
                   hash,
-                  subject: subject || 'No commit message',
+                  subject: sanitizeSubject(subject),
                   author: author || 'Unknown',
                   date: date || '',
                   timestamp,
@@ -128,12 +135,12 @@ export default function PublicMissionControlPage() {
       // Fallback mock logs if git command is not available (e.g. serverless containers)
       totalCommits = 880;
       commitsList = [
-        { hash: 'c2ab969', subject: 'fix(api): replace asyncio.run() seeding with synchronous psycopg2 seed to eliminate event loop corruption on login', author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
-        { hash: '21a52f5', subject: 'fix(alembic): escape percent signs for configparser in env.py', author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
-        { hash: '562c032', subject: 'fix(api): disable statement cache in SQLAlchemy and Alembic for PgBouncer compatibility', author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
-        { hash: '21c555e', subject: 'feat(homepage): Module 2.3 — Propagate dynamic photo-synced colors globally across entire homepage', author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
-        { hash: 'c00a210', subject: 'feat(hero): Module 1.3 — Extract dominant pixel color from portrait and synchronize system glows', author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
-        { hash: 'ca41b76', subject: 'feat(telemetry): Implement SystemTelemetryTicker LED status bar and biometric laser sweep on about page', author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' }
+        { hash: 'c2ab969', subject: sanitizeSubject('fix(api): replace asyncio.run() seeding with synchronous psycopg2 seed to eliminate event loop corruption on login'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
+        { hash: '21a52f5', subject: sanitizeSubject('fix(alembic): escape percent signs for configparser in env.py'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
+        { hash: '562c032', subject: sanitizeSubject('fix(api): disable statement cache in SQLAlchemy and Alembic for PgBouncer compatibility'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
+        { hash: '21c555e', subject: sanitizeSubject('feat(homepage): Module 2.3 — Propagate dynamic photo-synced colors globally across entire homepage'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
+        { hash: 'c00a210', subject: sanitizeSubject('feat(hero): Module 1.3 — Extract dominant pixel color from portrait and synchronize system glows'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
+        { hash: 'ca41b76', subject: sanitizeSubject('feat(telemetry): Implement SystemTelemetryTicker LED status bar and biometric laser sweep on about page'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' }
       ];
       heatmapCells = Array.from({ length: 52 * 7 }, (_, i) => {
         const factor = Math.sin(i / 15) * Math.cos(i / 30);

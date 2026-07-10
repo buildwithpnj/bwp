@@ -12,16 +12,16 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const exp = getExperimentBySlug(slug);
-  if (!exp) return { title: 'Experiment Not Found — BuildWithPNJ' };
+  if (!exp) return { title: 'Experiment Not Found' };
 
   return {
-    title: `${exp.title} — BuildWithPNJ`,
+    title: exp.title,
     description: exp.tagline,
     alternates: {
       canonical: `/labs/${exp.slug}`,
     },
     openGraph: {
-      title: `${exp.title} — BuildWithPNJ`,
+      title: exp.title,
       description: exp.tagline,
       url: `https://buildwithpnj.in/labs/${exp.slug}`,
       type: 'article',
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps) {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${exp.title} — BuildWithPNJ`,
+      title: exp.title,
       description: exp.tagline,
       creator: '@buildwithpnj',
     },
