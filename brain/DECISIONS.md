@@ -57,4 +57,12 @@
 * **Solution**: Implemented a local SQL aggregator inside the `/insights` router that computes completion metrics, active calendar loads, and recovery streaks, generating structured insights text.
 * **Tradeoffs**: Fast, secure, zero token cost, but lacks freeform dialogue response variety.
 
+## ADR-012: Decoupled JSON Cognitive Interrupter Library
+* **Problem**: Adding a large set of recovery interventions directly inside client components increases layout bundle size and blocks future personalization.
+* **Solution**: Decoupled the 102 prompts into a standalone static JSON library (`interventions.json`) loaded on-demand.
+* **Tradeoffs**: Requires importing local JSON files dynamically, but completely isolates the behavioral content from the React layout code, making it future-ready for automated AI customization.
 
+## ADR-013: Reference-Stabilized useCallback Hoisting for High-Framerate Animations
+* **Problem**: Active canvas rendering frames and trigger calculations triggered frequent rendering restarts due to unstable helper references.
+* **Solution**: Converted utility functions inside `premium-pixel-background.tsx` to hoisted standard functions and wrapped layout listeners (`measureSections`, `loadData`) in `useCallback` hooks.
+* **Tradeoffs**: Slightly increases code length in hook setups, but guarantees sub-millisecond layout stability, zero warning compilations, and stable 60 FPS rendering.

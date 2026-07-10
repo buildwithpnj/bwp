@@ -53,6 +53,14 @@ interface Ember {
   swayOffset: number;
 }
 
+const TICKER_PHRASES = [
+  "Integrating Autonomous AI Agents",
+  "Configuring Real-Time Voice AI",
+  "Engineering Intelligent Workflows",
+  "Deploying Complex AI Integrations",
+  "Building High-End Enterprise Automation"
+];
+
 function rgbToHsl(r: number, g: number, b: number) {
   r /= 255; g /= 255; b /= 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
@@ -100,17 +108,10 @@ export function AIPortraitHero() {
   const portraitColorRef = useRef({ h: 221, s: 83, l: 53, r: 59, g: 130, b: 246 });
   const activeColorRef = useRef({ h: 221, s: 83, l: 53 });
   const [tickerIndex, setTickerIndex] = useState(0);
-  const tickerPhrases = [
-    "Integrating Autonomous AI Agents",
-    "Configuring Real-Time Voice AI",
-    "Engineering Intelligent Workflows",
-    "Deploying Complex AI Integrations",
-    "Building High-End Enterprise Automation"
-  ];
 
   useEffect(() => {
     const tickerInterval = setInterval(() => {
-      setTickerIndex((prev) => (prev + 1) % tickerPhrases.length);
+      setTickerIndex((prev) => (prev + 1) % TICKER_PHRASES.length);
     }, 3200);
     return () => clearInterval(tickerInterval);
   }, []);
@@ -1197,7 +1198,7 @@ export function AIPortraitHero() {
                 key={tickerIndex}
                 className="animate-ticker-slide font-semibold truncate text-foreground/95"
               >
-                {tickerPhrases[tickerIndex]}
+                {TICKER_PHRASES[tickerIndex]}
               </span>
             </div>
 

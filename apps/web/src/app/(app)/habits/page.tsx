@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Target,
   Plus,
@@ -92,8 +92,19 @@ export default function HabitsPage() {
   const [editContent, setEditContent] = useState('');
   const [savingJournal, setSavingJournal] = useState(false);
 
+  const selectJournal = useCallback((entry: JournalEntry) => {
+    setSelectedEntry(entry);
+    setEditMood(entry.mood || 3);
+    try {
+      const parsed = JSON.parse(entry.body_json);
+      setEditContent(parsed.text || '');
+    } catch {
+      setEditContent(entry.body_json || '');
+    }
+  }, []);
+
   // Load habits and journals
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const hData = await api<Habit[]>('/api/habits');
@@ -109,22 +120,11 @@ export default function HabitsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectJournal]);
 
   useEffect(() => {
     loadData();
-  }, []);
-
-  const selectJournal = (entry: JournalEntry) => {
-    setSelectedEntry(entry);
-    setEditMood(entry.mood || 3);
-    try {
-      const parsed = JSON.parse(entry.body_json);
-      setEditContent(parsed.text || '');
-    } catch {
-      setEditContent(entry.body_json || '');
-    }
-  };
+  }, [loadData]);
 
   const handleCreateHabit = async (e: React.FormEvent) => {
     e.preventDefault();

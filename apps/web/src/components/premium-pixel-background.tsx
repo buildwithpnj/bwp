@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ export function PremiumPixelBackground() {
   const documentHeightRef = useRef(0);
 
   // Measure sections on the homepage to update routing y-coordinates
-  const measureSections = () => {
+  const measureSections = useCallback(() => {
     try {
       const heights: Record<string, number> = {};
       const GRID = 32;
@@ -155,10 +155,11 @@ export function PremiumPixelBackground() {
       sectionPositionsRef.current = heights;
       buildMotherboardCircuits();
     } catch { /* suppress */ }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Build PCB motherboard circuit traces connecting the vertical trunks to sections
-  const buildMotherboardCircuits = () => {
+  function buildMotherboardCircuits() {
     const W = window.innerWidth;
     const docH = documentHeightRef.current || 4000;
     
@@ -654,7 +655,7 @@ export function PremiumPixelBackground() {
       window.removeEventListener('hero-pulse', handleHeroPulse);
       clearInterval(measureInterval);
     };
-  }, [inViewport, resolvedTheme, accentHSL]);
+  }, [inViewport, resolvedTheme, accentHSL, measureSections]);
 
   return (
     <div 

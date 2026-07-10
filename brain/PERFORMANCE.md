@@ -50,3 +50,15 @@ async def execute_gdrive_call(self, func, *args):
     return await asyncio.to_thread(func, *args)
 ```
 - **Results**: Latency of other concurrent endpoints remains at `14 ms` even during active, heavy file stream uploads.
+
+---
+
+## 5. Performance Sprint Reports
+For full details on the performance sprint audits and configurations:
+- [Performance Audit Report](file:///C:/Users/praka/.gemini/antigravity/brain/25c2f07f-27fd-415d-8b41-a61cfc183870/PERFORMANCE_REPORT.md)
+- [Optimization Report](file:///C:/Users/praka/.gemini/antigravity/brain/25c2f07f-27fd-415d-8b41-a61cfc183870/OPTIMIZATION_REPORT.md)
+- [Memory Optimization Report](file:///C:/Users/praka/.gemini/antigravity/brain/25c2f07f-27fd-415d-8b41-a61cfc183870/MEMORY_REPORT.md)
+- [Security Audit Report](file:///C:/Users/praka/.gemini/antigravity/brain/25c2f07f-27fd-415d-8b41-a61cfc183870/SECURITY_REPORT.md)
+- [Bundle Analysis Report](file:///C:/Users/praka/.gemini/antigravity/brain/25c2f07f-27fd-415d-8b41-a61cfc183870/BUNDLE_ANALYSIS.md)
+- [Animation Performance Report](file:///C:/Users/praka/.gemini/antigravity/brain/25c2f07f-27fd-415d-8b41-a61cfc183870/ANIMATION_REPORT.md)
+

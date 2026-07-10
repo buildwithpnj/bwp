@@ -49,7 +49,7 @@ export function Terminal({ title = 'warborn_telemetry.log', lines, className, sh
     if (lines && lines.length > 0 && history.length === 0) {
       setHistory(lines);
     }
-  }, [lines]);
+  }, [lines, history.length]);
 
   // Live telemetry stream simulator
   useEffect(() => {

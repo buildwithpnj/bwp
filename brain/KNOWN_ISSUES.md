@@ -6,16 +6,6 @@ This document logs critical bugs, regressions, and warnings discovered during de
 
 ## 1. Active Issues
 
-### ⚠️ React Hook Missing Dependency Warning (Eslint)
-- **Problem**: Missing `useEffect` dependencies are reported in the compiler console inside:
-  - `habits/page.tsx` (`loadData`)
-  - `ai-portrait-hero.tsx` (`tickerPhrases.length`)
-  - `premium-pixel-background.tsx` (`measureSections`)
-  - `terminal.tsx` (`history.length`)
-- **Root Cause**: Next.js ESLint rules require adding functions/lengths referenced inside hooks to the dependency array. However, doing so without wrapping the functions in `useCallback` triggers infinite render loops.
-- **Status**: *Warning* (Safe to run).
-- **Resolution Plan**: Wrap referenced helper functions in `useCallback` or safely configure ESLint inline override rules where applicable.
-
 ### ⚠️ Next.js native `<img>` tag Warnings (Bookshelf covers)
 - **Problem**: Next.js compiler logs warnings inside `/books` (`books/page.tsx`) and `/assets` (`assets/page.tsx`) regarding the use of native `<img>` elements instead of optimized `<Image />` tags.
 - **Root Cause**: Book cover images and asset uploads originate from dynamic, multi-account Google Drive attachments. Utilizing `<Image />` requires whitelisting all potential Google Drive domain subdomains inside `next.config.ts`, which is unscalable.
@@ -24,6 +14,12 @@ This document logs critical bugs, regressions, and warnings discovered during de
 ---
 
 ## 2. Resolved Issues
+
+### ❌ React Hook Missing Dependency Warning (Eslint)
+- **Problem**: Missing `useEffect` dependencies were reported in the compiler console inside `habits/page.tsx`, `ai-portrait-hero.tsx`, `premium-pixel-background.tsx`, and `terminal.tsx`.
+- **Root Cause**: Next.js ESLint rules required adding functions/lengths referenced inside hooks to the dependency array. However, doing so directly was triggering infinite render loops.
+- **Solution**: Wrapped referenced helper methods inside `useCallback` hooks and hoisted array constants outside component scopes to guarantee reference-stability.
+- **Status**: ✅ *Resolved*.
 
 ### ❌ Prerender Error on `/auth/google/callback` and `/storage/callback`
 - **Incident**: Next.js production builds failed with `useSearchParams() should be wrapped in a suspense boundary` on callback routes during static pages generation.

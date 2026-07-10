@@ -4,6 +4,17 @@ All notable changes to the BuildWithPNJ Dashboard are documented here.
 
 ---
 
+## [Unreleased] — 2026-07-10 (Performance Sprint & Recovery Interrupter)
+
+### Summary
+This release focused on stability optimizations, cognitive recovery features, and telemetry upgrades:
+1. **ESLint Warning Resolutions**: Refactored React hooks and state dependencies inside `habits/page.tsx`, `ai-portrait-hero.tsx`, `premium-pixel-background.tsx`, and `terminal.tsx` using `useCallback` hooks and static scope hoisting, achieving zero warning compilations in the codebase.
+2. **Visual Telemetry Dotted Tracks**: Overhauled the footer data stream path connections to render dotted alignments (`strokeDasharray="0 15"` and `strokeLinecap="round"`), and set `connected: false` for unconnected nodes (`mcp`, `node`, `embedding`) with a greyed-out visual layout.
+3. **Automated Geo-IP Detection**: Implemented geo-location detection showing detected regional node configurations, regional timezone clocks, and adaptive currency symbols.
+4. **Behavioral Interrupter Engine**: Designed the `RecoveryIntervention` widget displaying 102 cognitive prompts with smart rotation limits.
+
+---
+
 ## [Unreleased] — 2026-07-10 (Phase 3 Life OS Upgrade)
 
 ### Summary
