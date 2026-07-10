@@ -189,8 +189,9 @@ export function FooterDataStream() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inViewport]);
 
-  // glow colour derived from hero portrait
-  const glow    = heroColor || 'hsl(221.2 83.2% 53.3%)';
+  // Default primary telemetry color: Electric Blue
+  const glow = heroColor || '#3B82F6';
+  const collectColor = '#E5484D';
   const glowCSS = `0 0 12px ${glow}, 0 0 24px ${glow}66`;
 
   return (
@@ -270,7 +271,7 @@ export function FooterDataStream() {
                 {isPulsing && isConnected && (
                   <rect
                     x="-6" y="-6" width="12" height="12" rx="1"
-                    fill="none" stroke={glow} strokeWidth="1" opacity="0.6"
+                    fill="none" stroke={collectColor} strokeWidth="1" opacity="0.6"
                   >
                     <animate attributeName="x" from="-6" to="-15" dur="0.4s" fill="freeze" />
                     <animate attributeName="y" from="-6" to="-15" dur="0.4s" fill="freeze" />
@@ -283,16 +284,16 @@ export function FooterDataStream() {
                 {/* Anchor square */}
                 <rect
                   x="-5" y="-5" width="10" height="10" rx="2"
-                  fill={!isConnected ? '#111111' : (isCollected ? `${glow}33` : 'var(--card)')}
-                  stroke={!isConnected ? '#333333' : (isCollected || isHovered ? glow : 'var(--border)')}
+                  fill={!isConnected ? '#111111' : (isCollected ? `${collectColor}33` : 'var(--card)')}
+                  stroke={!isConnected ? '#333333' : (isCollected ? collectColor : (isHovered ? glow : 'var(--border)'))}
                   strokeWidth="0.8"
-                  style={{ filter: (isConnected && (isCollected || isHovered)) ? `drop-shadow(0 0 4px ${glow})` : 'none',
+                  style={{ filter: (isConnected && isCollected) ? `drop-shadow(0 0 4px ${collectColor})` : ((isConnected && isHovered) ? `drop-shadow(0 0 4px ${glow})` : 'none'),
                            transition: 'all 0.3s' }}
                 />
                 <rect
                   x="-2.5" y="-2.5" width="5" height="5" rx="1"
-                  fill={!isConnected ? '#333333' : (isCollected ? glow : '#888888')}
-                  opacity={!isConnected ? 0.2 : (isCollected ? 1 : 0.5)}
+                  fill={!isConnected ? '#333333' : (isCollected ? collectColor : (isHovered ? glow : '#888888'))}
+                  opacity={!isConnected ? 0.2 : (isCollected || isHovered ? 1 : 0.5)}
                 />
 
                 {/* Label */}

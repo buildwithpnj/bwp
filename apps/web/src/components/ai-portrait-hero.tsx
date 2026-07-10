@@ -53,6 +53,34 @@ interface Ember {
   swayOffset: number;
 }
 
+/*
+ * BuildWithPNJ homepage color sync is intentionally restricted to a premium 3-color system:
+ * Electric Blue for primary system energy,
+ * Engineering Red for selective emphasis,
+ * and one muted support tone.
+ * Do not introduce additional vivid accent colors without updating the design system.
+ */
+const HERO_SYNC_COLORS = {
+  blue: {
+    h: 217, s: 91,
+    lLight: 45, lDark: 65,
+    r: 59, g: 130, b: 246,
+    solid: '#3B82F6'
+  },
+  red: {
+    h: 358, s: 76,
+    lLight: 45, lDark: 59,
+    r: 229, g: 72, b: 77,
+    solid: '#E5484D'
+  },
+  muted: {
+    h: 215, s: 16,
+    lLight: 45, lDark: 65,
+    r: 148, g: 163, b: 184,
+    solid: '#94A3B8'
+  }
+};
+
 const TICKER_PHRASES = [
   "Integrating Autonomous AI Agents",
   "Configuring Real-Time Voice AI",
@@ -348,17 +376,24 @@ export function AIPortraitHero() {
         
         const hsl = rgbToHsl(finalR, finalG, finalB);
         
-        // Boost saturation/lightness for aesthetic neon glow profiles
-        const sBoost = Math.max(80, hsl.s);
-        const lBoost = resolvedTheme === 'light' ? 48 : 62;
-        
+        // Classify dynamic portrait hue to closest allowed key in the premium 3-color palette
+        let classification: 'blue' | 'red' | 'muted' = 'blue';
+        if (hsl.s < 32) {
+          classification = 'muted';
+        } else if (hsl.h >= 330 || hsl.h < 35) {
+          classification = 'red';
+        } else {
+          classification = 'blue';
+        }
+
+        const palette = HERO_SYNC_COLORS[classification];
         portraitColorRef.current = {
-          h: hsl.h,
-          s: sBoost,
-          l: lBoost,
-          r: finalR,
-          g: finalG,
-          b: finalB
+          h: palette.h,
+          s: palette.s,
+          l: resolvedTheme === 'light' ? palette.lLight : palette.lDark,
+          r: palette.r,
+          g: palette.g,
+          b: palette.b
         };
       }
 
@@ -492,27 +527,40 @@ export function AIPortraitHero() {
       const gY = height * 0.5 + Math.cos(time * 0.5) * height * 0.2;
       const glowRad = Math.min(width, height) * 0.8;
       
-       // Smoothly interpolate towards the target portrait color profile (adjusted for brand node hovering)
-       let targetColor = { ...portraitColorRef.current };
+       // Refactor color hover/active logic to select from the restricted 3-color palette map
+       let targetColorKey: 'blue' | 'red' | 'muted' = 'blue';
+
+       // Determine base portrait classification
+       const baseH = portraitColorRef.current.h;
+       if (baseH === HERO_SYNC_COLORS.red.h) {
+         targetColorKey = 'red';
+       } else if (baseH === HERO_SYNC_COLORS.muted.h) {
+         targetColorKey = 'muted';
+       } else {
+         targetColorKey = 'blue';
+       }
+
        const currentHoveredNode = hoveredNodeRef.current;
        if (currentHoveredNode) {
          const hoveredLabel = currentHoveredNode.split(':')[0].trim().toLowerCase();
-         if (hoveredLabel === 'python') {
-           targetColor = { h: 207, s: 82, l: isDark ? 65 : 45, r: 55, g: 118, b: 171 };
-         } else if (hoveredLabel === 'claude') {
-           targetColor = { h: 12, s: 65, l: isDark ? 62 : 48, r: 217, g: 119, b: 95 };
-         } else if (hoveredLabel === 'gemini') {
-           targetColor = { h: 235, s: 90, l: isDark ? 62 : 48, r: 99, g: 102, b: 241 };
-         } else if (hoveredLabel === 'openai') {
-           targetColor = { h: 164, s: 82, l: isDark ? 62 : 45, r: 16, g: 163, b: 127 };
-         } else if (hoveredLabel === 'fastapi') {
-           targetColor = { h: 174, s: 100, l: isDark ? 60 : 40, r: 0, g: 150, b: 136 };
-         } else if (hoveredLabel === 'postgresql') {
-           targetColor = { h: 207, s: 48, l: isDark ? 65 : 45, r: 51, g: 103, b: 145 };
-         } else if (hoveredLabel === 'langchain') {
-           targetColor = { h: 147, s: 82, l: isDark ? 60 : 40, r: 19, g: 193, b: 96 };
+         if (hoveredLabel === 'python' || hoveredLabel === 'postgresql' || hoveredLabel === 'gemini') {
+           targetColorKey = 'blue';
+         } else if (hoveredLabel === 'claude' || hoveredLabel === 'openai') {
+           targetColorKey = 'red';
+         } else if (hoveredLabel === 'fastapi' || hoveredLabel === 'langchain') {
+           targetColorKey = 'muted';
          }
        }
+
+       const palette = HERO_SYNC_COLORS[targetColorKey];
+       const targetColor = {
+         h: palette.h,
+         s: palette.s,
+         l: isDark ? palette.lDark : palette.lLight,
+         r: palette.r,
+         g: palette.g,
+         b: palette.b
+       };
 
        activeColorRef.current.h += (targetColor.h - activeColorRef.current.h) * 0.045;
        activeColorRef.current.s += (targetColor.s - activeColorRef.current.s) * 0.045;

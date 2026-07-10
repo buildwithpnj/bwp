@@ -592,14 +592,29 @@ export function PremiumPixelBackground() {
         // Draw only if visible in viewport
         if (screenY < -20 || screenY > H + 20) return;
 
-        // Determine functional packet color based on resolved theme for perfect contrast
-        let packetColor = isDark ? `hsla(${activeH}, ${activeS}%, 65%, ` : `hsla(${activeH}, ${activeS}%, 40%, `; 
-        if (p.category === 'inference') packetColor = isDark ? `hsla(${(activeH + 30) % 360}, ${activeS}%, 65%, ` : `hsla(${(activeH + 30) % 360}, ${activeS}%, 35%, `; 
-        if (p.category === 'memory') packetColor = isDark ? `hsla(${(activeH + 280) % 360}, ${activeS - 10}%, 70%, ` : `hsla(${(activeH + 280) % 360}, ${activeS - 10}%, 45%, `; 
-        if (p.category === 'broadcast') packetColor = isDark ? `hsla(${activeH}, 15%, 95%, ` : `hsla(${activeH}, 15%, 20%, `; 
-        if (p.category === 'success') packetColor = isDark ? `hsla(${(activeH + 120) % 360}, ${activeS}%, 65%, ` : `hsla(${(activeH + 120) % 360}, ${activeS}%, 35%, `; 
-        if (p.category === 'retry') packetColor = isDark ? `hsla(${(activeH + 60) % 360}, ${activeS}%, 65%, ` : `hsla(${(activeH + 60) % 360}, ${activeS}%, 45%, `; 
-        if (p.category === 'error') packetColor = isDark ? `hsla(0, 95%, 65%, ` : `hsla(0, 95%, 45%, `; 
+        // Map background packet color strictly to the premium 3-color design system
+        let h = 217;
+        let s = 91;
+        let l = isDark ? 65 : 45;
+
+        if (p.category === 'error' || p.category === 'retry') {
+          // Engineering Red
+          h = 358;
+          s = 76;
+          l = isDark ? 59 : 45;
+        } else if (p.category === 'broadcast') {
+          // Muted Slate
+          h = 215;
+          s = 16;
+          l = isDark ? 65 : 45;
+        } else {
+          // Electric Blue (Default Active System Color)
+          h = 217;
+          s = 91;
+          l = isDark ? 65 : 45;
+        }
+
+        let packetColor = `hsla(${h}, ${s}%, ${l}%, `;
 
         // Adjust alpha based on wave proximity (min baseline 0.55 for high visibility)
         let alpha = Math.max(0.55, p.alpha);
@@ -617,7 +632,9 @@ export function PremiumPixelBackground() {
         let labelText = p.label;
         if (isFooterPath && !p.isMaster) {
           labelText = FOOTER_STATUSES[p.pathIndex % FOOTER_STATUSES.length];
-          packetColor = isDark ? `hsla(${(activeH + 120) % 360}, ${activeS}%, 65%, ` : `hsla(${(activeH + 120) % 360}, ${activeS}%, 35%, `; 
+          // Default footer path packets to Electric Blue
+          h = 217; s = 91; l = isDark ? 65 : 45;
+          packetColor = `hsla(${h}, ${s}%, ${l}%, `;
         }
 
         ctx.save();
