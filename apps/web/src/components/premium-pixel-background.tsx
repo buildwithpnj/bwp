@@ -144,16 +144,16 @@ export function PremiumPixelBackground() {
           const rect = el.getBoundingClientRect();
           heights[node.sectionId] = rect.top + window.scrollY;
         } else {
-          // Fallback based on typical scrolling height ratios
-          const ratio = node.sectionId === 'section-mission' ? 0.15
-                      : node.sectionId === 'section-solutions' ? 0.3
-                      : node.sectionId === 'section-projects' ? 0.45
-                      : node.sectionId === 'section-labs' ? 0.6
-                      : node.sectionId === 'section-journal' ? 0.68
-                      : node.sectionId === 'section-control' ? 0.76
-                      : node.sectionId === 'section-newsletter' ? 0.86
-                      : 0.95;
-          heights[node.sectionId] = docHeight * ratio;
+          // Fixed static grid-aligned Y coordinates for pages where these sections do not exist (guarantees locked lines across all routes)
+          const fixedY = node.sectionId === 'section-mission' ? 640
+                       : node.sectionId === 'section-solutions' ? 1280
+                       : node.sectionId === 'section-projects' ? 1920
+                       : node.sectionId === 'section-labs' ? 2560
+                       : node.sectionId === 'section-journal' ? 3200
+                       : node.sectionId === 'section-control' ? 3840
+                       : node.sectionId === 'section-newsletter' ? 4480
+                       : 5120;
+          heights[node.sectionId] = fixedY;
         }
       });
 
