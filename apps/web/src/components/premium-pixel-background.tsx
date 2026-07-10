@@ -593,9 +593,9 @@ export function PremiumPixelBackground() {
         if (screenY < -20 || screenY > H + 20) return;
 
         // Map background packet color strictly to the premium 3-color design system
-        let h = 217;
-        let s = 91;
-        let l = isDark ? 65 : 45;
+        let h = activeH;
+        let s = activeS;
+        let l = isDark ? activeL : (activeL - 10);
 
         if (p.category === 'error' || p.category === 'retry') {
           // Engineering Red
@@ -608,10 +608,10 @@ export function PremiumPixelBackground() {
           s = 16;
           l = isDark ? 65 : 45;
         } else {
-          // Electric Blue (Default Active System Color)
-          h = 217;
-          s = 91;
-          l = isDark ? 65 : 45;
+          // Dynamic Sync Color (Electric Blue default, transitions to hovered accent color)
+          h = activeH;
+          s = activeS;
+          l = isDark ? activeL : (activeL - 10);
         }
 
         let packetColor = `hsla(${h}, ${s}%, ${l}%, `;
