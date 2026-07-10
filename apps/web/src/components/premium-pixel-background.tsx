@@ -69,6 +69,7 @@ const SUBSYSTEM_NODES: SubSystemNode[] = [
   { id: 'solutions-mem', label: 'MEMORY SYNC', sectionId: 'section-solutions', align: 'right', yOffset: 64, status: 'PERSISTENT', pulseTimer: 0 },
   { id: 'projects-router', label: 'SHIPS TELEMETRY', sectionId: 'section-projects', align: 'left', yOffset: 96, status: 'MONITORED', pulseTimer: 0 },
   { id: 'labs-compute', label: 'R&D COMPUTE', sectionId: 'section-labs', align: 'right', yOffset: 64, status: 'COMPILING', pulseTimer: 0 },
+  { id: 'journal-log', label: 'ENGINE JOURNAL', sectionId: 'section-journal', align: 'left', yOffset: 64, status: 'ARCHIVED', pulseTimer: 0 },
   { id: 'mission-status', label: 'RUN TIME WATCH', sectionId: 'section-control', align: 'left', yOffset: 32, status: 'SECURE', pulseTimer: 0 },
   { id: 'newsletter-mcp', label: 'MCP CONNECTOR', sectionId: 'section-newsletter', align: 'right', yOffset: 96, status: 'LISTENING', pulseTimer: 0 },
   { id: 'footer-sync', label: 'SYSTEM STATE', sectionId: 'section-footer', align: 'left', yOffset: 32, status: 'SYNCHRONIZED', pulseTimer: 0 }
@@ -287,13 +288,14 @@ export function PremiumPixelBackground() {
 
       // Spawn regular traffic packets (slowed speed & bright solid opacity)
       for (let i = 0; i < 150; i++) {
-        const pathIdx = Math.floor(Math.random() * (paths.length - 1));
+        const pathIdx = Math.floor(Math.random() * paths.length);
+        const segmentIdx = Math.floor(Math.random() * paths[pathIdx].segments.length);
         const category = getRandomCategory();
         const label = getRandomLabel(category);
         
         packets.push({
           pathIndex: pathIdx,
-          segmentIndex: 0,
+          segmentIndex: segmentIdx,
           progress: Math.random(),
           speed: 0.0012 + Math.random() * 0.0028, // Slowed down from 0.006 - 0.014
           size: 3,
@@ -329,6 +331,10 @@ export function PremiumPixelBackground() {
     if (nodeSection === 'section-labs') {
       const labLabels = ['RESEARCH', 'HYPOTHESIS', 'RESULT', 'EXP', 'MATH'];
       return labLabels[Math.floor(Math.random() * labLabels.length)];
+    }
+    if (nodeSection === 'section-journal') {
+      const journalLabels = ['POST', 'ARTICLE', 'JOURNAL', 'WRITE', 'ARCHIVE'];
+      return journalLabels[Math.floor(Math.random() * journalLabels.length)];
     }
 
     const labels = PACKET_LABES[cat];
@@ -374,8 +380,9 @@ export function PremiumPixelBackground() {
         'section-mission': 0.15,
         'section-solutions': 0.3,
         'section-projects': 0.48,
-        'section-labs': 0.65,
-        'section-control': 0.78,
+        'section-labs': 0.62,
+        'section-journal': 0.72,
+        'section-control': 0.80,
         'section-newsletter': 0.88
       };
 
