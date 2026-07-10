@@ -301,8 +301,8 @@ export function FooterDataStream() {
                   fontSize="7"
                   fontFamily="monospace"
                   fontWeight="700"
-                  fill={!isConnected ? '#444444' : (isCollected || isHovered ? glow : 'currentColor')}
-                  style={{ transition: 'fill 0.3s' }}
+                  fill="var(--muted-foreground)"
+                  opacity={!isConnected ? 0.35 : 0.75}
                   className="select-none"
                 >
                   {node.label}
