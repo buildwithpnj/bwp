@@ -51,7 +51,7 @@ function buildCircuitPath(): string {
 
   const pts = [
     ...topRow.map(nodeToXY),
-    ...botRow.map(nodeToXY).reverse(),
+    ...botRow.map(nodeToXY),
   ];
 
   // Smooth polyline using simple quadratic bezier at each corner
