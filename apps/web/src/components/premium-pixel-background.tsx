@@ -628,8 +628,8 @@ export function PremiumPixelBackground() {
         ctx.shadowBlur = p.isMaster ? 10 : 4;
         ctx.fillRect(px - size / 2, screenY - size / 2, size, size);
 
-        // Draw small monospace text next to packet dot (using the bold theme-appropriate color, fully opaque)
-        ctx.fillStyle = p.isMaster ? (isDark ? '#FFFFFF' : '#0F172A') : `${packetColor}1.0)`;
+        // Draw small monospace text next to packet dot (using a clean terminal green color for all)
+        ctx.fillStyle = isDark ? '#22C55E' : '#15803D';
         ctx.font = 'bold 9.5px monospace';
         ctx.shadowBlur = 0; // Disable text shadow to preserve performance
         ctx.fillText(labelText, px + 7, screenY + 3.0);
