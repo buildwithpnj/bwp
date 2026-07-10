@@ -218,7 +218,7 @@ export function FooterDataStream() {
       <div className="flex items-center justify-between px-6 pb-4 border-b border-border/20 font-mono text-[9px] text-muted-foreground/80">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: glow }} />
+            <span className="h-1.5 w-1.5 rounded-sm animate-pulse" style={{ backgroundColor: glow }} />
             AI NETWORK: ONLINE
           </span>
           <span className="hidden sm:inline">RATE: 1.6MBPS</span>
@@ -237,16 +237,14 @@ export function FooterDataStream() {
           viewBox={`0 0 ${VW} ${VH}`}
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Base dotted track */}
+          {/* Base solid wire track */}
           <path
             ref={pathRef}
             d={CIRCUIT_PATH}
             fill="none"
             stroke="currentColor"
-            className="text-border/30 dark:text-border/15"
-            strokeWidth="3.2"
-            strokeDasharray="0 15"
-            strokeLinecap="round"
+            className="text-border/20 dark:text-border/10"
+            strokeWidth="1.2"
           />
 
           {/* Glowing colour-synced underlay */}
@@ -254,10 +252,8 @@ export function FooterDataStream() {
             d={CIRCUIT_PATH}
             fill="none"
             stroke={glow}
-            strokeWidth="6"
-            strokeDasharray="0 15"
-            strokeLinecap="round"
-            opacity="0.1"
+            strokeWidth="2.5"
+            opacity="0.08"
           />
 
           {/* Node hit areas + anchors (rendered in SVG for perfect scaling) */}
@@ -276,12 +272,18 @@ export function FooterDataStream() {
                 onMouseLeave={() => isConnected && setActiveNode(null)}
                 className={isConnected ? "cursor-pointer" : "pointer-events-none"}
               >
-                {/* Outer pulse ring on collect */}
+                {/* Outer square pulse ring on collect */}
                 {isPulsing && isConnected && (
-                  <circle r="12" fill="none" stroke={glow} strokeWidth="1" opacity="0.6">
-                    <animate attributeName="r" from="6" to="20" dur="0.4s" fill="freeze" />
+                  <rect
+                    x="-6" y="-6" width="12" height="12" rx="1"
+                    fill="none" stroke={glow} strokeWidth="1" opacity="0.6"
+                  >
+                    <animate attributeName="x" from="-6" to="-15" dur="0.4s" fill="freeze" />
+                    <animate attributeName="y" from="-6" to="-15" dur="0.4s" fill="freeze" />
+                    <animate attributeName="width" from="12" to="30" dur="0.4s" fill="freeze" />
+                    <animate attributeName="height" from="12" to="30" dur="0.4s" fill="freeze" />
                     <animate attributeName="opacity" from="0.8" to="0" dur="0.4s" fill="freeze" />
-                  </circle>
+                  </rect>
                 )}
 
                 {/* Anchor square */}
