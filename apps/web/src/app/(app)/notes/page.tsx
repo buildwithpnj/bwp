@@ -177,7 +177,7 @@ export default function NotesPage() {
     }
   };
 
-  // Simple Markdown renderer
+  // Simple Markdown renderer with rich Notion/Apple Notes style embeds
   const renderMarkdown = (text: string) => {
     if (!text) return '<p class="text-muted-foreground italic">No content yet. Start writing in Markdown...</p>';
 
@@ -187,22 +187,52 @@ export default function NotesPage() {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
 
-    // Headers
-    html = html.replace(/^# (.*?)$/gm, '<h1 class="text-xl font-bold mt-4 mb-2 border-b border-border pb-1">$1</h1>');
-    html = html.replace(/^## (.*?)$/gm, '<h2 class="text-lg font-semibold mt-3 mb-1 border-b border-border/40 pb-0.5">$1</h2>');
-    html = html.replace(/^### (.*?)$/gm, '<h3 class="text-base font-semibold mt-2 mb-1">$1</h3>');
+    // 1. Math block equations: $$ formula $$
+    html = html.replace(/\$\$([\s\S]*?)\$\$/g, '<div class="bg-muted/30 border border-border/60 rounded-xl px-4 py-3 text-center font-mono my-3 text-primary text-sm">$$ $1 $$</div>');
+    html = html.replace(/\$(.*?)\$/g, '<code class="bg-muted px-1.5 py-0.5 rounded font-mono text-xs text-primary">$1</code>');
 
-    // Bold & Italics
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // 2. Callouts: > [!NOTE] text or > [!WARNING] text
+    html = html.replace(/^&gt;\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](.*?)$/gm, (match, type, content) => {
+      const typeLower = type.toLowerCase();
+      let colorClass = 'border-blue-500 bg-blue-500/5 text-blue-400';
+      if (type === 'WARNING' || type === 'CAUTION') colorClass = 'border-rose-500 bg-rose-500/5 text-rose-400';
+      if (type === 'IMPORTANT') colorClass = 'border-amber-500 bg-amber-500/5 text-amber-400';
+      return `<div class="p-3 border-l-4 rounded-r-lg my-3 ${colorClass} text-xs font-semibold uppercase tracking-wider flex flex-col gap-1"><span>[${type}]</span><span class="text-foreground normal-case font-normal">${content}</span></div>`;
+    });
 
-    // Lists
-    html = html.replace(/^\s*-\s*(.*?)$/gm, '<li class="ml-4 list-disc my-0.5">$1</li>');
-    html = html.replace(/^\s*\*\s*(.*?)$/gm, '<li class="ml-4 list-disc my-0.5">$1</li>');
+    // 3. Headers
+    html = html.replace(/^# (.*?)$/gm, '<h1 class="text-xl font-bold mt-5 mb-2.5 border-b border-border pb-1 text-foreground">$1</h1>');
+    html = html.replace(/^## (.*?)$/gm, '<h2 class="text-lg font-semibold mt-4 mb-2 border-b border-border/40 pb-0.5 text-foreground">$1</h2>');
+    html = html.replace(/^### (.*?)$/gm, '<h3 class="text-base font-semibold mt-3 mb-1 text-foreground">$1</h3>');
 
-    // Code
-    html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-muted p-3 rounded-md font-mono text-xs my-3 overflow-x-auto border border-border">$1</pre>');
-    html = html.replace(/`(.*?)`/g, '<code class="bg-muted px-1.5 py-0.5 rounded font-mono text-xs border border-border">$1</code>');
+    // 4. Checklists / Todo list checkbox items
+    html = html.replace(/^\s*-\s*\[x\]\s*(.*?)$/gm, '<div class="flex items-center gap-2.5 my-1 text-muted-foreground line-through"><input type="checkbox" checked disabled class="rounded border-border text-primary h-3.5 w-3.5" /><span>$1</span></div>');
+    html = html.replace(/^\s*-\s*\[\s*\]\s*(.*?)$/gm, '<div class="flex items-center gap-2.5 my-1"><input type="checkbox" disabled class="rounded border-border text-primary h-3.5 w-3.5" /><span>$1</span></div>');
+
+    // 5. Lists
+    html = html.replace(/^\s*-\s*(.*?)$/gm, '<li class="ml-4 list-disc my-1 text-foreground/90">$1</li>');
+    html = html.replace(/^\s*\*\s*(.*?)$/gm, '<li class="ml-4 list-disc my-1 text-foreground/90">$1</li>');
+
+    // 6. Code Blocks & Inline Code
+    html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-muted p-4 rounded-xl font-mono text-xs my-4 overflow-x-auto border border-border/80 text-foreground">$1</pre>');
+    html = html.replace(/`(.*?)`/g, '<code class="bg-muted px-1.5 py-0.5 rounded font-mono text-xs border border-border text-foreground">$1</code>');
+
+    // 7. Embedded Images: ![caption](url) with caption and aspect ratio
+    html = html.replace(/!\[(.*?)\]\((.*?)\)/g, (match, caption, url) => {
+      return `
+        <div class="my-4 flex flex-col items-center gap-1.5">
+          <img src="${url}" alt="${caption}" class="max-w-full h-auto rounded-xl border border-border shadow-md object-contain max-h-72 lazy" />
+          ${caption ? `<span class="text-3xs text-muted-foreground italic font-medium">${caption}</span>` : ''}
+        </div>
+      `;
+    });
+
+    // 8. Simple Tables
+    html = html.replace(/\|(.*?)\|/g, (match, content) => {
+      const cells = content.split('|').map((c: string) => c.trim());
+      const row = cells.map((c: string) => `<td class="px-3 py-1.5 border-b border-border/60 text-2xs">${c}</td>`).join('');
+      return `<tr class="hover:bg-muted/10">${row}</tr>`;
+    });
 
     // Internal links [[Note Title]] -> clickable anchor tags
     html = html.replace(/\[\[(.*?)\]\]/g, (match, title) => {
@@ -226,11 +256,15 @@ export default function NotesPage() {
           trimmed.startsWith('<h') ||
           trimmed.startsWith('<li') ||
           trimmed.startsWith('<pre') ||
-          trimmed.startsWith('</pre>')
+          trimmed.startsWith('</pre>') ||
+          trimmed.startsWith('<div') ||
+          trimmed.startsWith('</div>') ||
+          trimmed.startsWith('<tr') ||
+          trimmed.startsWith('</tr>')
         ) {
           return line;
         }
-        return trimmed ? `<p class="mb-2 leading-relaxed text-[13.5px]">${line}</p>` : '<div class="h-2"></div>';
+        return trimmed ? `<p class="mb-2 leading-relaxed text-[13.5px] text-foreground/90">${line}</p>` : '<div class="h-2"></div>';
       })
       .join('\n');
 

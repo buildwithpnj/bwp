@@ -10,6 +10,7 @@ from app.models.storage_provider import StorageProvider
 from app.storage.services import StorageManager
 from app.storage.providers.google.oauth import GoogleOAuthManager
 from app.storage.utils import encrypt_token
+from app.storage.config import storage_settings
 
 logger = logging.getLogger("warborn_storage_routes")
 
@@ -20,93 +21,150 @@ class CallbackRequest(BaseModel):
     code: str
 
 
+# ── Provider A OAuth ──────────────────────────────────────────────────────────
+
 @router.get("/auth/google/login")
 async def google_auth_login(current_user: CurrentUser):
-    """Generate authorization consent URL to connect a new Google Drive provider account."""
-    oauth = GoogleOAuthManager()
+    """Generate authorization consent URL to connect Google Drive Provider A (Primary)."""
+    oauth = GoogleOAuthManager(
+        client_id=storage_settings.google_client_id,
+        client_secret=storage_settings.google_client_secret,
+        redirect_uri=storage_settings.google_redirect_uri
+    )
     try:
         url = oauth.get_authorization_url()
         return {"url": url}
     except Exception as e:
-        logger.error(f"Failed to generate google consent url: {e}")
+        logger.error(f"Failed to generate google consent url for Provider A: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/auth/google/callback")
 async def google_auth_callback(body: CallbackRequest, current_user: CurrentUser, db: DB):
-    """Receive code from consent flow, exchange for tokens, encrypt, and register a new StorageProvider."""
-    oauth = GoogleOAuthManager()
+    """Receive code from consent flow, exchange for tokens, and register Provider A."""
+    oauth = GoogleOAuthManager(
+        client_id=storage_settings.google_client_id,
+        client_secret=storage_settings.google_client_secret,
+        redirect_uri=storage_settings.google_redirect_uri
+    )
     try:
         tokens = oauth.exchange_code_for_tokens(body.code)
         refresh_token = tokens.get("refresh_token")
         email = tokens.get("email")
 
         if not refresh_token:
-            # Refresh token is only sent on first consent screen authorization.
-            # Google doesn't return refresh token if reconnecting without consent prompt.
-            # We raise warning or search if provider already exists in database.
             stmt = select(StorageProvider).where(StorageProvider.account_email == email)
             res = await db.execute(stmt)
             existing = res.scalar_one_or_none()
             if existing:
-                return {"status": "success", "message": f"Provider for '{email}' is already fully authorized."}
+                return {"status": "success", "message": f"Provider A for '{email}' is already fully authorized."}
                 
             raise HTTPException(
                 status_code=400,
-                detail="Google did not return a refresh token. Please go to your Google account security settings, remove 'Warborn OS' authorization, and reconnect to trigger fresh consent."
+                detail="Google did not return a refresh token. Please reset permissions in your Google Account and try again."
             )
 
-        encrypted_token = encrypt_token(refresh_token)
-
-        # Check if provider already exists
-        stmt = select(StorageProvider).where(StorageProvider.account_email == email)
-        res = await db.execute(stmt)
-        provider = res.scalar_one_or_none()
-
-        if not provider:
-            # Determine dynamic name: Count existing providers in database to assign index name
-            stmt_count = select(StorageProvider)
-            res_count = await db.execute(stmt_count)
-            count = len(res_count.scalars().all())
-            letter = chr(65 + count) if count < 26 else str(count)
-            name = f"Drive {letter}"
-
-            provider = StorageProvider(
-                name=name,
-                type="google_drive",
-                account_email=email,
-                encrypted_refresh_token=encrypted_token,
-                status="active"
-            )
-            db.add(provider)
-            logger.info(f"Registered new storage provider: '{name}' for '{email}'.")
-        else:
-            provider.encrypted_refresh_token = encrypted_token
-            provider.status = "active"
-            logger.info(f"Refreshed authorization token for existing provider: '{provider.name}' ({email}).")
-
-        await db.commit()
+        provider = await StorageManager.register_provider(
+            db=db,
+            name="Drive A",
+            provider_type="google_drive",
+            email=email,
+            refresh_token=refresh_token,
+            folder_id=storage_settings.google_drive_a_folder_id,
+            client_id=storage_settings.google_client_id,
+            client_secret=storage_settings.google_client_secret,
+            redirect_uri=storage_settings.google_redirect_uri,
+            label="A",
+            priority=1
+        )
         return {"status": "success", "connected": True, "email": email, "provider": provider.name}
 
     except Exception as e:
-        logger.error(f"Failed to handle oauth callback token exchange: {e}")
+        logger.error(f"Failed to handle oauth callback for Provider A: {e}")
         raise HTTPException(status_code=400, detail=f"OAuth connection failed: {str(e)}")
 
+
+# ── Provider B OAuth ──────────────────────────────────────────────────────────
+
+@router.get("/auth/google/provider-b/login")
+async def google_auth_provider_b_login(current_user: CurrentUser):
+    """Generate authorization consent URL to connect Google Drive Provider B."""
+    oauth = GoogleOAuthManager(
+        client_id=storage_settings.google_drive_b_client_id,
+        client_secret=storage_settings.google_drive_b_client_secret,
+        redirect_uri=storage_settings.google_drive_b_redirect_uri
+    )
+    try:
+        url = oauth.get_authorization_url()
+        return {"url": url}
+    except Exception as e:
+        logger.error(f"Failed to generate google consent url for Provider B: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/auth/google/provider-b/callback")
+async def google_auth_provider_b_callback(body: CallbackRequest, current_user: CurrentUser, db: DB):
+    """Receive code from consent flow, exchange for tokens, and register Provider B."""
+    oauth = GoogleOAuthManager(
+        client_id=storage_settings.google_drive_b_client_id,
+        client_secret=storage_settings.google_drive_b_client_secret,
+        redirect_uri=storage_settings.google_drive_b_redirect_uri
+    )
+    try:
+        tokens = oauth.exchange_code_for_tokens(body.code)
+        refresh_token = tokens.get("refresh_token")
+        email = tokens.get("email")
+
+        if not refresh_token:
+            stmt = select(StorageProvider).where(StorageProvider.account_email == email)
+            res = await db.execute(stmt)
+            existing = res.scalar_one_or_none()
+            if existing:
+                return {"status": "success", "message": f"Provider B for '{email}' is already fully authorized."}
+                
+            raise HTTPException(
+                status_code=400,
+                detail="Google did not return a refresh token for Provider B. Please reset permissions in your Google Account and try again."
+            )
+
+        provider = await StorageManager.register_provider(
+            db=db,
+            name="Drive B",
+            provider_type="google_drive",
+            email=email,
+            refresh_token=refresh_token,
+            folder_id=storage_settings.google_drive_b_folder_id,
+            client_id=storage_settings.google_drive_b_client_id,
+            client_secret=storage_settings.google_drive_b_client_secret,
+            redirect_uri=storage_settings.google_drive_b_redirect_uri,
+            label="B",
+            priority=2
+        )
+        return {"status": "success", "connected": True, "email": email, "provider": provider.name}
+
+    except Exception as e:
+        logger.error(f"Failed to handle oauth callback for Provider B: {e}")
+        raise HTTPException(status_code=400, detail=f"OAuth connection failed: {str(e)}")
+
+
+# ── File Access Routing ───────────────────────────────────────────────────────
 
 @router.post("/upload")
 async def upload_file(
     db: DB,
     current_user: CurrentUser,
     file: UploadFile = File(...),
+    provider: str | None = Query(default=None),
 ):
-    """Upload a file. The Storage Manager automatically routes the file and validates it."""
+    """Upload a file. Auto-routes by category/default if provider is omitted, with dynamic failover."""
     try:
         content = await file.read()
         file_id = await StorageManager.upload(
             db=db,
             file_name=file.filename,
             content_type=file.content_type,
-            data=content
+            data=content,
+            provider_choice=provider
         )
         return {"status": "success", "file_id": file_id, "filename": file.filename}
     except Exception as e:
@@ -121,7 +179,7 @@ async def download_file(
     current_user: CurrentUser,
     provider_id: str | None = Query(default=None),
 ):
-    """Download a file by remote ID. Fetches and streams data from the storage network."""
+    """Download a file. Dynamic download search through active providers if ID is omitted."""
     try:
         name, mime, content = await StorageManager.download(db, file_id, provider_id)
         from io import BytesIO
@@ -147,7 +205,7 @@ async def list_files(
     folder_id: str = Query(default="root"),
     provider_id: str | None = Query(default=None),
 ):
-    """List all active files in a directory."""
+    """List active directory files. Merges directories from all providers if ID is omitted."""
     try:
         files = await StorageManager.list(db, folder_id, provider_id)
         return {"files": files}
@@ -163,7 +221,7 @@ async def delete_file(
     current_user: CurrentUser,
     provider_id: str | None = Query(default=None),
 ):
-    """Delete a file from the storage system."""
+    """Delete a file from the cloud storage system."""
     try:
         await StorageManager.delete(db, file_id, provider_id)
         return {"status": "success", "message": f"File '{file_id}' deleted successfully."}
@@ -174,32 +232,6 @@ async def delete_file(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/providers")
-async def get_providers(db: DB, current_user: CurrentUser):
-    """List status, capacity, and sync times for all registered storage providers."""
-    # Seed default drives if database is empty
-    await StorageManager.seed_drives_if_empty(db)
-    
-    stmt = select(StorageProvider)
-    res = await db.execute(stmt)
-    providers = res.scalars().all()
-    
-    output = []
-    for p in providers:
-        output.append({
-            "id": p.id,
-            "name": p.name,
-            "type": p.type,
-            "account_email": p.account_email,
-            "drive_folder_id": p.drive_folder_id,
-            "status": p.status,
-            "used_storage": p.used_storage,
-            "available_storage": p.available_storage,
-            "last_sync": p.last_sync.isoformat() if p.last_sync else None
-        })
-    return {"providers": output}
-
-
 @router.get("/search")
 async def search_files(
     q: str,
@@ -207,7 +239,7 @@ async def search_files(
     current_user: CurrentUser,
     provider_id: str | None = Query(default=None),
 ):
-    """Search for files in storage matching query text."""
+    """Search active files matching search token."""
     try:
         files = await StorageManager.search(db, q, provider_id)
         return {"files": files}
@@ -216,32 +248,65 @@ async def search_files(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+# ── Provider Management ───────────────────────────────────────────────────────
+
+@router.get("/providers")
+async def get_providers(db: DB, current_user: CurrentUser):
+    """List details, health, and status report for all registered storage providers."""
+    await StorageManager.seed_drives_if_empty(db)
+    providers = await StorageManager.list_providers(db)
+    
+    output = []
+    for p in providers:
+        output.append({
+            "id": str(p.id),
+            "name": p.name,
+            "provider_label": p.provider_label,
+            "type": p.type,
+            "account_email": p.account_email,
+            "drive_folder_id": p.drive_folder_id,
+            "status": p.status,
+            "connected": p.status == "active",
+            "used_storage": p.used_storage,
+            "available_storage": p.available_storage,
+            "priority": p.priority,
+            "last_sync": p.last_sync.isoformat() if p.last_sync else None
+        })
+    return {"providers": output}
+
+
+@router.post("/providers/{provider_id}/set-default")
+async def set_default_provider(provider_id: str, db: DB, current_user: CurrentUser):
+    """Set the target provider to be default (priority = 1)."""
+    try:
+        provider = await StorageManager.switch_provider(db, provider_id)
+        return {"status": "success", "message": f"Default provider switched to '{provider.name}'."}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/providers/{provider_id}")
+async def delete_provider(provider_id: str, db: DB, current_user: CurrentUser):
+    """Unlink/remove a registered storage provider."""
+    try:
+        await StorageManager.remove_provider(db, provider_id)
+        return {"status": "success", "message": "Provider removed successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.get("/health")
 async def storage_health(db: DB, current_user: CurrentUser):
-    """Check connectivity to all active storage providers in database."""
-    stmt = select(StorageProvider).where(StorageProvider.status == "active")
-    res = await db.execute(stmt)
-    providers = res.scalars().all()
-    
-    status_report = {}
-    is_healthy = True
-    
-    for p in providers:
-        try:
-            driver = await StorageManager.get_driver_for_provider(p)
-            await driver.get_quota()
-            status_report[p.name] = "healthy"
-        except Exception as e:
-            status_report[p.name] = f"error: {str(e)}"
-            is_healthy = False
-            
-    if not status_report:
-        return JSONResponse(
-            status_code=503,
-            content={"status": "degraded", "message": "No active providers configured", "details": status_report}
-        )
-        
-    return {
-        "status": "healthy" if is_healthy else "degraded",
-        "details": status_report
-    }
+    """Perform real-time connectivity checks on all registered storage providers."""
+    try:
+        status_report = await StorageManager.health_check(db)
+        is_healthy = all(val == "healthy" for val in status_report.values())
+        return {
+            "status": "healthy" if is_healthy else "degraded",
+            "details": status_report
+        }
+    except Exception as e:
+        logger.error(f"Health route error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))

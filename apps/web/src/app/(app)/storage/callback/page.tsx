@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 
-export default function StorageCallback() {
+import { Suspense } from 'react';
+
+function StorageCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -27,7 +29,7 @@ export default function StorageCallback() {
 
     async function handleCallback() {
       try {
-        await api('/api/gdrive/callback', {
+        await api('/api/storage/auth/google/callback', {
           method: 'POST',
           body: { code },
         });
@@ -83,5 +85,17 @@ export default function StorageCallback() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function StorageCallback() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    }>
+      <StorageCallbackContent />
+    </Suspense>
   );
 }

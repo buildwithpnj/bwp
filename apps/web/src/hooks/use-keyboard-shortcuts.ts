@@ -80,12 +80,21 @@ export function useKeyboardShortcuts(
       if (pendingSequence === 'g') {
         e.preventDefault();
         const routes: Record<string, string> = {
-          d: '/',
-          f: '/finance',
-          b: '/books',
-          h: '/habits',
+          m: '/dashboard',
+          w: '/workspace',
           n: '/notes',
-          t: '/tools',
+          k: '/knowledge',
+          p: '/projects-dashboard',
+          b: '/books',
+          a: '/assets',
+          h: '/media',
+          s: '/storage',
+          c: '/calendar',
+          l: '/habits',
+          q: '/recovery',
+          i: '/ai-memory',
+          e: '/settings',
+          r: '/trash',
         };
         if (routes[key]) {
           navigate(routes[key]);

@@ -4,15 +4,22 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  Wallet,
-  BookOpen,
-  Target,
+  Terminal,
   StickyNote,
-  Wrench,
-  Inbox,
+  BookOpen,
+  Briefcase,
+  BookMarked,
+  Image,
+  Film,
+  HardDrive,
+  Calendar,
+  Cpu,
+  Settings,
+  Trash2,
   ChevronLeft,
   ChevronRight,
-  HardDrive,
+  Target,
+  Flame,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { create } from 'zustand';
@@ -28,14 +35,21 @@ export const useSidebarStore = create<SidebarState>((set) => ({
 }));
 
 const navItems = [
-  { href: '/', label: 'Home', icon: LayoutDashboard, shortcut: 'G D' },
-  { href: '/finance', label: 'Finance', icon: Wallet, shortcut: 'G F' },
-  { href: '/books', label: 'Books', icon: BookOpen, shortcut: 'G B' },
-  { href: '/habits', label: 'Habits', icon: Target, shortcut: 'G H' },
+  { href: '/dashboard', label: 'Mission Control', icon: LayoutDashboard, shortcut: 'G M' },
+  { href: '/workspace', label: 'Workspace', icon: Terminal, shortcut: 'G W' },
   { href: '/notes', label: 'Notes', icon: StickyNote, shortcut: 'G N' },
-  { href: '/tools', label: 'Tools', icon: Wrench, shortcut: 'G T' },
-  { href: '/storage', label: 'Storage', icon: HardDrive, shortcut: 'G S' },
-  { href: '/agent-inbox', label: 'Agent Inbox', icon: Inbox, shortcut: 'Ctrl+Shift+A' },
+  { href: '/knowledge', label: 'Knowledge Base', icon: BookOpen, shortcut: 'G K' },
+  { href: '/projects-dashboard', label: 'Projects', icon: Briefcase, shortcut: 'G P' },
+  { href: '/books', label: 'Books', icon: BookMarked, shortcut: 'G B' },
+  { href: '/assets', label: 'Assets', icon: Image, shortcut: 'G A' },
+  { href: '/media', label: 'Media', icon: Film, shortcut: 'G H' },
+  { href: '/storage', label: 'Storage Manager', icon: HardDrive, shortcut: 'G S' },
+  { href: '/calendar', label: 'Calendar', icon: Calendar, shortcut: 'G C' },
+  { href: '/habits', label: 'Habits', icon: Target, shortcut: 'G L' },
+  { href: '/recovery', label: 'Quit Addiction', icon: Flame, shortcut: 'G Q' },
+  { href: '/ai-memory', label: 'AI Memory', icon: Cpu, shortcut: 'G I' },
+  { href: '/settings', label: 'Settings', icon: Settings, shortcut: 'G E' },
+  { href: '/trash', label: 'Trash', icon: Trash2, shortcut: 'G R' },
 ];
 
 export function Sidebar() {

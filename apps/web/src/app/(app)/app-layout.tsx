@@ -9,12 +9,15 @@ import { Header } from '@/components/header';
 import { CommandPalette } from '@/components/command-palette';
 import { ShortcutCheatsheet } from '@/components/shortcut-cheatsheet';
 import { QuickCapture } from '@/components/quick-capture';
+import { UploadCenter } from '@/components/upload-center';
+import { useUploadCenter } from '@/hooks/use-upload-center';
 import { cn } from '@/lib/utils';
 
 export function AppLayoutClient({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, isLoading, fetchUser } = useAuth();
   const { collapsed } = useSidebarStore();
+  const { addFiles } = useUploadCenter();
 
   useEffect(() => {
     fetchUser();
@@ -22,6 +25,31 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
 
   // Register global keyboard shortcuts
   useKeyboardShortcuts((path) => router.push(path));
+
+  // Global Drag & Drop Listener
+  useEffect(() => {
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+        const filesArray = Array.from(e.dataTransfer.files);
+        addFiles(filesArray);
+      }
+    };
+
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('drop', handleDrop);
+
+    return () => {
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('drop', handleDrop);
+    };
+  }, [addFiles]);
 
   // Auth guard
   useEffect(() => {
@@ -32,7 +60,7 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-[100vh] items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 animate-fade-in">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-primary" />
           <p className="text-sm text-muted-foreground">Loading...</p>
@@ -62,6 +90,7 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
       <CommandPalette />
       <ShortcutCheatsheet />
       <QuickCapture />
+      <UploadCenter />
     </div>
   );
 }

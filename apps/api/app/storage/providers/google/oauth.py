@@ -10,16 +10,21 @@ from app.storage.config import storage_settings
 class GoogleOAuthManager:
     """OAuth Manager handles Google Drive API OAuth 2.0 redirection, token exchange and refresh flows."""
 
-    def __init__(self):
-        self.client_id = storage_settings.google_client_id
-        self.client_secret = storage_settings.google_client_secret
-        self.redirect_uri = storage_settings.google_redirect_uri
+    def __init__(
+        self,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        redirect_uri: str | None = None
+    ):
+        self.client_id = client_id or storage_settings.google_client_id
+        self.client_secret = client_secret or storage_settings.google_client_secret
+        self.redirect_uri = redirect_uri or storage_settings.google_redirect_uri
 
     def get_authorization_url(self, state: str | None = None) -> str:
         """Construct the Google Consent screen URL requesting offline access to Google Drive."""
         if not self.client_id:
             raise ValueError("Google Client ID is not configured.")
-        
+
         params = {
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
@@ -31,7 +36,7 @@ class GoogleOAuthManager:
         }
         if state:
             params["state"] = state
-            
+
         base_url = "https://accounts.google.com/o/oauth2/v2/auth"
         return f"{base_url}?{urlencode(params)}"
 
@@ -48,20 +53,20 @@ class GoogleOAuthManager:
             "redirect_uri": self.redirect_uri,
             "grant_type": "authorization_code",
         }
-        
+
         data = urllib.parse.urlencode(payload).encode("utf-8")
         req = urllib.request.Request(token_url, data=data, method="POST")
-        
+
         with urllib.request.urlopen(req) as response:
             res_body = response.read().decode("utf-8")
             token_data = json.loads(res_body)
-            
+
         access_token = token_data.get("access_token")
         refresh_token = token_data.get("refresh_token")
-        
+
         # Fetch the user's email associated with the token
         email = self.fetch_account_email(access_token)
-        
+
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
@@ -74,7 +79,7 @@ class GoogleOAuthManager:
         url = "https://www.googleapis.com/oauth2/v2/userinfo"
         req = urllib.request.Request(url)
         req.add_header("Authorization", f"Bearer {access_token}")
-        
+
         with urllib.request.urlopen(req) as response:
             user_info = json.loads(response.read().decode("utf-8"))
             return user_info.get("email", "")

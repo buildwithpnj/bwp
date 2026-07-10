@@ -19,6 +19,13 @@ class Habit(Base, UUIDMixin, TimestampMixin):
         default="daily",
     )
     target: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    difficulty: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    priority: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    estimated_duration: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    color_theme: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    routine: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     logs: Mapped[list["HabitLog"]] = relationship(
         back_populates="habit", cascade="all, delete-orphan"

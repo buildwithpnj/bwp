@@ -4,16 +4,37 @@ All notable changes to the BuildWithPNJ Dashboard are documented here.
 
 ---
 
-## [Unreleased] — 2026-07-10
+## [Unreleased] — 2026-07-10 (Phase 3 Life OS Upgrade)
 
 ### Summary
 This release focused on:
-1. **Google Drive Multi-Account Storage Provider Subsystem**: Complete production-ready implementation of storage virtualization with automatic extension-based routing, dynamic fallback mechanisms (>= 90% drive capacity limit), OAuth 2.0 token exchanges, cryptographic Fernet AES token encryption, and non-blocking uvicorn-thread execution.
-2. **Visual Refinements**: Complete visual overhaul of the public-facing homepage and its interactive elements — including the navbar alignment to Hero Pixel Portrait, circuit/data-stream background systems, sitemap globe favicon replacement, and footer telemetry streams.
+1. **Habits Engine Restoration & Redesign**: Restored the habits module and redesigned it to support morning/evening routines classification, custom priority levels, and daily streak counters.
+2. **Google Calendar Bi-directional Sync**: Implemented bi-directional synchronization that links the local calendar cache with remote Google Calendars, mapping events with proper timezone metrics.
+3. **Addiction Recovery Dashboard**: Created a sobriety module supporting count-up timers, trigger logs, relapse registers, and reclaimed time/money metrics.
+4. **AI Coach Integration**: Developed an AI wellness coaching review engine summarizing database logs into daily coach recommendations.
+5. **Mission Control Dashboard Overlay**: Re-engineered Mission Control to display today's habits checks, calendar events, recovery streaks, and AI Coach reviews.
 
 ---
 
-## 🆕 New Components
+## [Unreleased] — 2026-07-10 (Phase 2 Multi-Provider Upgrade)
+
+### Summary
+This release focused on:
+1. **Multi-Provider Google Drive Storage (Phase 2)**: Extended the single-account virtualization to support multiple Google Drive accounts with independent OAuth client credentials (`client_id`, encrypted `client_secret`, and `redirect_uri` stored per provider row in the database).
+2. **Explicit Routing**: Handled explicit upload queries (`?provider=A` or `?provider=B`) alongside default category-based and failover mechanisms.
+3. **Auto-Failover**: Implemented automatic failover on file uploads: if a preferred drive encounters a connection or API error, the Storage Manager transparently uploads the file to the next active, non-full drive in the priority queue.
+4. **Enhanced Providers API**: Added `/auth/google/provider-b/login`, `/auth/google/provider-b/callback`, `/providers/{provider_id}/set-default`, and unlinking support.
+5. **Startup Configuration Service**: Integrated environment variable verification validating formats (URLs, Encryption keys) and printing safe ASCII reports on startup.
+6. **Visual Refinements**: Complete visual overhaul of the public-facing homepage and its interactive elements — including the navbar alignment to Hero Pixel Portrait, circuit/data-stream background systems, sitemap globe favicon replacement, and footer telemetry streams.
+
+---
+
+
+## 🆕 New Components & Modules
+
+### `apps/api/app/storage/`
+- **NEW** — Created `StorageManager`, `GoogleDriveProvider`, token encryption helpers, configuration validation service, and pytest test suite.
+- **NEW** — Created abstract interface `CalendarProvider` with empty method stubs inside `apps/api/app/storage/providers/calendar.py`.
 
 ### `apps/web/src/components/ai-core-visualization.tsx`
 - **NEW** — Standalone AI core visualization component.

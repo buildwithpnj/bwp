@@ -1,4 +1,3 @@
-import os
 import base64
 import hashlib
 from pydantic import Field
@@ -12,15 +11,31 @@ class StorageSettings(BaseSettings):
         extra="ignore",
     )
 
-    # Google Credentials (Global OAuth app)
+    # ── Provider A — Global OAuth App ─────────────────────────────────────────
     google_client_id: str | None = Field(default=None, validation_alias="GOOGLE_CLIENT_ID")
     google_client_secret: str | None = Field(default=None, validation_alias="GOOGLE_CLIENT_SECRET")
     google_redirect_uri: str = Field(
-        default="http://localhost:3000/storage/callback", 
+        default="http://localhost:3000/storage/callback",
         validation_alias="GOOGLE_REDIRECT_URI"
     )
 
-    # Static settings for multi-drive setups (optional initial seed values)
+    # ── Provider B — Separate OAuth App ───────────────────────────────────────
+    google_drive_b_client_id: str | None = Field(default=None, validation_alias="GOOGLE_DRIVE_B_CLIENT_ID")
+    google_drive_b_client_secret: str | None = Field(default=None, validation_alias="GOOGLE_DRIVE_B_CLIENT_SECRET")
+    google_drive_b_redirect_uri: str = Field(
+        default="http://localhost:3000/auth/google/callback",
+        validation_alias="GOOGLE_DRIVE_B_REDIRECT_URI"
+    )
+
+    # ── Provider C — Separate OAuth App (reserved) ────────────────────────────
+    google_drive_c_client_id: str | None = Field(default=None, validation_alias="GOOGLE_DRIVE_C_CLIENT_ID")
+    google_drive_c_client_secret: str | None = Field(default=None, validation_alias="GOOGLE_DRIVE_C_CLIENT_SECRET")
+    google_drive_c_redirect_uri: str = Field(
+        default="http://localhost:3000/storage/callback",
+        validation_alias="GOOGLE_DRIVE_C_REDIRECT_URI"
+    )
+
+    # ── Seed Refresh Tokens (optional, for auto-seeding on first boot) ────────
     google_drive_a_refresh_token: str | None = Field(default=None, validation_alias="GOOGLE_DRIVE_A_REFRESH_TOKEN")
     google_drive_b_refresh_token: str | None = Field(default=None, validation_alias="GOOGLE_DRIVE_B_REFRESH_TOKEN")
     google_drive_c_refresh_token: str | None = Field(default=None, validation_alias="GOOGLE_DRIVE_C_REFRESH_TOKEN")
@@ -33,16 +48,15 @@ class StorageSettings(BaseSettings):
     google_drive_b_email: str | None = Field(default=None, validation_alias="GOOGLE_DRIVE_B_EMAIL")
     google_drive_c_email: str | None = Field(default=None, validation_alias="GOOGLE_DRIVE_C_EMAIL")
 
-    # Encryption key string
+    # ── Encryption ────────────────────────────────────────────────────────────
     raw_encryption_key: str = Field(
-        default="production-secret-encryption-key-must-change-to-something-secure-for-warborn-os", 
+        default="production-secret-encryption-key-must-change-to-something-secure-for-warborn-os",
         validation_alias="ENCRYPTION_KEY"
     )
 
     @property
     def encryption_key(self) -> bytes:
-        """Derive a stable 32-byte URL-safe base64 key for Fernet from any configured ENCRYPTION_KEY string."""
-        # Use SHA-256 to hash the key string and then encode to base64 URL safe
+        """Derive a stable 32-byte URL-safe base64 Fernet key from ENCRYPTION_KEY string."""
         hashed = hashlib.sha256(self.raw_encryption_key.encode()).digest()
         return base64.urlsafe_b64encode(hashed)
 

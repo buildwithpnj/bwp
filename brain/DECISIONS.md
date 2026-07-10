@@ -30,3 +30,31 @@
 ## ADR-006: Subtler Mouse Parallax Dampening Multipliers
 * **Problem**: Mouse coordinates tracking inside the AI Portrait Hero workspace originally caused extreme, rapid rotations that felt distracting.
 * **Solution**: Halved the rotation multiplier forces (dampening client side input factors) inside the tracking frame updates, delivering smooth 3D tilting effects.
+
+## ADR-007: Phase 1 Google Drive Storage Virtualization
+* **Problem**: Need to support multiple Google Drive accounts seamlessly without changing frontend or core application logic.
+* **Analysis**: Having specific database schemas for separate slots A, B, and C makes adding future cloud adapters (S3, Dropbox) brittle.
+* **Solution**: Created a unified database table (`storage_providers`) and a centralized `StorageManager` that handles routing. During Phase 1, only "Drive A" (Primary Google Drive account) is seeded and activated, while routing fallback and capacity logic are fully implemented under the hood.
+* **Tradeoffs**: Adds a database roundtrip to read active storage provider tokens, but supports transparent future scalability.
+
+## ADR-008: Calendar Integration Architecture (Interface Stubs)
+* **Problem**: Prepare for Google Calendar integrations without requesting permissions or building logic prematurely.
+* **Solution**: Introduced abstract base interface `CalendarProvider` exposing placeholder methods (`create_event`, `update_event`, `delete_event`, `list_events`, `check_availability`). Actual sync logic and scopes are withheld until a later phase.
+
+## ADR-009: Per-Provider OAuth Database Schema for Google Drive (Phase 2)
+* **Problem**: Provider A and Provider B belong to different Google Cloud Console projects (different client IDs, secrets, and redirect URIs), making a single global env variable config insufficient.
+* **Analysis**: Adding GOOGLE_DRIVE_B_CLIENT_ID/SECRET to backend configuration and hardcoding checks inside the routes is not scalable.
+* **Solution**: Extended `storage_providers` database schema with `client_id`, `encrypted_client_secret`, and `redirect_uri` columns. When a provider is registered, its specific OAuth client credentials are saved in its row (client secret is Fernet-encrypted). The StorageManager reads these credentials dynamically per account, allowing any number of independent Google Cloud apps to connect.
+* **Tradeoffs**: Requires encrypting client secrets in the database alongside refresh tokens, but achieves total configuration-driven isolation between accounts.
+
+## ADR-010: Bi-directional Google Calendar Event Caching
+* **Problem**: Fetching Google Calendar events directly on page render introduces high API latencies and rate-limiting thresholds.
+* **Solution**: Introduced a local `calendar_events` table acting as a transactional cache cache layer. When listing events, Google Calendar items are fetched, merged, and cached locally using `google_event_id` to eliminate duplicates. Write operations write locally first, then synchronously propagate downstream to Google API.
+* **Tradeoffs**: Local updates appear immediately (optimistic UI), but network drops can delay downstream propagation.
+
+## ADR-011: Local Rule-Based AI Coach Evaluation
+* **Problem**: Calling LLMs dynamically for real-time coach feedback introduces significant latency, token billing, and failure points.
+* **Solution**: Implemented a local SQL aggregator inside the `/insights` router that computes completion metrics, active calendar loads, and recovery streaks, generating structured insights text.
+* **Tradeoffs**: Fast, secure, zero token cost, but lacks freeform dialogue response variety.
+
+

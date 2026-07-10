@@ -7,32 +7,40 @@ venv/
 *.egg-info/
 dist/
 
-# Environment
+# Environment configurations (Secrets)
 .env
 .env.local
 .env.production
+.env.development
+.env.test
 
-# IDE
+# Keys and SSL Certs
+*.pem
+*.key
+credentials.json
+token.json
+
+# IDE config files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Build
+# Next.js / Turbo Builds
 .next/
 .turbo/
 out/
 
-# Database
+# Database files
 *.db
 *.sqlite
 
-# OS
+# OS cache
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Docker
+# Docker mounts
 pgdata/
 redisdata/
 
@@ -40,7 +48,7 @@ redisdata/
 *.log
 logs/
 
-# Coverage
+# Coverage reports
 coverage/
 .coverage
 htmlcov/

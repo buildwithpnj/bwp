@@ -111,7 +111,10 @@ async def get_auth_url(current_user: CurrentUser):
     }
 
     flow = Flow.from_client_config(
-        client_config, scopes=["https://www.googleapis.com/auth/drive"]
+        client_config, scopes=[
+            "https://www.googleapis.com/auth/drive",
+            "https://www.googleapis.com/auth/calendar"
+        ]
     )
     flow.redirect_uri = settings.google_redirect_uri
 

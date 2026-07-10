@@ -18,42 +18,45 @@ from app.routers import (
     habits,
     notes,
     transactions,
+    gcalendar,
+    recovery,
+    aicoach,
 )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Run database migrations and seeding in a separate thread to avoid event loop conflicts
-    import sys
-    import threading
-    
-    def run_migrations_and_seed():
-        print("DEBUG: Running database migrations in worker thread...", file=sys.stderr)
-        try:
-            from alembic.config import Config
-            from alembic import command
-            alembic_cfg = Config("alembic.ini")
-            command.upgrade(alembic_cfg, "head")
-            print("DEBUG: Database migrations applied successfully in thread!", file=sys.stderr)
+    # Validate environment configurations at startup
+    from app.storage.config_validator import validate_config
+    validate_config()
 
-            # Use synchronous seeding — no asyncio, no event loop conflicts.
-            from seed import seed_sync
-            seed_sync()
-            print("DEBUG: Database seeding complete in thread!", file=sys.stderr)
-        except Exception as e:
-            print(f"DEBUG: Thread migrations/seeding failed: {e}", file=sys.stderr)
-            import traceback
-            traceback.print_exc(file=sys.stderr)
+    # Run Alembic migrations via subprocess — fully isolated from asyncio, works with --reload
+    import subprocess
+    result = subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        print(f"MIGRATION ERROR:\n{result.stderr}", file=sys.stderr, flush=True)
+    else:
+        print("DEBUG: Migrations applied.", file=sys.stderr, flush=True)
 
-    thread = threading.Thread(target=run_migrations_and_seed, daemon=True)
-    thread.start()
-    thread.join()  # Wait for database initialization before starting API
-    
+    # Run seed synchronously via asyncio.to_thread (safe with --reload)
+    import asyncio
+    async def _seed():
+        from seed import seed_sync
+        await asyncio.to_thread(seed_sync)
+
+    await _seed()
+    print("DEBUG: Seeding complete.", file=sys.stderr, flush=True)
+
     yield
     # Shutdown
     from app.database import engine
-
     await engine.dispose()
+
+
+
 
 
 app = FastAPI(
@@ -96,6 +99,9 @@ app.include_router(gdrive.router)
 app.include_router(notes.router)
 app.include_router(books.router)
 app.include_router(habits.router)
+app.include_router(gcalendar.router)
+app.include_router(recovery.router)
+app.include_router(aicoach.router)
 
 from app.storage.routes import router as storage_router
 app.include_router(storage_router)
@@ -104,3 +110,4 @@ app.include_router(storage_router)
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "version": "0.1.0"}
+

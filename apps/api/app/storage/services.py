@@ -1,7 +1,7 @@
 import mimetypes
 import logging
 from datetime import datetime, UTC
-from sqlalchemy import select
+from sqlalchemy import select, update, delete as sqldelete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.storage_provider import StorageProvider
@@ -19,10 +19,15 @@ class StorageManager:
     async def get_driver_for_provider(provider: StorageProvider) -> GoogleDriveProvider:
         """Decrypt refresh token and construct the provider instance."""
         decrypted_token = decrypt_token(provider.encrypted_refresh_token)
+        client_secret = None
+        if provider.encrypted_client_secret:
+            client_secret = decrypt_token(provider.encrypted_client_secret)
         return GoogleDriveProvider(
             refresh_token=decrypted_token,
             folder_id=provider.drive_folder_id,
-            account_email=provider.account_email
+            account_email=provider.account_email,
+            client_id=provider.client_id,
+            client_secret=client_secret
         )
 
     @staticmethod
@@ -49,132 +54,285 @@ class StorageManager:
         return "documents"
 
     @classmethod
-    async def select_provider(cls, db: AsyncSession, file_name: str, content_type: str) -> StorageProvider:
-        """Apply automatic storage routing rules and fallback mechanisms to select an active provider below 90% capacity."""
-        # Ensure initial drives are seeded in DB
-        await cls.seed_drives_if_empty(db)
-        
-        category = cls.detect_category(file_name, content_type)
-        logger.info(f"Automatic routing triggered. Category detected: '{category}' for file: '{file_name}'")
-        
-        # Map category to preferred provider name prefix
-        # Documents -> Drive A
-        # Images / Videos -> Drive B
-        # Backups / Logs -> Drive C
-        preferred_name = "Drive A"
-        if category in ("images", "videos"):
-            preferred_name = "Drive B"
-        elif category in ("backups", "logs"):
-            preferred_name = "Drive C"
-            
-        # Fetch preferred active provider
-        stmt = select(StorageProvider).where(
-            StorageProvider.name == preferred_name,
-            StorageProvider.status == "active"
-        )
-        result = await db.execute(stmt)
-        provider = result.scalar_one_or_none()
-        
-        # Check capacity: (used_storage / available_storage) >= 90%
-        # If available_storage is 0, we treat it as infinite or uncalculated yet.
-        is_capacity_exceeded = False
-        if provider and provider.available_storage > 0:
-            usage_percentage = (provider.used_storage / provider.available_storage) * 100
-            if usage_percentage >= 90:
-                is_capacity_exceeded = True
-                logger.warning(
-                    f"Preferred provider '{preferred_name}' capacity exceeded: {usage_percentage:.1f}%. Triggering fallback."
-                )
+    async def get_provider(cls, db: AsyncSession, provider_id: str) -> StorageProvider | None:
+        """Retrieve a specific storage provider by ID."""
+        stmt = select(StorageProvider).where(StorageProvider.id == provider_id)
+        res = await db.execute(stmt)
+        return res.scalar_one_or_none()
 
-        if provider and not is_capacity_exceeded:
-            logger.info(f"Routed file '{file_name}' to preferred provider: '{provider.name}' ({provider.account_email})")
-            return provider
-            
-        # Fallback logic: Select any active provider that is under 90% capacity
-        logger.info("Executing fallback selection for active providers...")
-        stmt_all = select(StorageProvider).where(StorageProvider.status == "active")
-        all_results = await db.execute(stmt_all)
-        active_providers = all_results.scalars().all()
+    @classmethod
+    async def list_providers(cls, db: AsyncSession) -> list[StorageProvider]:
+        """List all storage providers ordered by priority."""
+        stmt = select(StorageProvider).order_by(StorageProvider.priority.asc())
+        res = await db.execute(stmt)
+        return list(res.scalars().all())
+
+    @classmethod
+    async def default_provider(cls, db: AsyncSession) -> StorageProvider | None:
+        """Get the default storage provider (lowest priority number, status active)."""
+        stmt = select(StorageProvider).where(StorageProvider.status == "active").order_by(StorageProvider.priority.asc())
+        res = await db.execute(stmt)
+        return res.scalars().first()
+
+    @classmethod
+    async def switch_provider(cls, db: AsyncSession, provider_id: str) -> StorageProvider:
+        """Promote the chosen provider to be default (set priority to 1 and push others down)."""
+        provider = await cls.get_provider(db, provider_id)
+        if not provider:
+            raise ValueError(f"Provider '{provider_id}' not found.")
         
-        for candidate in active_providers:
-            if candidate.available_storage > 0:
-                usage = (candidate.used_storage / candidate.available_storage) * 100
-                if usage < 90:
-                    logger.info(f"Fallback routed file '{file_name}' to: '{candidate.name}' ({candidate.account_email})")
-                    return candidate
-            else:
-                # Available storage is not computed yet, assume safe to use
-                logger.info(f"Fallback routed file '{file_name}' to: '{candidate.name}' ({candidate.account_email})")
-                return candidate
-                
-        # Hard fallback: Return the first active provider regardless of quota
-        if active_providers:
-            fallback = active_providers[0]
-            logger.warning(f"All providers exceeded capacity limit or inactive. Hard fallback to: '{fallback.name}'")
-            return fallback
-            
-        raise RuntimeError("No active storage providers found. Connect Google Drive or configure environment variables.")
+        # Set priority of all other providers to be > 1
+        await db.execute(
+            update(StorageProvider)
+            .where(StorageProvider.id != provider_id)
+            .values(priority=StorageProvider.priority + 10)
+        )
+        provider.priority = 1
+        await db.commit()
+        logger.info(f"Switched default provider to '{provider.name}' ({provider.account_email}).")
+        return provider
+
+    @classmethod
+    async def register_provider(
+        cls,
+        db: AsyncSession,
+        name: str,
+        provider_type: str,
+        email: str,
+        refresh_token: str,
+        folder_id: str | None = None,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        redirect_uri: str | None = None,
+        label: str | None = None,
+        priority: int = 10
+    ) -> StorageProvider:
+        """Register a new storage provider or update credentials if it already exists."""
+        encrypted_token = encrypt_token(refresh_token)
+        encrypted_secret = encrypt_token(client_secret) if client_secret else None
+
+        stmt = select(StorageProvider).where(StorageProvider.account_email == email)
+        res = await db.execute(stmt)
+        provider = res.scalar_one_or_none()
+
+        if not provider:
+            provider = StorageProvider(
+                name=name,
+                type=provider_type,
+                account_email=email,
+                encrypted_refresh_token=encrypted_token,
+                client_id=client_id,
+                encrypted_client_secret=encrypted_secret,
+                redirect_uri=redirect_uri,
+                drive_folder_id=folder_id,
+                provider_label=label,
+                priority=priority,
+                status="active"
+            )
+            db.add(provider)
+            logger.info(f"Registered new storage provider '{name}' for '{email}'.")
+        else:
+            provider.name = name
+            provider.encrypted_refresh_token = encrypted_token
+            provider.client_id = client_id
+            if encrypted_secret:
+                provider.encrypted_client_secret = encrypted_secret
+            if redirect_uri:
+                provider.redirect_uri = redirect_uri
+            provider.drive_folder_id = folder_id
+            provider.provider_label = label
+            provider.status = "active"
+            logger.info(f"Updated credentials for existing provider '{name}' ({email}).")
+
+        await db.commit()
+        return provider
+
+    @classmethod
+    async def remove_provider(cls, db: AsyncSession, provider_id: str) -> None:
+        """Permanently delete a provider from database configuration."""
+        stmt = sqldelete(StorageProvider).where(StorageProvider.id == provider_id)
+        await db.execute(stmt)
+        await db.commit()
+        logger.info(f"Deleted storage provider with ID '{provider_id}'.")
 
     @classmethod
     async def seed_drives_if_empty(cls, db: AsyncSession) -> None:
-        """Seed initial storage providers (Drive A, B, C) if they are configured in settings and the table is empty."""
-        stmt = select(StorageProvider)
-        result = await db.execute(stmt)
-        if result.scalars().first():
-            return
-            
-        # Seeding configuration sets
+        """Seed Drive A and Drive B if configured in environment and not already in database."""
         seeds = [
-            ("Drive A", storage_settings.google_drive_a_refresh_token, storage_settings.google_drive_a_folder_id, storage_settings.google_drive_a_email),
-            ("Drive B", storage_settings.google_drive_b_refresh_token, storage_settings.google_drive_b_folder_id, storage_settings.google_drive_b_email),
-            ("Drive C", storage_settings.google_drive_c_refresh_token, storage_settings.google_drive_c_folder_id, storage_settings.google_drive_c_email),
+            (
+                "Drive A",
+                "A",
+                storage_settings.google_drive_a_refresh_token,
+                storage_settings.google_drive_a_folder_id,
+                storage_settings.google_drive_a_email,
+                storage_settings.google_client_id,
+                storage_settings.google_client_secret,
+                storage_settings.google_redirect_uri,
+                1
+            ),
+            (
+                "Drive B",
+                "B",
+                storage_settings.google_drive_b_refresh_token,
+                storage_settings.google_drive_b_folder_id,
+                storage_settings.google_drive_b_email,
+                storage_settings.google_drive_b_client_id,
+                storage_settings.google_drive_b_client_secret,
+                storage_settings.google_drive_b_redirect_uri,
+                2
+            ),
         ]
         
-        for name, token, folder_id, email in seeds:
+        for name, label, token, folder_id, email, client_id, client_secret, redirect_uri, priority in seeds:
             if token and email:
-                encrypted_token = encrypt_token(token)
-                provider = StorageProvider(
-                    name=name,
-                    type="google_drive",
-                    account_email=email,
-                    encrypted_refresh_token=encrypted_token,
-                    drive_folder_id=folder_id,
-                    status="active"
-                )
-                db.add(provider)
-                logger.info(f"Seeded default storage provider '{name}' ({email}) inside database.")
-                
+                # Check if already seeded by email
+                stmt = select(StorageProvider).where(StorageProvider.account_email == email)
+                res = await db.execute(stmt)
+                if not res.scalar_one_or_none():
+                    encrypted_token = encrypt_token(token)
+                    encrypted_secret = encrypt_token(client_secret) if client_secret else None
+                    provider = StorageProvider(
+                        name=name,
+                        type="google_drive",
+                        account_email=email,
+                        encrypted_refresh_token=encrypted_token,
+                        client_id=client_id,
+                        encrypted_client_secret=encrypted_secret,
+                        redirect_uri=redirect_uri,
+                        drive_folder_id=folder_id,
+                        provider_label=label,
+                        status="active",
+                        priority=priority
+                    )
+                    db.add(provider)
+                    logger.info(f"Seeded default storage provider '{name}' ({email}) in database.")
+                    
         await db.commit()
 
     @classmethod
-    async def upload(cls, db: AsyncSession, file_name: str, content_type: str, data: bytes) -> str:
-        """Execute the upload pipeline: select provider, scan hooks, execute, update db quota, return file ID."""
-        # 1. Validation & Safety checks
+    async def select_provider(
+        cls,
+        db: AsyncSession,
+        provider_choice: str | None = None,
+        file_name: str | None = None,
+        content_type: str | None = None
+    ) -> StorageProvider:
+        """Selects the active provider based on rules, falling back dynamically as needed."""
+        # Ensure initial drives are seeded in DB
+        await cls.seed_drives_if_empty(db)
+
+        provider = None
+        
+        # 1. Routing by explicit choice
+        if provider_choice:
+            choice_clean = provider_choice.strip().upper()
+            if choice_clean in ("A", "DRIVE A"):
+                stmt = select(StorageProvider).where(StorageProvider.provider_label == "A", StorageProvider.status == "active")
+            elif choice_clean in ("B", "DRIVE B"):
+                stmt = select(StorageProvider).where(StorageProvider.provider_label == "B", StorageProvider.status == "active")
+            else:
+                # Search by UUID or Name
+                stmt = select(StorageProvider).where(
+                    (StorageProvider.id == provider_choice) | (StorageProvider.name == provider_choice),
+                    StorageProvider.status == "active"
+                )
+            res = await db.execute(stmt)
+            provider = res.scalar_one_or_none()
+            if provider:
+                logger.info(f"Explicitly routed to provider '{provider.name}' ({provider.account_email})")
+                return provider
+
+        # 2. Omitted choice -> Fallback to category-based detection or Default Provider
+        if file_name and content_type:
+            category = cls.detect_category(file_name, content_type)
+            preferred_label = "A"
+            if category in ("images", "videos"):
+                preferred_label = "B"
+            elif category in ("backups", "logs"):
+                preferred_label = "C"
+
+            stmt = select(StorageProvider).where(StorageProvider.provider_label == preferred_label, StorageProvider.status == "active")
+            res = await db.execute(stmt)
+            provider = res.scalar_one_or_none()
+            if provider:
+                # Quota check
+                is_exceeded = False
+                if provider.available_storage > 0:
+                    usage_percentage = (provider.used_storage / provider.available_storage) * 100
+                    if usage_percentage >= 90:
+                        is_exceeded = True
+                
+                if not is_exceeded:
+                    logger.info(f"Category '{category}' routed to preferred provider '{provider.name}'")
+                    return provider
+
+        # 3. Default Provider fallback
+        provider = await cls.default_provider(db)
+        if provider:
+            logger.info(f"Routed to default provider '{provider.name}'")
+            return provider
+
+        # 4. Global fallback to any active provider
+        stmt = select(StorageProvider).where(StorageProvider.status == "active").order_by(StorageProvider.priority.asc())
+        res = await db.execute(stmt)
+        active_providers = list(res.scalars().all())
+        if active_providers:
+            logger.warning(f"Routed to first active fallback provider '{active_providers[0].name}'")
+            return active_providers[0]
+
+        raise RuntimeError("No active storage providers found. Connect a Google Drive account.")
+
+    @classmethod
+    async def upload(cls, db: AsyncSession, file_name: str, content_type: str, data: bytes, provider_choice: str | None = None) -> str:
+        """Execute the upload pipeline with dynamic failover."""
         if not file_name or len(data) == 0:
             raise ValueError("Invalid file metadata or empty file content.")
             
-        # 2. Virus Scan Hook (Mock implementation)
         cls.virus_scan_hook(file_name, data)
         
-        # 3. Provider selection
-        provider = await cls.select_provider(db, file_name, content_type)
-        driver = await cls.get_driver_for_provider(provider)
+        # Resolve preferred provider
+        provider = await cls.select_provider(db, provider_choice, file_name, content_type)
         
-        # 4. Upload file
-        file_id = await driver.upload(file_name, content_type, data)
-        
-        # 5. Background/immediate update storage quota
+        try:
+            driver = await cls.get_driver_for_provider(provider)
+            file_id = await driver.upload(file_name, content_type, data)
+            await cls._sync_quota_silently(db, provider, driver)
+            return file_id
+        except Exception as primary_error:
+            logger.error(f"Upload to primary choice '{provider.name}' failed: {primary_error}. Attempting failover...")
+            
+            # If explicit choice failed, or default failed, try the OTHER provider (Auto failover)
+            stmt = select(StorageProvider).where(
+                StorageProvider.id != provider.id,
+                StorageProvider.status == "active"
+            ).order_by(StorageProvider.priority.asc())
+            res = await db.execute(stmt)
+            failover_providers = res.scalars().all()
+            
+            for backup in failover_providers:
+                try:
+                    logger.info(f"Failover upload triggered. Routing to '{backup.name}'...")
+                    driver = await cls.get_driver_for_provider(backup)
+                    file_id = await driver.upload(file_name, content_type, data)
+                    await cls._sync_quota_silently(db, backup, driver)
+                    return file_id
+                except Exception as backup_error:
+                    logger.error(f"Failover to '{backup.name}' failed: {backup_error}")
+                    continue
+            
+            # If all failover attempts fail, raise the original error
+            raise RuntimeError(f"Storage system upload failed completely. Primary error: {str(primary_error)}")
+
+    @classmethod
+    async def _sync_quota_silently(cls, db: AsyncSession, provider: StorageProvider, driver: GoogleDriveProvider):
         try:
             used, limit = await driver.get_quota()
             provider.used_storage = used
             provider.available_storage = limit
             provider.last_sync = datetime.now(UTC)
             await db.commit()
-            logger.info(f"Updated storage usage statistics for '{provider.name}': {used}/{limit} bytes.")
         except Exception as e:
-            logger.warning(f"Failed to fetch quota metadata after upload: {e}")
-            
-        return file_id
+            logger.warning(f"Failed to fetch quota metadata for '{provider.name}': {e}")
 
     @staticmethod
     def virus_scan_hook(file_name: str, data: bytes) -> None:
@@ -185,9 +343,7 @@ class StorageManager:
     async def download(cls, db: AsyncSession, file_id: str, provider_id: str | None = None) -> tuple[str, str, bytes]:
         """Download file content. If provider_id is not specified, search through all active providers."""
         if provider_id:
-            stmt = select(StorageProvider).where(StorageProvider.id == provider_id)
-            res = await db.execute(stmt)
-            provider = res.scalar_one_or_none()
+            provider = await cls.get_provider(db, provider_id)
             if not provider:
                 raise ValueError("Specified storage provider not found.")
             driver = await cls.get_driver_for_provider(provider)
@@ -195,12 +351,10 @@ class StorageManager:
             content = await driver.download(file_id)
             return meta.get("name", "download"), meta.get("mimeType", "application/octet-stream"), content
             
-        # Search through all active providers to find file
-        stmt_all = select(StorageProvider).where(StorageProvider.status == "active")
-        res_all = await db.execute(stmt_all)
-        providers = res_all.scalars().all()
+        providers = await cls.list_providers(db)
+        active_providers = [p for p in providers if p.status == "active"]
         
-        for provider in providers:
+        for provider in active_providers:
             try:
                 driver = await cls.get_driver_for_provider(provider)
                 meta = await driver.get_metadata(file_id)
@@ -215,22 +369,18 @@ class StorageManager:
     async def delete(cls, db: AsyncSession, file_id: str, provider_id: str | None = None) -> None:
         """Delete file from google drive."""
         if provider_id:
-            stmt = select(StorageProvider).where(StorageProvider.id == provider_id)
-            res = await db.execute(stmt)
-            provider = res.scalar_one_or_none()
+            provider = await cls.get_provider(db, provider_id)
             if provider:
                 driver = await cls.get_driver_for_provider(provider)
                 await driver.delete(file_id)
                 return
                 
-        stmt_all = select(StorageProvider).where(StorageProvider.status == "active")
-        res_all = await db.execute(stmt_all)
-        providers = res_all.scalars().all()
+        providers = await cls.list_providers(db)
+        active_providers = [p for p in providers if p.status == "active"]
         
-        for provider in providers:
+        for provider in active_providers:
             try:
                 driver = await cls.get_driver_for_provider(provider)
-                # Attempt to read first to see if exists
                 await driver.get_metadata(file_id)
                 await driver.delete(file_id)
                 return
@@ -243,29 +393,27 @@ class StorageManager:
     async def list(cls, db: AsyncSession, folder_id: str = "root", provider_id: str | None = None) -> list[dict]:
         """List files in the target provider. If not specified, returns lists merged from all providers."""
         if provider_id:
-            stmt = select(StorageProvider).where(StorageProvider.id == provider_id)
-            res = await db.execute(stmt)
-            provider = res.scalar_one_or_none()
+            provider = await cls.get_provider(db, provider_id)
             if not provider:
                 return []
             driver = await cls.get_driver_for_provider(provider)
             files = await driver.list(folder_id)
-            # Add provider name to output mapping
             for f in files:
                 f["provider"] = provider.name
+                f["provider_id"] = str(provider.id)
             return files
             
-        stmt_all = select(StorageProvider).where(StorageProvider.status == "active")
-        res_all = await db.execute(stmt_all)
-        providers = res_all.scalars().all()
+        providers = await cls.list_providers(db)
+        active_providers = [p for p in providers if p.status == "active"]
         
         merged_files = []
-        for provider in providers:
+        for provider in active_providers:
             try:
                 driver = await cls.get_driver_for_provider(provider)
                 files = await driver.list(folder_id)
                 for f in files:
                     f["provider"] = provider.name
+                    f["provider_id"] = str(provider.id)
                 merged_files.extend(files)
             except Exception as e:
                 logger.warning(f"Could not list directory from provider '{provider.name}': {e}")
@@ -276,30 +424,58 @@ class StorageManager:
     async def search(cls, db: AsyncSession, query: str, provider_id: str | None = None) -> list[dict]:
         """Search files matching query text."""
         if provider_id:
-            stmt = select(StorageProvider).where(StorageProvider.id == provider_id)
-            res = await db.execute(stmt)
-            provider = res.scalar_one_or_none()
+            provider = await cls.get_provider(db, provider_id)
             if not provider:
                 return []
             driver = await cls.get_driver_for_provider(provider)
             files = await driver.search(query)
             for f in files:
                 f["provider"] = provider.name
+                f["provider_id"] = str(provider.id)
             return files
 
-        stmt_all = select(StorageProvider).where(StorageProvider.status == "active")
-        res_all = await db.execute(stmt_all)
-        providers = res_all.scalars().all()
+        providers = await cls.list_providers(db)
+        active_providers = [p for p in providers if p.status == "active"]
         
         merged_results = []
-        for provider in providers:
+        for provider in active_providers:
             try:
                 driver = await cls.get_driver_for_provider(provider)
                 files = await driver.search(query)
                 for f in files:
                     f["provider"] = provider.name
+                    f["provider_id"] = str(provider.id)
                 merged_results.extend(files)
             except Exception as e:
                 logger.warning(f"Could not search files from provider '{provider.name}': {e}")
                 
         return merged_results
+
+    @classmethod
+    async def health_check(cls, db: AsyncSession) -> dict[str, str]:
+        """Run connection checks on all providers."""
+        providers = await cls.list_providers(db)
+        status_report = {}
+        for p in providers:
+            try:
+                driver = await cls.get_driver_for_provider(p)
+                await driver.get_quota()
+                status_report[p.name] = "healthy"
+                p.status = "active"
+            except Exception as e:
+                status_report[p.name] = f"error: {str(e)}"
+                p.status = "error"
+        await db.commit()
+        return status_report
+
+    @classmethod
+    async def available_storage(cls, db: AsyncSession) -> int:
+        """Sum of total limit space across all active providers."""
+        providers = await cls.list_providers(db)
+        return sum(p.available_storage for p in providers if p.status == "active")
+
+    @classmethod
+    async def provider_usage(cls, db: AsyncSession) -> int:
+        """Sum of total used space across all active providers."""
+        providers = await cls.list_providers(db)
+        return sum(p.used_storage for p in providers if p.status == "active")

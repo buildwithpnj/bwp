@@ -8,6 +8,10 @@ from app.models.staging import StagingEntry
 from app.models.tools import Automation, ToolRecord, ToolSchema
 from app.models.user import User
 from app.models.storage_provider import StorageProvider
+from app.models.recovery import Addiction, RelapseLog
+from app.models.goals import Goal
+from app.models.calendar_event import CalendarEvent
+from app.models.ai_insight import AICoachInsight
 
 __all__ = [
     "Base",
@@ -32,4 +36,9 @@ __all__ = [
     "Automation",
     "StagingEntry",
     "StorageProvider",
+    "Addiction",
+    "RelapseLog",
+    "Goal",
+    "CalendarEvent",
+    "AICoachInsight",
 ]

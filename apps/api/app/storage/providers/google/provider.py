@@ -16,12 +16,19 @@ logger = logging.getLogger("warborn_storage_google")
 class GoogleDriveProvider(BaseStorageProvider):
     """Google Drive specific storage driver that runs blocking API commands in execution threads."""
 
-    def __init__(self, refresh_token: str, folder_id: str | None = None, account_email: str = ""):
+    def __init__(
+        self,
+        refresh_token: str,
+        folder_id: str | None = None,
+        account_email: str = "",
+        client_id: str | None = None,
+        client_secret: str | None = None
+    ):
         self.refresh_token = refresh_token
         self.folder_id = folder_id
         self.account_email = account_email
-        self.client_id = storage_settings.google_client_id
-        self.client_secret = storage_settings.google_client_secret
+        self.client_id = client_id or storage_settings.google_client_id
+        self.client_secret = client_secret or storage_settings.google_client_secret
         self.token_uri = "https://oauth2.googleapis.com/token"
 
     def _build_credentials(self) -> Credentials:
