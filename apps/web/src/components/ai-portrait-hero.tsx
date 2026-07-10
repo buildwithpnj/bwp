@@ -163,8 +163,8 @@ export function AIPortraitHero() {
   const pixelateProgressRef = useRef(0);
   const nextImageLoadedRef = useRef<HTMLImageElement | null>(null);
   const neuralPulseRef = useRef({ progress: 0 });
-  const portraitColorRef = useRef({ h: 221, s: 83, l: 53, r: 59, g: 130, b: 246 });
-  const activeColorRef = useRef({ h: 221, s: 83, l: 53 });
+  const portraitColorRef = useRef({ h: 217, s: 91, l: 65, r: 59, g: 130, b: 246 });
+  const activeColorRef = useRef({ h: 217, s: 91, l: 65 });
   const [tickerIndex, setTickerIndex] = useState(0);
 
   useEffect(() => {
@@ -406,15 +406,8 @@ export function AIPortraitHero() {
         
         const hsl = rgbToHsl(finalR, finalG, finalB);
         
-        // Classify dynamic portrait hue to closest allowed key in the premium 3-color palette
+        // The rest/idle state is locked to Electric Blue. Other colors trigger only on cursor touch.
         let classification: 'blue' | 'red' | 'muted' = 'blue';
-        if (hsl.s < 32) {
-          classification = 'muted';
-        } else if (hsl.h >= 330 || hsl.h < 35) {
-          classification = 'red';
-        } else {
-          classification = 'blue';
-        }
 
         const palette = HERO_SYNC_COLORS[classification];
         portraitColorRef.current = {

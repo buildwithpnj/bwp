@@ -152,11 +152,15 @@ export function AnimatedMissions() {
   const [activeIndex, setActiveIndex] = useState(0);
   const activeSignal = missionSignals[activeIndex];
 
-  useEffect(() => {
+  const handleMouseEnter = () => {
     const colors: ('red' | 'blue' | 'muted')[] = ['red', 'blue', 'muted'];
     const activeColor = colors[activeIndex % colors.length];
     window.dispatchEvent(new CustomEvent('pnj-sync-color', { detail: { key: activeColor } }));
-  }, [activeIndex]);
+  };
+
+  const handleMouseLeave = () => {
+    window.dispatchEvent(new CustomEvent('pnj-sync-color', { detail: { key: null } }));
+  };
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -167,7 +171,11 @@ export function AnimatedMissions() {
   }, [activeIndex]);
 
   return (
-    <section className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(420px,1fr)]">
+    <section 
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(420px,1fr)]"
+    >
       <div className="flex max-w-3xl flex-col gap-3">
         <DecodedHeader key={activeSignal.header} text={activeSignal.header} />
         
