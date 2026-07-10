@@ -43,38 +43,66 @@ function nodeToXY(n: DataNode) {
   return { x: (n.xPct / 100) * VW, y: (n.yPct / 100) * VH };
 }
 
-// Build a sharp rectangular track directly through all node centers (L→R top row, then R→L bottom row, closing back)
-function buildCircuitPath(): string {
-  const connectedNodes = NODES.filter(n => n.connected !== false);
-  
-  const topRow = connectedNodes.filter(n => n.yPct < 60);
-  const botRow = connectedNodes.filter(n => n.yPct >= 60);
+// Precomputed neighbor mapping to make packets traverse horizontally & vertically
+const NODE_NEIGHBORS: Record<string, string[]> = {
+  api: ['llm', 'embedding'],
+  llm: ['api', 'rag', 'memory'],
+  rag: ['llm', 'json', 'vector'],
+  json: ['rag', 'sql', 'token'],
+  sql: ['json', 'cache', 'node'],
+  cache: ['sql', 'gpu', 'tools'],
+  gpu: ['cache', 'cpu', 'voice'],
+  cpu: ['gpu', 'mcp'],
+  mcp: ['cpu', 'voice'],
+  voice: ['mcp', 'tools', 'gpu'],
+  tools: ['voice', 'node', 'cache'],
+  node: ['tools', 'token', 'sql'],
+  token: ['node', 'vector', 'json'],
+  vector: ['token', 'memory', 'rag'],
+  memory: ['vector', 'embedding', 'llm'],
+  embedding: ['memory', 'api']
+};
 
-  const pts = [
-    ...topRow.map(nodeToXY),
-    ...botRow.map(nodeToXY),
-  ];
+// Build a double-rung grid path connecting all nodes in the 2x8 ladder
+function buildGridPath(): string {
+  let d = '';
+  const xStart = (10 / 100) * VW;
+  const xEnd = (94 / 100) * VW;
+  const yTop = (25 / 100) * VH;
+  const yBot = (75 / 100) * VH;
 
-  let d = `M ${pts[0].x},${pts[0].y}`;
-  for (let i = 1; i < pts.length; i++) {
-    d += ` L ${pts[i].x},${pts[i].y}`;
-  }
-  d += ' Z';
+  // Horizontal rails
+  d += `M ${xStart},${yTop} L ${xEnd},${yTop} `;
+  d += `M ${xStart},${yBot} L ${xEnd},${yBot} `;
+
+  // Vertical columns
+  const cols = [10, 22, 34, 46, 58, 70, 82, 94];
+  cols.forEach(pct => {
+    const x = (pct / 100) * VW;
+    d += `M ${x},${yTop} L ${x},${yBot} `;
+  });
+
   return d;
 }
 
-const CIRCUIT_PATH = buildCircuitPath();
+const CIRCUIT_PATH = buildGridPath();
 
 const STATUS_LABELS = [
   'SYSTEM ONLINE', 'MEMORY ACTIVE', 'TOOLS READY', 'VOICE READY',
   'RAG INDEXED', 'MODELS LOADED', 'PIPELINES NOMINAL', 'VECTOR CACHE SYNCD'
 ];
 
-// ─── Component ────────────────────────────────────────────────────────────────
+interface PacketState {
+  currNodeId: string;
+  targetNodeId: string;
+  x: number;
+  y: number;
+  progress: number;
+  trail: { x: number; y: number }[];
+}
+
 export function FooterDataStream() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const pathRef      = useRef<SVGPathElement>(null);
-
   const [collected,       setCollected]       = useState<Record<string, boolean>>({});
   const [activeNode,      setActiveNode]       = useState<DataNode | null>(null);
   const [pulseNode,       setPulseNode]        = useState<string | null>(null);
@@ -83,13 +111,10 @@ export function FooterDataStream() {
   const [inViewport,      setInViewport]       = useState(false);
 
   // heroColor: read from CSS variable and subscribe to changes
-  const [heroColor, setHeroColor] = useState('hsl(221.2 83.2% 53.3%)');
-
-  // Track viewport size so we can scale SVG coordinates → DOM
-  const [svgRect,  setSvgRect]  = useState({ width: 1, height: 1 });
+  const [heroColor, setHeroColor] = useState('hsl(217 91% 65%)');
   const svgRef = useRef<SVGSVGElement>(null);
 
-  // Watch for hero color CSS variable changes via a small polling effect
+  // Watch for hero color CSS variable changes
   useEffect(() => {
     const read = () => {
       const v = getComputedStyle(document.documentElement)
@@ -101,19 +126,6 @@ export function FooterDataStream() {
     return () => clearInterval(id);
   }, []);
 
-  // Track SVG bounding rect for hit testing (node collision in DOM space)
-  useEffect(() => {
-    const update = () => {
-      if (svgRef.current) {
-        const r = svgRef.current.getBoundingClientRect();
-        setSvgRect({ width: r.width, height: r.height });
-      }
-    };
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
-
   // Intersection observer
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => setInViewport(e.isIntersecting), { threshold: 0.1 });
@@ -121,11 +133,36 @@ export function FooterDataStream() {
     return () => obs.disconnect();
   }, []);
 
-  // Packet state refs (for 60fps without react re-renders)
-  const progressRef   = useRef(0);
-  const animationRef  = useRef<number | null>(null);
+  // Set up 3 active packets with randomized starting nodes and direction choices
+  const packetsRef = useRef<PacketState[]>([
+    {
+      currNodeId: 'api',
+      targetNodeId: 'llm',
+      x: nodeToXY(NODES[0]).x,
+      y: nodeToXY(NODES[0]).y,
+      progress: 0,
+      trail: []
+    },
+    {
+      currNodeId: 'tools',
+      targetNodeId: 'node',
+      x: nodeToXY(NODES[10]).x,
+      y: nodeToXY(NODES[10]).y,
+      progress: 0,
+      trail: []
+    },
+    {
+      currNodeId: 'gpu',
+      targetNodeId: 'voice',
+      x: nodeToXY(NODES[6]).x,
+      y: nodeToXY(NODES[6]).y,
+      progress: 0,
+      trail: []
+    }
+  ]);
 
-  // Animation loop
+  const animationRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (!inViewport) {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
@@ -133,51 +170,81 @@ export function FooterDataStream() {
     }
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const path = pathRef.current;
-    if (!path) return;
-
-    const totalLength = path.getTotalLength();
-    const speed = 0.7;
-
     const animate = () => {
-      progressRef.current = (progressRef.current + speed) % totalLength;
-      const head = path.getPointAtLength(progressRef.current);
+      const speed = 2.0; // Pixels per frame
 
-      // Move DOM elements directly — no react state = zero jank
-      const headEl = document.getElementById('ds-packet-head');
-      if (headEl) {
-        headEl.style.transform = `translate(${head.x}px, ${head.y}px)`;
-      }
+      packetsRef.current.forEach((packet, pIdx) => {
+        const currNode = NODES.find(n => n.id === packet.currNodeId)!;
+        const targetNode = NODES.find(n => n.id === packet.targetNodeId)!;
+        
+        const startPt = nodeToXY(currNode);
+        const endPt = nodeToXY(targetNode);
+        
+        const dx = endPt.x - startPt.x;
+        const dy = endPt.y - startPt.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
-      const trailEls = document.querySelectorAll<HTMLElement>('.ds-trail-dot');
-      trailEls.forEach((el, i) => {
-        // Space each trail dot exactly 14px behind the preceding one
-        const dotOffset = (progressRef.current - (i + 1) * 14 + totalLength) % totalLength;
-        const pt = path.getPointAtLength(dotOffset);
-        el.style.transform = `translate(${pt.x}px, ${pt.y}px)`;
-      });
+        // Advance progress
+        if (distance > 0) {
+          packet.progress += speed / distance;
+        } else {
+          packet.progress = 1.0;
+        }
 
-      // Node collision check (in SVG coordinate space)
-      NODES.forEach(node => {
-        if (node.connected === false) return;
-        const { x, y } = nodeToXY(node);
-        const dx = head.x - x;
-        const dy = head.y - y;
-        if (dx * dx + dy * dy < 196 && !collected[node.id]) {
-          setCollected(prev => ({ ...prev, [node.id]: true }));
+        if (packet.progress >= 1.0) {
+          // Reached target node!
+          packet.progress = 0;
           
-          const nodeId = node.id;
+          // Trigger node pulse and collection highlight
+          const reachedId = packet.targetNodeId;
+          setCollected(prev => ({ ...prev, [reachedId]: true }));
           setTimeout(() => {
             setCollected(prev => {
               const next = { ...prev };
-              delete next[nodeId];
+              delete next[reachedId];
               return next;
             });
           }, 1500);
 
-          setPulseNode(node.id);
+          setPulseNode(reachedId);
           setTimeout(() => setPulseNode(null), 400);
           setStatusText(STATUS_LABELS[Math.floor(Math.random() * STATUS_LABELS.length)]);
+
+          // Select next target node randomly from neighbors, avoiding backtracking where possible
+          const nextChoices = NODE_NEIGHBORS[reachedId].filter(id => id !== packet.currNodeId);
+          const chosenId = nextChoices.length > 0 
+            ? nextChoices[Math.floor(Math.random() * nextChoices.length)]
+            : NODE_NEIGHBORS[reachedId][0];
+
+          packet.currNodeId = reachedId;
+          packet.targetNodeId = chosenId;
+
+          packet.x = endPt.x;
+          packet.y = endPt.y;
+        } else {
+          // Calculate current coordinate along segment
+          packet.x = startPt.x + dx * packet.progress;
+          packet.y = startPt.y + dy * packet.progress;
+        }
+
+        // Manage trail position history
+        packet.trail.push({ x: packet.x, y: packet.y });
+        if (packet.trail.length > 5) {
+          packet.trail.shift();
+        }
+
+        // Apply positions directly to DOM elements
+        const headEl = document.getElementById(`ds-packet-${pIdx}-head`);
+        if (headEl) {
+          headEl.style.transform = `translate(${packet.x - 3.25}px, ${packet.y - 3.25}px)`;
+        }
+
+        for (let tIdx = 0; tIdx < 5; tIdx++) {
+          const trailEl = document.getElementById(`ds-packet-${pIdx}-trail-${tIdx}`);
+          if (trailEl) {
+            const pt = packet.trail[packet.trail.length - 1 - tIdx] || { x: packet.x, y: packet.y };
+            trailEl.style.transform = `translate(${pt.x - 2}px, ${pt.y - 2}px)`;
+          }
         }
       });
 
@@ -186,10 +253,8 @@ export function FooterDataStream() {
 
     animationRef.current = requestAnimationFrame(animate);
     return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inViewport]);
 
-  // Default primary telemetry color: Electric Blue
   const glow = heroColor || '#3B82F6';
   const collectColor = '#E5484D';
   const glowCSS = `0 0 12px ${glow}, 0 0 24px ${glow}66`;
@@ -205,8 +270,8 @@ export function FooterDataStream() {
 
       {/* Ambient glow halo behind the visualiser */}
       <div
-        className="absolute inset-0 opacity-20 pointer-events-none"
-        style={{ background: `radial-gradient(ellipse 60% 60% at 50% 50%, ${glow}33, transparent)` }}
+        className="absolute inset-0 opacity-15 dark:opacity-20 pointer-events-none"
+        style={{ background: `radial-gradient(ellipse 60% 60% at 50% 50%, ${glow}22, transparent)` }}
       />
 
       {/* Status bar */}
@@ -232,13 +297,12 @@ export function FooterDataStream() {
           viewBox={`0 0 ${VW} ${VH}`}
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Base solid wire track */}
+          {/* Base solid wire track - perfectly visible in light and dark mode */}
           <path
-            ref={pathRef}
             d={CIRCUIT_PATH}
             fill="none"
             stroke="currentColor"
-            className="text-border/20 dark:text-border/10"
+            className="text-neutral-300/40 dark:text-neutral-700/50"
             strokeWidth="1.2"
           />
 
@@ -281,30 +345,38 @@ export function FooterDataStream() {
                   </rect>
                 )}
 
-                {/* Anchor square */}
+                {/* Anchor square container - styling for light and dark modes */}
                 <rect
                   x="-5" y="-5" width="10" height="10" rx="2"
-                  fill={!isConnected ? '#111111' : (isCollected ? `${collectColor}33` : 'var(--card)')}
-                  stroke={!isConnected ? '#333333' : (isCollected ? collectColor : (isHovered ? glow : 'var(--border)'))}
+                  fill="none"
+                  stroke={!isConnected ? 'currentColor' : (isCollected ? collectColor : (isHovered ? glow : 'currentColor'))}
                   strokeWidth="0.8"
-                  style={{ filter: (isConnected && isCollected) ? `drop-shadow(0 0 4px ${collectColor})` : ((isConnected && isHovered) ? `drop-shadow(0 0 4px ${glow})` : 'none'),
-                           transition: 'all 0.3s' }}
+                  className={!isConnected 
+                    ? "text-neutral-200 dark:text-neutral-800" 
+                    : (isCollected || isHovered ? "" : "text-neutral-400 dark:text-neutral-500")}
+                  style={{ transition: 'all 0.3s' }}
                 />
+                
+                {/* Inner dot */}
                 <rect
                   x="-2.5" y="-2.5" width="5" height="5" rx="1"
-                  fill={!isConnected ? '#333333' : (isCollected ? collectColor : (isHovered ? glow : '#888888'))}
-                  opacity={!isConnected ? 0.2 : (isCollected || isHovered ? 1 : 0.5)}
+                  fill={!isConnected ? 'currentColor' : (isCollected ? collectColor : (isHovered ? glow : 'currentColor'))}
+                  className={!isConnected 
+                    ? "text-neutral-200 dark:text-neutral-800 opacity-20" 
+                    : (isCollected || isHovered ? "" : "text-neutral-500 dark:text-neutral-400")}
+                  style={{ transition: 'all 0.3s' }}
                 />
 
-                {/* Label */}
+                {/* Label - beautifully high-contrast in light & dark mode */}
                 <text
-                  x="9" y="4"
+                  x="9" y="3"
                   fontSize="7"
                   fontFamily="monospace"
                   fontWeight="700"
-                  fill="var(--muted-foreground)"
-                  opacity={!isConnected ? 0.35 : 0.75}
-                  className="select-none"
+                  fill="currentColor"
+                  className={!isConnected 
+                    ? "text-neutral-300 dark:text-neutral-700 opacity-35 select-none" 
+                    : "text-neutral-500 dark:text-neutral-400 select-none"}
                 >
                   {node.label}
                 </text>
@@ -324,30 +396,30 @@ export function FooterDataStream() {
             );
           })}
 
-          {/* ── Packet trail (Pixel trace dots) ── */}
-          {/* Trail dots */}
-          {Array.from({ length: 6 }).map((_, i) => (
-            <rect
-              key={i}
-              className="ds-trail-dot"
-              width="4.2" height="4.2"
-              fill={glow}
-              opacity={0.55 - i * 0.08}
-              style={{ transform: 'translate(0px,0px)', transformBox: 'fill-box', transformOrigin: 'center',
-                       transition: 'opacity 0.1s' }}
-            />
+          {/* ── Render 3 random packets elements without the square drop-shadow shade filter ── */}
+          {Array.from({ length: 3 }).map((_, pIdx) => (
+            <g key={pIdx}>
+              {/* Trail dots for packet */}
+              {Array.from({ length: 5 }).map((_, tIdx) => (
+                <rect
+                  key={tIdx}
+                  id={`ds-packet-${pIdx}-trail-${tIdx}`}
+                  width="4" height="4"
+                  rx="1"
+                  fill={glow}
+                  opacity={0.65 - tIdx * 0.13}
+                  style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+                />
+              ))}
+              {/* Head packet */}
+              <rect
+                id={`ds-packet-${pIdx}-head`}
+                width="6.5" height="6.5"
+                rx="1.5"
+                fill={glow}
+              />
+            </g>
           ))}
-
-          {/* Head packet */}
-          <rect
-            id="ds-packet-head"
-            width="6.5" height="6.5"
-            fill={glow}
-            style={{
-              filter: `drop-shadow(0 0 4px ${glow})`,
-              transform: 'translate(0px,0px)',
-            }}
-          />
         </svg>
       </div>
 
