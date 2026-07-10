@@ -1,12 +1,17 @@
 import React from 'react';
 import Link from 'next/link';
+import { FooterDataStream } from './footer-data-stream';
 
 export function PublicFooter() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full border-t border-border bg-background py-12 md:py-16 mt-20 relative z-20">
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <footer id="section-footer" className="w-full border-t border-border bg-background py-12 md:py-16 mt-20 relative z-20">
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-10">
+        
+        {/* AI Data Stream visualization */}
+        <FooterDataStream />
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12 text-left">
           
           {/* Brand Column */}

@@ -537,39 +537,22 @@ export function AIPortraitHero() {
          root.style.setProperty('--primary', `${activeH} ${activeS}% ${primaryL}`);
        }
 
-       const ambientGlow = ctx.createRadialGradient(gX, gY, 10, gX, gY, glowRad);
-       if (isDark) {
-         ambientGlow.addColorStop(0, `hsla(${activeH}, ${activeS}%, 45%, 0.05)`);
-         ambientGlow.addColorStop(0.35, `hsla(${activeH}, ${activeS}%, 45%, 0.015)`);
-         ambientGlow.addColorStop(1, 'rgba(3, 4, 8, 1)'); // Deep black/graphite core
-       } else {
-         ambientGlow.addColorStop(0, `hsla(${activeH}, ${activeS}%, 45%, 0.03)`);
-         ambientGlow.addColorStop(0.5, `hsla(${activeH}, ${activeS}%, 45%, 0.01)`);
-         ambientGlow.addColorStop(1, 'rgba(255, 255, 255, 1)');
-       }
-      ctx.fillStyle = ambientGlow;
-      ctx.fillRect(0, 0, width, height);
+        ctx.clearRect(0, 0, width, height);
 
-      // Background grid
-      ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.015)' : 'rgba(0, 0, 0, 0.02)';
-      ctx.lineWidth = 1;
-      const gridSize = 45;
-      const gridParallaxX = mouseRef.current.rx * 5.0;
-      const gridParallaxY = mouseRef.current.ry * 5.0;
-      
-      ctx.save();
-      ctx.translate(gridParallaxX, gridParallaxY);
-      ctx.beginPath();
-      for (let x = 0; x < width; x += gridSize) {
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-      }
-      for (let y = 0; y < height; y += gridSize) {
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-      }
-      ctx.stroke();
-      ctx.restore();
+        const ambientGlow = ctx.createRadialGradient(gX, gY, 10, gX, gY, glowRad);
+        if (isDark) {
+          ambientGlow.addColorStop(0, `hsla(${activeH}, ${activeS}%, 45%, 0.12)`);
+          ambientGlow.addColorStop(0.35, `hsla(${activeH}, ${activeS}%, 45%, 0.04)`);
+          ambientGlow.addColorStop(1, 'rgba(3, 4, 8, 0)'); 
+        } else {
+          ambientGlow.addColorStop(0, `hsla(${activeH}, ${activeS}%, 45%, 0.08)`);
+          ambientGlow.addColorStop(0.5, `hsla(${activeH}, ${activeS}%, 45%, 0.02)`);
+          ambientGlow.addColorStop(1, 'rgba(255, 255, 255, 0)'); 
+        }
+        ctx.fillStyle = ambientGlow;
+        ctx.fillRect(0, 0, width, height);
+
+
 
       // Render Floating Background Particles
       bgParticlesRef.current.forEach((bp) => {
@@ -619,6 +602,11 @@ export function AIPortraitHero() {
         neuralPulseRef.current.progress += 0.0035;
         if (neuralPulseRef.current.progress >= 1.0) {
           neuralPulseRef.current.progress = 0;
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('hero-pulse', {
+              detail: { h: activeH, s: activeS, l: activeL }
+            }));
+          }
         }
       }
 
@@ -1150,7 +1138,8 @@ export function AIPortraitHero() {
   return (
     <section 
       ref={containerRef}
-      className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mt-[-32px] md:mt-[-48px] min-h-[100vh] py-16 lg:py-0 flex flex-col justify-center overflow-hidden bg-background select-none border-b border-border/20 z-30"
+      id="hero-section-root"
+      className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mt-[-32px] md:mt-[-48px] min-h-[100vh] py-16 lg:py-0 flex flex-col justify-center overflow-hidden bg-transparent select-none border-b border-border/20 z-30"
     >
       {/* Background Interactive canvas */}
       <canvas 
@@ -1259,6 +1248,7 @@ export function AIPortraitHero() {
           {/* RIGHT SIDE: Interactive Portrait and Orbiting Tech Stack Ecosystem */}
           <div 
             ref={rightContainerRef}
+            id="hero-portrait-container"
             className="lg:col-span-7 w-full mt-10 lg:mt-0 h-[520px] sm:h-[650px] lg:h-[760px] relative flex items-center justify-center select-none z-20"
           >
             {/* Wrap orbiting stack elements in a unified pointer-interactive layout container */}
@@ -1266,14 +1256,14 @@ export function AIPortraitHero() {
               {/* Top Orbiting Card: AI Voice Agent */}
               <div 
                 id="node-voiceagent"
-                className="hidden lg:flex absolute top-[2%] left-1/2 -translate-x-1/2 p-2 rounded-xl border border-border/30 bg-card/75 backdrop-blur-md text-left flex-col gap-1 max-w-[150px] shadow-lg shadow-cyan-500/5 hover:border-primary/30 transition-all hover:scale-[1.03] duration-300"
+                className="hidden lg:flex absolute top-[2%] left-1/2 -translate-x-1/2 p-2 rounded-xl border border-border/30 bg-card/75 backdrop-blur-md text-left flex-col gap-1 max-w-[150px] shadow-lg shadow-primary/5 hover:border-primary/30 transition-all hover:scale-[1.03] duration-300"
               >
                 <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-pixel text-[8px] font-bold text-emerald-400">● LIVE</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  <span className="font-pixel text-[8px] font-bold text-primary">● LIVE</span>
                 </div>
                 <h4 className="font-mono text-[9px] font-black text-foreground uppercase">AI Voice Agent</h4>
-                <p className="text-[7.5px] leading-snug text-muted-foreground">Real-time conversational voice.</p>
+                <p className="text-[7.5px] leading-snug text-primary/85 font-medium">Real-time conversational voice.</p>
               </div>
 
               {/* Orbiting Category Node Badges */}
@@ -1437,22 +1427,26 @@ function FlowStackItem({ label, desc }: { label: string; desc: string }) {
   return (
     <div className="w-full max-w-[155px] sm:max-w-[190px] p-1 px-1.5 sm:px-2 rounded-lg border border-border/25 bg-background/50 text-center flex flex-col gap-0.5 shadow">
       <span className="font-black text-foreground/90 uppercase tracking-tight text-[7px] sm:text-[8px]">{label}</span>
-      <span className="text-[5.5px] sm:text-[6.5px] text-muted-foreground/80 leading-none">{desc}</span>
+      <span className="text-[5.5px] sm:text-[6.5px] text-primary/90 font-bold leading-none">{desc}</span>
     </div>
   );
 }
 
 function FlowCardItem({ label, status, desc, version, color = 'bg-primary' }: { label: string; status: string; desc: string; version: string; color?: string }) {
+  const isBuilding = status === 'BUILDING';
+  const statusColorClass = isBuilding ? 'text-amber-500' : 'text-primary';
+  const dotColorClass = isBuilding ? 'bg-amber-500' : 'bg-primary';
+
   return (
     <div className="w-full p-1 sm:p-1.5 px-2 sm:px-2.5 rounded-xl border border-border/30 bg-card/60 hover:bg-card/90 text-left flex items-start justify-between gap-2 sm:gap-3 shadow hover:border-primary/20 hover:scale-[1.01] transition-all">
       <div className="flex flex-col gap-0.5 max-w-[72%]">
         <h5 className="font-black text-foreground uppercase tracking-tight text-[7.5px] sm:text-[8.5px]">{label}</h5>
-        <p className="text-[6.5px] sm:text-[7px] leading-tight text-muted-foreground">{desc}</p>
+        <p className="text-[6.5px] sm:text-[7px] leading-tight text-primary/85 font-medium">{desc}</p>
       </div>
       <div className="flex flex-col items-end gap-1 shrink-0">
         <div className="flex items-center gap-1">
-          <span className={cn("w-1 h-1 rounded-full", color)} />
-          <span className="text-[6px] sm:text-[6.5px] font-bold text-foreground/75 tracking-wider">{status}</span>
+          <span className={cn("w-1 h-1 rounded-full animate-pulse", dotColorClass)} />
+          <span className={cn("text-[6px] sm:text-[6.5px] font-bold tracking-wider", statusColorClass)}>{status}</span>
         </div>
         <span className="text-[5.5px] sm:text-[6px] text-muted-foreground font-bold px-0.5 rounded bg-background/50 border border-border/40">{version}</span>
       </div>

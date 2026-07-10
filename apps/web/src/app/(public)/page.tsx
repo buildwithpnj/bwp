@@ -50,7 +50,7 @@ export default async function PublicHomePage() {
       <AIPortraitHero />
       
       {/* Boxed Content Area */}
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 flex flex-col gap-28 md:gap-36 text-left">
+      <div className="container max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 flex flex-col gap-28 md:gap-36 text-left">
         
         {/* 2. MISSION SECTION */}
         <ScrollReveal>
@@ -61,7 +61,7 @@ export default async function PublicHomePage() {
  
         {/* 3. DEDICATED WARBORN OS SECTION */}
         <ScrollReveal delay={80}>
-          <section className="flex flex-col gap-10">
+          <section id="section-solutions" className="flex flex-col gap-10">
             <div className="flex flex-col gap-2">
               <span className="font-mono text-[10px] tracking-[0.25em] text-primary/80 uppercase">
                 {"// CENTRAL OPERATING ENGINE"}
@@ -71,7 +71,7 @@ export default async function PublicHomePage() {
               </h2>
             </div>
             
-            <div className="group/card p-6 sm:p-8 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-md relative overflow-hidden flex flex-col lg:flex-row gap-8 items-center hover:border-primary/20 transition-all duration-500 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_50px_rgba(59,130,246,0.04)]">
+            <div className="group/card p-6 sm:p-8 rounded-2xl border border-border/40 bg-background/95 dark:bg-card/95 backdrop-blur-xl relative overflow-hidden flex flex-col lg:flex-row gap-8 items-center hover:border-primary/40 hover:-translate-y-1.5 transition-all duration-500 shadow-[0_12px_36px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.45)] hover:shadow-[0_20px_48px_rgba(0,0,0,0.15)] dark:hover:shadow-[0_20px_48px_rgba(0,0,0,0.55)]">
               <div className="absolute top-0 right-0 w-[240px] h-[240px] bg-primary/5 blur-[90px] pointer-events-none group-hover/card:bg-primary/8 transition-all duration-700" />
 
               <div className="flex-1 flex flex-col gap-6 w-full text-left">
@@ -144,7 +144,7 @@ export default async function PublicHomePage() {
 
         {/* 4. FEATURED PROJECTS SECTION */}
         <ScrollReveal delay={80}>
-          <section className="flex flex-col gap-10">
+          <section id="section-projects" className="flex flex-col gap-10">
             <div className="flex items-end justify-between border-b border-border/40 pb-4">
               <div className="flex flex-col gap-2">
                 <span className="font-mono text-[10px] tracking-[0.25em] text-primary/80 uppercase">
@@ -173,7 +173,7 @@ export default async function PublicHomePage() {
                   >
                     <Link
                       href={`/projects/${project.slug}`}
-                      className="group p-5 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-sm flex flex-col gap-4 hover:border-primary/20 hover:shadow-[0_8px_30px_rgba(59,130,246,0.04)] transition-all duration-500 hover:-translate-y-[2px] h-full"
+                      className="group p-5 rounded-2xl border border-border/40 bg-background/95 dark:bg-card/95 backdrop-blur-xl flex flex-col gap-4 hover:border-primary/40 hover:-translate-y-1.5 transition-all duration-500 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_16px_40px_rgba(0,0,0,0.55)] h-full"
                     >
                       <div className="aspect-video w-full rounded-lg bg-background flex items-center justify-center relative overflow-hidden border border-border/40">
                         <div className="absolute inset-0 grid-dots opacity-20" />
@@ -216,7 +216,7 @@ export default async function PublicHomePage() {
 
         {/* 5. ENGINEERING JOURNAL PREVIEW */}
         <ScrollReveal delay={80}>
-          <section className="flex flex-col gap-10">
+          <section id="section-journal" className="flex flex-col gap-10">
             <div className="flex items-end justify-between border-b border-border/40 pb-4">
               <div className="flex flex-col gap-2">
                 <span className="font-mono text-[10px] tracking-[0.25em] text-primary/80 uppercase">
@@ -243,7 +243,7 @@ export default async function PublicHomePage() {
                 >
                   <Link
                     href={`/journal/${post.slug}`}
-                    className="group p-5 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-sm flex flex-col justify-between gap-5 hover:border-primary/20 hover:shadow-[0_8px_30px_rgba(59,130,246,0.04)] transition-all duration-500 hover:-translate-y-[2px] h-full"
+                    className="group p-5 rounded-2xl border border-border/40 bg-background/95 dark:bg-card/95 backdrop-blur-xl flex flex-col justify-between gap-5 hover:border-primary/40 hover:-translate-y-1.5 transition-all duration-500 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_16px_40px_rgba(0,0,0,0.55)] h-full"
                   >
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center gap-2 font-mono text-[9px] text-muted-foreground">
@@ -276,7 +276,7 @@ export default async function PublicHomePage() {
 
         {/* 6. LABS PREVIEW SECTION */}
         <ScrollReveal delay={80}>
-          <section className="flex flex-col gap-10">
+          <section id="section-labs" className="flex flex-col gap-10">
             <div className="flex items-end justify-between border-b border-border/40 pb-4">
               <div className="flex flex-col gap-2">
                 <span className="font-mono text-[10px] tracking-[0.25em] text-primary/80 uppercase">
@@ -305,7 +305,7 @@ export default async function PublicHomePage() {
                   >
                     <Link
                       href={`/labs/${exp.slug}`}
-                      className="p-5 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-sm hover:bg-secondary/40 hover:border-primary/20 flex flex-col gap-4 transition-all duration-500 group shadow-sm hover:-translate-y-[2px] hover:shadow-[0_8px_30px_rgba(59,130,246,0.04)] h-full"
+                      className="p-5 rounded-2xl border border-border/40 bg-background/95 dark:bg-card/95 backdrop-blur-xl hover:border-primary/40 flex flex-col gap-4 transition-all duration-500 group shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_16px_40px_rgba(0,0,0,0.55)] h-full"
                     >
                       <div className="aspect-video w-full rounded-lg bg-background flex items-center justify-center relative overflow-hidden border border-border/40">
                         <div className="absolute inset-0 grid-dots opacity-20" />
@@ -337,7 +337,7 @@ export default async function PublicHomePage() {
 
         {/* 7. MISSION CONTROL SUMMARY */}
         <ScrollReveal delay={80}>
-          <section className="group/card p-6 sm:p-8 rounded-2xl border border-border/40 bg-card/35 backdrop-blur-md relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 hover:border-primary/20 transition-all duration-500 shadow-[0_8px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_16px_50px_rgba(59,130,246,0.04)]">
+          <section id="section-control" className="group/card p-6 sm:p-8 rounded-2xl border border-border/40 bg-background/95 dark:bg-card/95 backdrop-blur-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 hover:border-primary/40 hover:-translate-y-1.5 transition-all duration-500 shadow-[0_12px_36px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.45)] hover:shadow-[0_20px_48px_rgba(0,0,0,0.15)] dark:hover:shadow-[0_20px_48px_rgba(0,0,0,0.55)]">
             <div className="flex flex-col gap-2 text-left w-full">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
@@ -364,7 +364,7 @@ export default async function PublicHomePage() {
 
         {/* 8. NEWSLETTER CONTAINER */}
         <ScrollReveal delay={80}>
-          <section className="py-16 border-t border-border/40 flex flex-col items-center text-center gap-8">
+          <section id="section-newsletter" className="py-16 border-t border-border/40 flex flex-col items-center text-center gap-8">
             <div className="flex flex-col gap-3 max-w-md">
               <span className="font-mono text-[10px] tracking-[0.25em] text-primary/80 uppercase">
                 {"// SYSTEM UPDATES"}
@@ -377,7 +377,7 @@ export default async function PublicHomePage() {
               </p>
             </div>
 
-            <div className="w-full max-w-md p-6 rounded-2xl border border-border/40 bg-card/25 backdrop-blur-md shadow-sm">
+            <div className="w-full max-w-md p-6 rounded-2xl border border-border/40 bg-background/95 dark:bg-card/95 backdrop-blur-xl shadow-[0_12px_36px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:border-primary/30 transition-all duration-300">
               <NewsletterForm />
             </div>
             <span className="text-[10px] text-muted-foreground font-mono">

@@ -14,7 +14,7 @@ function DecodedHeader({ text }: { text: string }) {
       if (index > text.length) {
         clearInterval(interval);
       }
-    }, 40);
+    }, 45);
     return () => clearInterval(interval);
   }, [text]);
 
@@ -31,27 +31,37 @@ interface MissionSignal {
   description: string;
   telemetry: string;
   Icon: typeof Zap;
+  // Left-Side dynamic main screen copy
+  header: string;
+  heading: string;
+  mainDesc: string;
 }
 
 const missionSignals: MissionSignal[] = [
   {
+    header: '// OPERATIONAL MISSION',
+    heading: 'Architecting production-ready AI products, autonomous agent systems, and context-aware workspaces.',
+    mainDesc: 'We bypass theoretical delay to ship working software. Explore verified system architectures, database migration post-mortems, and active product blueprints.',
     title: 'Production-First Deployment',
-    description:
-      'Engineering working software directly to production. Our pipelines favor operational execution over static engineering prototypes.',
+    description: 'Engineering working software directly to production. Our pipelines favor operational execution over static engineering prototypes.',
     telemetry: 'SHIP MODE',
     Icon: Zap,
   },
   {
+    header: '// INFRASTRUCTURE ORCHESTRATION',
+    heading: 'Building multi-agent task execution grids, persistent vector graphs, and low-latency API routers.',
+    mainDesc: 'Deploying scalable memory contexts and event-driven LLM orchestration. Analyze production trace runs, real-time token performance, and system throughput.',
     title: 'Context-Aware Core',
-    description:
-      'Constructing stateful, vector-driven pipelines and memory retention models built for daily operational workflows.',
+    description: 'Constructing stateful, vector-driven pipelines and memory retention models built for daily operational workflows.',
     telemetry: 'MEMORY ONLINE',
     Icon: Cpu,
   },
   {
+    header: '// SEMANTIC DATA PIPELINES',
+    heading: 'Deploying self-correcting RAG systems, knowledge synthesis layers, and context extraction blocks.',
+    mainDesc: 'Bridging the gap between unstructured storage and agentic recall. Inspect vector space search parameters, memory caching loops, and model convergence profiles.',
     title: 'Open Architectures',
-    description:
-      'Publishing complete system designs, database schemas, and codebase blueprints for the developer community.',
+    description: 'Publishing complete system designs, database schemas, and codebase blueprints for the developer community.',
     telemetry: 'SCHEMA OPEN',
     Icon: Radio,
   },
@@ -69,7 +79,7 @@ function MissionSignalCard({
   const Icon = signal.Icon;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-card/35 p-5 sm:p-6 backdrop-blur-md shadow-[0_12px_40px_rgba(0,0,0,0.03)]">
+    <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-background/95 dark:bg-card/95 p-5 sm:p-6 backdrop-blur-xl shadow-[0_12px_36px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.45)] hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_20px_48px_rgba(0,0,0,0.15)] dark:hover:shadow-[0_20px_48px_rgba(0,0,0,0.55)] transition-all duration-300">
       <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-primary/10 blur-[70px]" />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent" />
 
@@ -83,7 +93,7 @@ function MissionSignalCard({
               <p className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-primary/80">
                 {signal.telemetry}
               </p>
-              <h3 key={signal.title} className="mt-1 text-base font-bold text-foreground animate-in">
+              <h3 key={signal.title} className="mt-1 text-base font-bold text-foreground animate-in fade-in slide-in-from-bottom-1 duration-500">
                 {signal.title}
               </h3>
             </div>
@@ -104,7 +114,7 @@ function MissionSignalCard({
           </div>
         </div>
 
-        <p key={signal.description} className="max-w-xl text-sm leading-relaxed text-muted-foreground animate-in">
+        <p key={signal.description} className="max-w-xl text-sm leading-relaxed text-muted-foreground animate-in fade-in slide-in-from-bottom-1 duration-500">
           {signal.description}
         </p>
 
@@ -145,20 +155,28 @@ export function AnimatedMissions() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % missionSignals.length);
-    }, 3600);
+    }, 4500); // 4.5 seconds for comfortable reading
 
     return () => window.clearInterval(interval);
-  }, []);
+  }, [activeIndex]);
 
   return (
-    <section className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)]">
+    <section className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(420px,1fr)]">
       <div className="flex max-w-3xl flex-col gap-3">
-        <DecodedHeader text="// OPERATIONAL MISSION" />
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground leading-tight">
-          Architecting production-ready AI products, autonomous agent systems, and context-aware workspaces.
+        <DecodedHeader key={activeSignal.header} text={activeSignal.header} />
+        
+        <h2 
+          key={activeSignal.heading} 
+          className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground leading-tight animate-in fade-in slide-in-from-bottom-2 duration-700"
+        >
+          {activeSignal.heading}
         </h2>
-        <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-          We bypass theoretical delay to ship working software. Explore verified system architectures, database migration post-mortems, and active product blueprints.
+        
+        <p 
+          key={activeSignal.mainDesc} 
+          className="text-sm sm:text-base text-muted-foreground leading-relaxed animate-in fade-in slide-in-from-bottom-2 duration-900"
+        >
+          {activeSignal.mainDesc}
         </p>
       </div>
 

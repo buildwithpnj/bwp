@@ -1,411 +1,680 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from 'next-themes';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Interfaces ───────────────────────────────────────────────────────────────
 
-interface Pixel {
-  x: number;
-  docY: number;
-  vx: number;
-  vy: number;
+interface SubSystemNode {
+  id: string;
+  label: string;
+  sectionId: string;
+  align: 'left' | 'right';
+  yOffset: number;
+  status: string;
+  pulseTimer: number;
+}
+
+interface Packet {
+  pathIndex: number;
+  segmentIndex: number;
+  progress: number; // 0 to 1 along segment
+  speed: number;
   size: number;
   alpha: number;
-  targetAlpha: number;
-  hueShift: number;
-  satShift: number;
-  lightShift: number;
-  isWhite: boolean;
-  glow: boolean;
-  angle: number;
-  spin: number;
-  snapped: boolean;
-  snapT: number;
-  sx: number;   // snap start x
-  sy: number;   // snap start docY
-  tx: number;   // snap target x
-  ty: number;   // snap target docY
-  flash: number;
-  pulse: number;
-  alive: boolean; // false = marked for removal
+  isMaster: boolean;
+  label: string;
+  category: 'request' | 'inference' | 'memory' | 'broadcast' | 'success' | 'retry' | 'error';
+  colorOverride?: string;
+  lifeTime?: number;
 }
 
-interface Slot {
-  lx: number;
-  ly: number;
-  filled: boolean;
+interface CircuitSegment {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+interface CircuitPath {
+  id: string;
+  segments: CircuitSegment[];
+  length: number;
+}
+
+// ─── Telemetry Label Configurations ──────────────────────────────────────────
+
+const PACKET_LABES = {
+  request: ['REQ', 'ACK', 'RSP', 'API', 'POST', 'GET', 'PUT', 'JSON', 'JWT', 'AUTH'],
+  inference: ['LLM', 'RAG', 'MCP', 'TOK', 'EMB', 'MODEL', 'PLAN', 'EXEC'],
+  memory: ['MEM', 'CTX', 'VECTOR', 'SEARCH', 'SQL', 'CACHE'],
+  broadcast: ['SYNC', 'PING', 'PONG', 'WEBHOOK', 'QUEUE'],
+  success: ['200 OK', 'DONE', 'COMPLETE'],
+  retry: ['RETRY', 'TIMEOUT'],
+  error: ['LOST', '404 ERR', '500 ERR']
+};
+
+const FOOTER_STATUSES = [
+  'SYSTEM ONLINE',
+  'ALL SERVICES HEALTHY',
+  'LATENCY 18ms',
+  'AGENTS READY',
+  'MEMORY SYNC COMPLETE',
+  'BUILDWITHPNJ ACTIVE'
+];
+
+const SUBSYSTEM_NODES: SubSystemNode[] = [
+  { id: 'hero-core', label: 'WARBORN PROCESSOR', sectionId: 'section-hero', align: 'left', yOffset: 128, status: 'SYS ACTIVE', pulseTimer: 0 },
+  { id: 'voice-ai', label: 'VOICE AI ENGINE', sectionId: 'section-mission', align: 'left', yOffset: 32, status: 'VOICE READY', pulseTimer: 0 },
+  { id: 'solutions-mem', label: 'MEMORY SYNC', sectionId: 'section-solutions', align: 'right', yOffset: 64, status: 'PERSISTENT', pulseTimer: 0 },
+  { id: 'projects-router', label: 'SHIPS TELEMETRY', sectionId: 'section-projects', align: 'left', yOffset: 96, status: 'MONITORED', pulseTimer: 0 },
+  { id: 'labs-compute', label: 'R&D COMPUTE', sectionId: 'section-labs', align: 'right', yOffset: 64, status: 'COMPILING', pulseTimer: 0 },
+  { id: 'mission-status', label: 'RUN TIME WATCH', sectionId: 'section-control', align: 'left', yOffset: 32, status: 'SECURE', pulseTimer: 0 },
+  { id: 'newsletter-mcp', label: 'MCP CONNECTOR', sectionId: 'section-newsletter', align: 'right', yOffset: 96, status: 'LISTENING', pulseTimer: 0 },
+  { id: 'footer-sync', label: 'SYSTEM STATE', sectionId: 'section-footer', align: 'left', yOffset: 32, status: 'SYNCHRONIZED', pulseTimer: 0 }
+];
 
 export function PremiumPixelBackground() {
   const { resolvedTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [inViewport, setInViewport] = useState(true);
+  const [accentHSL, setAccentHSL] = useState({ h: 221, s: 83, l: 53 });
+
+  // References for rendering logic (refs used for perfect 60fps)
+  const pathsRef = useRef<CircuitPath[]>([]);
+  const packetsRef = useRef<Packet[]>([]);
+  const nodeStatesRef = useRef<SubSystemNode[]>(SUBSYSTEM_NODES);
+  const sectionPositionsRef = useRef<Record<string, number>>({});
+  const pulseWavesRef = useRef<{ y: number; speed: number; alpha: number }[]>([]);
+  
+  // Track hover status per section
+  const hoveredSectionRef = useRef<string | null>(null);
+
+  // Track dynamic portrait centerpiece coordinates
+  const portraitCenterRef = useRef({ x: 0, y: 0 });
+
+  // Track page size
+  const documentHeightRef = useRef(0);
+
+  // Measure sections on the homepage to update routing y-coordinates
+  const measureSections = () => {
+    try {
+      const heights: Record<string, number> = {};
+      const GRID = 32;
+      let docHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+      documentHeightRef.current = docHeight;
+
+      // Find dynamic center of portrait centerpiece
+      const portraitEl = document.getElementById('hero-portrait-container');
+      if (portraitEl) {
+        const rect = portraitEl.getBoundingClientRect();
+        const absoluteX = rect.left + rect.width / 2;
+        const absoluteY = rect.top + window.scrollY + rect.height * 0.42;
+        // Snap to grid
+        portraitCenterRef.current = {
+          x: Math.round(absoluteX / GRID) * GRID,
+          y: Math.round(absoluteY / GRID) * GRID
+        };
+      } else {
+        portraitCenterRef.current = {
+          x: Math.round((window.innerWidth * 0.58) / GRID) * GRID,
+          y: Math.round(450 / GRID) * GRID
+        };
+      }
+
+      // Hero section Y defaults to 250
+      const hero = document.querySelector('section');
+      heights['section-hero'] = hero ? hero.getBoundingClientRect().top + window.scrollY : 250;
+
+      // Measure rest of sections
+      SUBSYSTEM_NODES.forEach(node => {
+        if (node.sectionId === 'section-hero') return;
+        const el = document.getElementById(node.sectionId) || document.querySelector(`[id*="${node.sectionId}"]`);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          heights[node.sectionId] = rect.top + window.scrollY;
+        } else {
+          // Fallback based on typical scrolling height ratios
+          const ratio = node.sectionId === 'section-mission' ? 0.15
+                      : node.sectionId === 'section-solutions' ? 0.3
+                      : node.sectionId === 'section-projects' ? 0.45
+                      : node.sectionId === 'section-labs' ? 0.6
+                      : node.sectionId === 'section-control' ? 0.72
+                      : node.sectionId === 'section-newsletter' ? 0.85
+                      : 0.95;
+          heights[node.sectionId] = docHeight * ratio;
+        }
+      });
+
+      // Footer
+      const footer = document.getElementById('section-footer') || document.querySelector('footer');
+      heights['section-footer'] = footer ? footer.getBoundingClientRect().top + window.scrollY : docHeight - 200;
+
+      sectionPositionsRef.current = heights;
+      buildMotherboardCircuits();
+    } catch { /* suppress */ }
+  };
+
+  // Build PCB motherboard circuit traces connecting the vertical trunks to sections
+  const buildMotherboardCircuits = () => {
+    const W = window.innerWidth;
+    const docH = documentHeightRef.current || 4000;
+    
+    // Snapping everything exactly to the 32px blueprint grid lines!
+    const GRID = 32;
+    const leftCol = Math.round((W * 0.08) / GRID);
+    const gridCols = Math.floor(W / GRID);
+    const rightCol = gridCols - leftCol;
+
+    const leftTrunkX = leftCol * GRID;
+    const rightTrunkX = rightCol * GRID;
+    const centerX = Math.round((W * 0.5) / GRID) * GRID;
+
+    // Start exactly at the bottom of the landing hero section (absolute document position)
+    const heroEl = document.getElementById('hero-section-root') || document.querySelector('section');
+    let startY = 800;
+    if (heroEl) {
+      const rect = heroEl.getBoundingClientRect();
+      // rect.bottom is viewport-relative; add scrollY to get absolute document Y
+      const heroBottomAbsolute = rect.bottom + window.scrollY;
+      startY = Math.round(heroBottomAbsolute / GRID) * GRID;
+    }
+
+    const paths: CircuitPath[] = [];
+
+    // Left & Right continuous main trunks starting from startY (end of hero page)
+    paths.push({
+      id: 'left-trunk',
+      segments: [{ x1: leftTrunkX, y1: startY, x2: leftTrunkX, y2: Math.round((docH - 100) / GRID) * GRID }],
+      length: docH - startY
+    });
+    paths.push({
+      id: 'right-trunk',
+      segments: [{ x1: rightTrunkX, y1: startY, x2: rightTrunkX, y2: Math.round((docH - 100) / GRID) * GRID }],
+      length: docH - startY
+    });
+
+    // Generate branches for each subsystem node (only if below hero page)
+    nodeStatesRef.current.forEach((node) => {
+      if (node.sectionId === 'section-hero') return;
+      const secY = sectionPositionsRef.current[node.sectionId] || 500;
+      const targetY = Math.round((secY + node.yOffset) / GRID) * GRID;
+      if (targetY < startY) return;
+      
+      const trunkX = node.align === 'left' ? leftTrunkX : rightTrunkX;
+      const nodeX = trunkX + (node.align === 'left' ? GRID * 2 : -GRID * 2);
+
+      // 90 degree bracket connection from trunk -> node snapped to 32px steps
+      const segments: CircuitSegment[] = [
+        { x1: trunkX, y1: targetY - GRID, x2: trunkX, y2: targetY },
+        { x1: trunkX, y1: targetY, x2: nodeX, y2: targetY }
+      ];
+
+      paths.push({
+        id: `branch-${node.id}`,
+        segments,
+        length: GRID * 3
+      });
+    });
+
+    // Special Master Circuit path looping snapped exactly to grid (starting at startY)
+    const masterSegments: CircuitSegment[] = [];
+    const secPositions = nodeStatesRef.current.map(n => Math.round((sectionPositionsRef.current[n.sectionId] || 500) / GRID) * GRID);
+
+    masterSegments.push({ x1: leftTrunkX, y1: startY, x2: leftTrunkX, y2: secPositions[2] + GRID });
+    masterSegments.push({ x1: leftTrunkX, y1: secPositions[2] + GRID, x2: centerX - GRID * 3, y2: secPositions[2] + GRID });
+    
+    // Solutions -> Projects
+    masterSegments.push({ x1: centerX - GRID * 3, y1: secPositions[2] + GRID, x2: centerX + GRID * 3, y2: secPositions[2] + GRID });
+    masterSegments.push({ x1: centerX + GRID * 3, y1: secPositions[2] + GRID, x2: rightTrunkX, y2: secPositions[2] + GRID });
+    masterSegments.push({ x1: rightTrunkX, y1: secPositions[2] + GRID, x2: rightTrunkX, y2: secPositions[3] + GRID });
+    masterSegments.push({ x1: rightTrunkX, y1: secPositions[3] + GRID, x2: centerX, y2: secPositions[3] + GRID });
+    
+    // Projects -> Labs -> Footer
+    masterSegments.push({ x1: centerX, y1: secPositions[3] + GRID, x2: leftTrunkX, y2: secPositions[3] + GRID });
+    masterSegments.push({ x1: leftTrunkX, y1: secPositions[3] + GRID, x2: leftTrunkX, y2: secPositions[7] + GRID });
+    masterSegments.push({ x1: leftTrunkX, y1: secPositions[7] + GRID, x2: centerX, y2: secPositions[7] + GRID });
+
+    paths.push({
+      id: 'master-data-flow',
+      segments: masterSegments,
+      length: docH * 2
+    });
+
+    pathsRef.current = paths;
+
+    // Initialize packets if empty
+    if (packetsRef.current.length === 0) {
+      const packets: Packet[] = [];
+      
+      // Spawn one Master BuildWithPNJ packet (White/Bright)
+      packets.push({
+        pathIndex: paths.length - 1,
+        segmentIndex: 0,
+        progress: 0,
+        speed: 0.0006, // Slowed down from 0.003
+        size: 5,
+        alpha: 1.0,
+        isMaster: true,
+        label: 'PNJ-MASTER',
+        category: 'broadcast',
+        colorOverride: '#FFFFFF'
+      });
+
+      // Spawn regular traffic packets (slowed speed & bright solid opacity)
+      for (let i = 0; i < 150; i++) {
+        const pathIdx = Math.floor(Math.random() * (paths.length - 1));
+        const category = getRandomCategory();
+        const label = getRandomLabel(category);
+        
+        packets.push({
+          pathIndex: pathIdx,
+          segmentIndex: 0,
+          progress: Math.random(),
+          speed: 0.0012 + Math.random() * 0.0028, // Slowed down from 0.006 - 0.014
+          size: 3,
+          alpha: 0.8 + Math.random() * 0.2, // Bright visibility baseline
+          isMaster: false,
+          label,
+          category
+        });
+      }
+      packetsRef.current = packets;
+    }
+  };
+
+  const getRandomCategory = (): Packet['category'] => {
+    const roll = Math.random();
+    if (roll < 0.3) return 'request';
+    if (roll < 0.55) return 'inference';
+    if (roll < 0.75) return 'memory';
+    if (roll < 0.9) return 'broadcast';
+    return 'success';
+  };
+
+  const getRandomLabel = (cat: Packet['category'], nodeSection?: string | null): string => {
+    // Override labels based on section hovering
+    if (nodeSection === 'section-mission') {
+      const voiceLabels = ['STT', 'TTS', 'VOICE', 'AUDIO', 'STREAM'];
+      return voiceLabels[Math.floor(Math.random() * voiceLabels.length)];
+    }
+    if (nodeSection === 'section-projects') {
+      const projLabels = ['BUILD', 'DEPLOY', 'TEST', 'PROD', 'DONE'];
+      return projLabels[Math.floor(Math.random() * projLabels.length)];
+    }
+    if (nodeSection === 'section-labs') {
+      const labLabels = ['RESEARCH', 'HYPOTHESIS', 'RESULT', 'EXP', 'MATH'];
+      return labLabels[Math.floor(Math.random() * labLabels.length)];
+    }
+
+    const labels = PACKET_LABES[cat];
+    return labels[Math.floor(Math.random() * labels.length)];
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: true });
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const isDark = resolvedTheme === 'dark';
+    // Viewport observer
+    const observer = new IntersectionObserver(([entry]) => {
+      setInViewport(entry.isIntersecting);
+    }, { threshold: 0.02 });
 
-    // Reduced motion
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let reducedMotion = mq.matches;
-    const onMQ = (e: MediaQueryListEvent) => { reducedMotion = e.matches; };
-    mq.addEventListener('change', onMQ);
+    if (containerRef.current) observer.observe(containerRef.current);
 
-    // Canvas sizing
-    let W = window.innerWidth;
-    let H = window.innerHeight;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2); // cap at 2x
-    const resize = () => {
-      W = window.innerWidth;
-      H = window.innerHeight;
-      canvas.width = W * dpr;
-      canvas.height = H * dpr;
-      canvas.style.width = `${W}px`;
-      canvas.style.height = `${H}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    resize();
-    window.addEventListener('resize', resize);
+    // Initial setup
+    measureSections();
 
-    // State
-    let scrollY = 0;
-    let mouseX = -9999;
-    let mouseY = -9999;
-    let mouseActive = false;
-    let primaryH = 221;
-    let primaryS = 83;
-    let primaryL = 53;
-    let frameCount = 0;
-
-    const onScroll = () => { scrollY = window.scrollY; };
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    const onMouse = (e: MouseEvent) => { mouseX = e.clientX; mouseY = e.clientY; mouseActive = true; };
-    const onLeave = () => { mouseActive = false; };
-    window.addEventListener('mousemove', onMouse, { passive: true });
-    document.addEventListener('mouseleave', onLeave);
-
-    // ─── Read --primary (throttled: every 8 frames ≈ 7.5 Hz) ───────────
-    const readPrimary = () => {
-      const raw = getComputedStyle(document.documentElement).getPropertyValue('--primary');
-      if (!raw) return;
-      const p = raw.trim().replace(/%/g, '').split(/\s+/);
-      if (p.length >= 3) {
-        primaryH = +p[0]; primaryS = +p[1]; primaryL = +p[2];
+    // Event hooks
+    const handleScroll = () => {
+      if (Math.random() < 0.03) {
+        measureSections();
       }
     };
-    readPrimary(); // initial read
 
-    // ─── Collection grid (page bottom only) ─────────────────────────────
-    let pageBottom = 0;
-    let slots: Slot[] = [];
-    let gridDone = false;
-    let gridTimer = 0;
-    let gridFade = 1;
-    let scanX = -600;
-    let filledCount = 0;
+    const handleResize = () => {
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      canvas.width = W;
+      canvas.height = H;
+      measureSections();
+    };
 
-    const buildGrid = () => {
-      const dh = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-      pageBottom = dh;
-      slots = [];
-      filledCount = 0;
-      gridDone = false;
-      gridTimer = 0;
-      gridFade = 1;
-      const po = () => Math.random() * 6.28;
-      // Bus line
-      for (let c = -18; c <= 18; c++) slots.push({ lx: c * 18, ly: -30, filled: false });
-      // Branches
-      for (const bx of [-216, -144, -72, 0, 72, 144, 216]) {
-        for (let r = 1; r <= 4; r++) slots.push({ lx: bx, ly: -30 - r * 14, filled: false });
-        slots.push({ lx: bx - 8, ly: -100, filled: false });
-        slots.push({ lx: bx + 8, ly: -100, filled: false });
-      }
-      // Dotted rows
-      for (let row = 0; row < 3; row++) {
-        const y = -120 - row * 16;
-        for (let col = -12; col <= 12; col += 2) {
-          if ((col + row) % 3 !== 0) slots.push({ lx: col * 16, ly: y, filled: false });
+    // Hover trackers for interactive node redirection
+    const handleMouseMove = (e: MouseEvent) => {
+      const y = e.pageY;
+      const docH = documentHeightRef.current || 4000;
+      
+      // Determine what section the cursor is currently in
+      const ratios = {
+        'section-mission': 0.15,
+        'section-solutions': 0.3,
+        'section-projects': 0.48,
+        'section-labs': 0.65,
+        'section-control': 0.78,
+        'section-newsletter': 0.88
+      };
+
+      let activeSection = null;
+      for (const [sec, ratio] of Object.entries(ratios)) {
+        if (Math.abs(y / docH - ratio) < 0.08) {
+          activeSection = sec;
+          break;
         }
       }
-    };
-    buildGrid();
-    const gridInterval = setInterval(buildGrid, 6000);
-
-    // ─── Pixel pool (flat array, swap-remove) ───────────────────────────
-    const MAX_PIXELS = 200;
-    const pixels: Pixel[] = [];
-
-    const removePixel = (i: number) => {
-      // Swap with last, pop — O(1)
-      const last = pixels.length - 1;
-      if (i < last) pixels[i] = pixels[last];
-      pixels.pop();
+      hoveredSectionRef.current = activeSection;
     };
 
-    // Size distribution
-    const SIZES = [2,2,2,4,4,4,4,6,6,6,8,8,8,12,12,16,20,24];
-
-    const spawn = () => {
-      if (pixels.length >= MAX_PIXELS) return;
-      let size = SIZES[(Math.random() * SIZES.length) | 0];
-      if (Math.random() < 0.04) size = 28 + ((Math.random() * 2) | 0) * 4; // 28 or 32
-
-      // Spawn position
-      let x: number;
-      const r = Math.random();
-      if (r < 0.35) x = Math.random() * W * 0.18;
-      else if (r < 0.70) x = W - Math.random() * W * 0.18;
-      else x = Math.random() * W;
-
-      const baseAlpha = size >= 16 ? Math.random() * 0.2 + 0.12 : Math.random() * 0.28 + 0.08;
-
-      pixels.push({
-        x,
-        docY: scrollY - 30 - Math.random() * 40,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: Math.random() * 0.7 + 0.3 + (size >= 16 ? 0.15 : 0),
-        size,
-        alpha: 0,
-        targetAlpha: baseAlpha,
-        hueShift: (Math.random() - 0.5) * 20,
-        satShift: (Math.random() - 0.5) * 16,
-        lightShift: (Math.random() - 0.5) * 24,
-        isWhite: Math.random() < 0.06,
-        glow: Math.random() < 0.10,
-        angle: 0,
-        spin: (Math.random() - 0.5) * (size >= 16 ? 0.004 : 0.012),
-        snapped: false, snapT: 0,
-        sx: 0, sy: 0, tx: 0, ty: 0,
-        flash: 0,
-        pulse: Math.random() * 0.018 + 0.012,
-        alive: true,
+    // Listen to custom hero pulse events to trigger circuit wave highlights
+    const handleHeroPulse = (e: Event) => {
+      // Emit pulse wave moving down the motherboard trunk lines
+      pulseWavesRef.current.push({
+        y: portraitCenterRef.current.y || 300,
+        speed: 18.0,
+        alpha: 1.0
       });
+
+      // Flash active processor node
+      const nodes = nodeStatesRef.current;
+      if (nodes[0]) {
+        nodes[0].pulseTimer = 40;
+      }
     };
 
-    // ─── Pre-computed color cache (updated once per primary read) ────────
-    // We'll build a small palette each time primary changes and use index
-    let cachedH = -1;
-    let cachedS = -1;
-    let cachedL = -1;
-    // White highlight strings
-    const whiteColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.5)';
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('hero-pulse', handleHeroPulse);
 
-    // ─── Render ─────────────────────────────────────────────────────────
-    let rafId: number;
-    let spawnAccum = 0;
+    // Animation Loop
+    let animationFrameId: number;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const render = (time: number) => {
-      rafId = requestAnimationFrame(render);
-      if (reducedMotion) { ctx.clearRect(0, 0, W, H); return; }
+    const render = () => {
+      animationFrameId = requestAnimationFrame(render);
+      
+      if (!inViewport || reducedMotion) return;
 
-      frameCount++;
+      const W = window.innerWidth;
+      const H = window.innerHeight;
 
-      // Throttled primary read (every 8 frames)
-      if ((frameCount & 7) === 0) readPrimary();
+      // Adjust canvas dimensions inline to match bounding rect exactly with Device Pixel Ratio (DPR)
+      const dpr = window.devicePixelRatio || 1;
+      if (canvas.width !== W * dpr || canvas.height !== H * dpr) {
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // Reset scale and apply dpr transform
+      }
 
       ctx.clearRect(0, 0, W, H);
+      
+      const scrollY = window.scrollY;
+      const isDark = resolvedTheme === 'dark';
 
-      // Spawn
-      spawnAccum++;
-      if (spawnAccum >= 12) {
-        spawn();
-        if (Math.random() < 0.3) spawn();
-        spawnAccum = 0;
+      // ─── Color Sync (Read directly from document style properties) ────
+      let activeH = 221;
+      let activeS = 83;
+      let activeL = 53;
+
+      try {
+        const rootStyles = getComputedStyle(document.documentElement);
+        const primaryVal = rootStyles.getPropertyValue('--primary').trim();
+        if (primaryVal) {
+          const parts = primaryVal.split(/\s+/);
+          if (parts.length >= 3) {
+            activeH = parseFloat(parts[0]);
+            activeS = parseFloat(parts[1].replace('%', ''));
+            activeL = parseFloat(parts[2].replace('%', ''));
+          }
+        }
+      } catch { /* fallback */ }
+
+      // Update state when color changes (throttled to avoid loop re-renders)
+      if (activeH !== accentHSL.h || activeS !== accentHSL.s || activeL !== accentHSL.l) {
+        setAccentHSL({ h: activeH, s: activeS, l: activeL });
       }
 
-      // Grid logic
-      if (!gridDone) {
-        scanX += 2;
-        if (scanX > W + 500) scanX = -500 - Math.random() * 300;
-        if (filledCount >= slots.length && slots.length > 0) {
-          gridDone = true;
-          gridTimer = 200;
-        }
-      } else {
-        gridTimer--;
-        if (gridTimer <= 80) gridFade = Math.max(0, gridTimer / 80);
-        if (gridTimer <= 0) {
-          // Reset
-          for (let s = 0; s < slots.length; s++) slots[s].filled = false;
-          filledCount = 0;
-          gridDone = false;
-          gridFade = 1;
-          // Remove snapped pixels
-          for (let i = pixels.length - 1; i >= 0; i--) {
-            if (pixels[i].snapped) removePixel(i);
+      const accentColor = `hsl(${activeH}, ${activeS}%, ${activeL}%)`;
+      const accentColorGlow = `hsla(${activeH}, ${activeS}%, ${activeL}%, 0.25)`;
+
+      // ─── Update waves ───────────────────────────────────────────────────
+      const waves = pulseWavesRef.current;
+      for (let i = waves.length - 1; i >= 0; i--) {
+        const w = waves[i];
+        w.y += w.speed;
+        w.alpha -= 0.003;
+        
+        // Pulse sections & nodes as wave passes
+        nodeStatesRef.current.forEach(node => {
+          const secY = sectionPositionsRef.current[node.sectionId] || 0;
+          const targetY = secY + node.yOffset;
+          if (Math.abs(w.y - targetY) < 30 && node.pulseTimer <= 0) {
+            node.pulseTimer = 45; // trigger pulse
           }
-        }
-      }
+        });
 
-      // Precompute half-width for grid center
-      const cx = W * 0.5;
-
-      // ─── Update & Draw ──────────────────────────────────────────────
-      for (let i = pixels.length - 1; i >= 0; i--) {
-        const p = pixels[i];
-        const screenY = p.docY - scrollY;
-
-        // Remove dead or way offscreen free pixels
-        if (!p.snapped && p.docY > pageBottom + 200) {
-          removePixel(i);
-          continue;
-        }
-
-        if (!p.snapped) {
-          // Fade in
-          if (p.alpha < p.targetAlpha) p.alpha += 0.008;
-
-          // Physics
-          p.vy += 0.0015;
-          p.docY += p.vy;
-          p.x += p.vx + Math.sin(time * 0.0008 + p.x * 0.03) * 0.06;
-          p.angle += p.spin;
-
-          // Bounds
-          if (p.x < -20) p.x = -20;
-          else if (p.x > W + 20) p.x = W + 20;
-
-          // Mouse push (squared distance, no sqrt unless close)
-          if (mouseActive) {
-            const dx = p.x - mouseX;
-            const dy = screenY - mouseY;
-            const d2 = dx * dx + dy * dy;
-            if (d2 < 8100 && d2 > 0) { // 90²
-              const dist = Math.sqrt(d2);
-              const f = (90 - dist) / 90;
-              p.x += (dx / dist) * f;
-              p.docY += (dy / dist) * f * 0.4;
-            }
-          }
-
-          // Grid snap check
-          if (!gridDone && p.docY >= pageBottom - 180 && p.docY <= pageBottom + 20) {
-            let bestIdx = -1;
-            let bestD = Infinity;
-            for (let s = 0; s < slots.length; s++) {
-              if (slots[s].filled) continue;
-              const dx = (cx + slots[s].lx) - p.x;
-              const dy = (pageBottom + slots[s].ly) - p.docY;
-              const d = dx * dx + dy * dy;
-              if (d < bestD) { bestD = d; bestIdx = s; }
-            }
-            if (bestIdx >= 0) {
-              const sl = slots[bestIdx];
-              sl.filled = true;
-              filledCount++;
-              p.snapped = true;
-              p.sx = p.x; p.sy = p.docY;
-              p.tx = cx + sl.lx; p.ty = pageBottom + sl.ly;
-              p.snapT = 0.01;
-              if (Math.random() < 0.35) p.flash = 20;
-            }
-          }
-
-          // Remove if past bottom with no slot
-          if (p.docY > pageBottom + 200) { removePixel(i); continue; }
-        } else {
-          // Snap lerp
-          if (p.snapT < 1) {
-            p.snapT += 0.05;
-            if (p.snapT >= 1) {
-              p.snapT = 1; p.x = p.tx; p.docY = p.ty;
-            } else {
-              const t = 1 - (1 - p.snapT) * (1 - p.snapT) * (1 - p.snapT); // ease-out cubic
-              p.x = p.sx + (p.tx - p.sx) * t;
-              p.docY = p.sy + (p.ty - p.sy) * t;
-            }
-          }
-        }
-
-        // ─── Draw ───────────────────────────────────────────────────
-        const dy = p.docY - scrollY;
-        if (dy > H + 40 || dy < -40) continue;
-
-        let a = p.alpha;
-        let isFlash = false;
-
-        if (p.snapped) {
-          a *= gridFade;
-          if (p.snapT >= 1 && !gridDone) {
-            a = Math.max(0.06, Math.min(0.7, p.alpha + Math.sin(time * p.pulse + p.x * 0.1) * 0.1));
-          }
-          const sd = scanX - p.x;
-          if (sd > -70 && sd < 70) {
-            a = Math.min(1, a + (1 - Math.abs(sd) / 70) * 0.4);
-            isFlash = true;
-          }
-        }
-
-        if (p.flash > 0) {
-          p.flash--;
-          a = Math.min(1, a + (p.flash / 20) * 0.5);
-          isFlash = true;
-        }
-
-        // Compute color from live primary
-        let color: string;
-        if (p.isWhite) {
-          color = whiteColor;
-        } else {
-          const h = ((primaryH + p.hueShift) % 360 + 360) % 360;
-          const s = Math.max(0, Math.min(100, primaryS + p.satShift));
-          const l = Math.max(10, Math.min(90, primaryL + p.lightShift));
-          color = `hsl(${h},${s}%,${l}%)`;
-        }
-
-        ctx.globalAlpha = a;
-
-        if (p.glow || isFlash) {
-          ctx.shadowColor = color;
-          ctx.shadowBlur = p.size * 0.5;
-        } else {
-          ctx.shadowBlur = 0;
-        }
-
-        ctx.fillStyle = isFlash ? '#FFF' : color;
-
-        if (!p.snapped && p.angle !== 0) {
-          ctx.save();
-          ctx.translate(p.x, dy);
-          ctx.rotate(p.angle);
-          const half = p.size * 0.5;
-          ctx.fillRect(-half, -half, p.size, p.size);
-          ctx.restore();
-        } else {
-          const half = p.size * 0.5;
-          ctx.fillRect(p.x - half, dy - half, p.size, p.size);
+        if (w.alpha <= 0 || w.y > documentHeightRef.current) {
+          waves.splice(i, 1);
         }
       }
 
-      // Reset composite state
-      ctx.globalAlpha = 1;
+      // ─── Draw Motherboard Circuits ─────────────────────────────────────
+      pathsRef.current.forEach(path => {
+        ctx.beginPath();
+        path.segments.forEach((seg, idx) => {
+          // Absolute Y to screen-space Y
+          const y1 = seg.y1 - scrollY;
+          const y2 = seg.y2 - scrollY;
+
+          // Cull offscreen lines to preserve CPU usage
+          if (Math.max(y1, y2) < -100 || Math.min(y1, y2) > H + 100) return;
+
+          if (idx === 0) {
+            ctx.moveTo(seg.x1, y1);
+          }
+          ctx.lineTo(seg.x2, y2);
+        });
+
+        // Make traces clearly visible
+        ctx.strokeStyle = isDark ? `hsla(${activeH}, ${activeS}%, ${activeL}%, 0.42)` : 'rgba(148, 163, 184, 0.32)';
+        ctx.lineWidth = path.id === 'master-data-flow' ? 2.5 : 1.8;
+        ctx.stroke();
+
+        // Overlay glowing pulse waves traveling down paths
+        waves.forEach(w => {
+          path.segments.forEach(seg => {
+            const y1 = seg.y1 - scrollY;
+            const y2 = seg.y2 - scrollY;
+            
+            // If wave coordinates are within line range
+            const minY = Math.min(seg.y1, seg.y2);
+            const maxY = Math.max(seg.y1, seg.y2);
+            
+            if (w.y >= minY && w.y <= maxY) {
+              // Draw small highlighted sub-segment
+              ctx.beginPath();
+              ctx.moveTo(seg.x1, w.y - 40 - scrollY);
+              ctx.lineTo(seg.x2, w.y + 40 - scrollY);
+              ctx.strokeStyle = accentColor;
+              ctx.globalAlpha = w.alpha * 0.7;
+              ctx.lineWidth = 2.0;
+              ctx.stroke();
+              ctx.globalAlpha = 1.0;
+            }
+          });
+        });
+      });
+
+      // ─── Draw Surrounding Nodes ─────────────────────────────────────────
+      nodeStatesRef.current.forEach(node => {
+        const secY = sectionPositionsRef.current[node.sectionId] || 0;
+        const nodeY = secY + node.yOffset - scrollY;
+        const leftCol = Math.round((W * 0.08) / 32);
+        const gridCols = Math.floor(W / 32);
+        const rightCol = gridCols - leftCol;
+        const trunkX = node.align === 'left' ? leftCol * 32 : rightCol * 32;
+        const nodeX = node.align === 'left' ? trunkX + 64 : trunkX - 64;
+
+        if (nodeY < -50 || nodeY > H + 50) return;
+
+        // Decrease pulse timer
+        if (node.pulseTimer > 0) node.pulseTimer--;
+
+        // Draw micro node circuit board point
+        ctx.save();
+        ctx.translate(nodeX, nodeY);
+
+        const isPulsing = node.pulseTimer > 0;
+        const alpha = isPulsing ? 0.9 : 0.4;
+        const scale = isPulsing ? 1.4 : 1.0;
+
+        // Draw square node marker
+        ctx.fillStyle = accentColor;
+        ctx.globalAlpha = alpha;
+        
+        ctx.shadowColor = accentColor;
+        ctx.shadowBlur = isPulsing ? 10 : 4;
+
+        ctx.fillRect(-3 * scale, -3 * scale, 6 * scale, 6 * scale);
+
+        // Subsystem details & text label
+        ctx.fillStyle = isDark ? '#E2E8F0' : '#1E293B'; 
+        ctx.globalAlpha = 0.95;
+        ctx.font = 'bold 8.5px monospace';
+        const textOffset = node.align === 'left' ? 10 : -10;
+        ctx.textAlign = node.align === 'left' ? 'left' : 'right';
+        ctx.fillText(node.label, textOffset, -2);
+        ctx.fillText(node.status, textOffset, 6);
+
+        ctx.restore();
+      });
+
+      // ─── Draw & Update Data Packets (With Monospace Telemetry Labels) ────
+      const packets = packetsRef.current;
+      packets.forEach(p => {
+        const path = pathsRef.current[p.pathIndex];
+        if (!path || path.segments.length === 0) return;
+
+        // Update progress
+        p.progress += p.speed;
+        if (p.progress >= 1.0) {
+          p.progress = 0;
+          p.segmentIndex = (p.segmentIndex + 1) % path.segments.length;
+          
+          // Randomly trigger packet error loss (2% chance)
+          if (!p.isMaster && Math.random() < 0.02) {
+            p.category = 'error';
+            p.label = getRandomLabel('error');
+          } else if (p.category === 'error') {
+            // Recover as retry
+            p.category = 'retry';
+            p.label = getRandomLabel('retry');
+          } else {
+            // Cycle new label based on current section hover override
+            p.label = getRandomLabel(p.category, hoveredSectionRef.current);
+          }
+        }
+
+        const seg = path.segments[p.segmentIndex];
+        if (!seg) return;
+
+        // Interpolate packet position inside current line segment
+        const px = seg.x1 + (seg.x2 - seg.x1) * p.progress;
+        const py = seg.y1 + (seg.y2 - seg.y1) * p.progress;
+
+        const screenY = py - scrollY;
+
+        // Draw only if visible in viewport
+        if (screenY < -20 || screenY > H + 20) return;
+
+        // Determine functional packet color based on resolved theme for perfect contrast
+        let packetColor = isDark ? `hsla(${activeH}, ${activeS}%, 65%, ` : `hsla(${activeH}, ${activeS}%, 40%, `; 
+        if (p.category === 'inference') packetColor = isDark ? `hsla(${(activeH + 30) % 360}, ${activeS}%, 65%, ` : `hsla(${(activeH + 30) % 360}, ${activeS}%, 35%, `; 
+        if (p.category === 'memory') packetColor = isDark ? `hsla(${(activeH + 280) % 360}, ${activeS - 10}%, 70%, ` : `hsla(${(activeH + 280) % 360}, ${activeS - 10}%, 45%, `; 
+        if (p.category === 'broadcast') packetColor = isDark ? `hsla(${activeH}, 15%, 95%, ` : `hsla(${activeH}, 15%, 20%, `; 
+        if (p.category === 'success') packetColor = isDark ? `hsla(${(activeH + 120) % 360}, ${activeS}%, 65%, ` : `hsla(${(activeH + 120) % 360}, ${activeS}%, 35%, `; 
+        if (p.category === 'retry') packetColor = isDark ? `hsla(${(activeH + 60) % 360}, ${activeS}%, 65%, ` : `hsla(${(activeH + 60) % 360}, ${activeS}%, 45%, `; 
+        if (p.category === 'error') packetColor = isDark ? `hsla(0, 95%, 65%, ` : `hsla(0, 95%, 45%, `; 
+
+        // Adjust alpha based on wave proximity (min baseline 0.55 for high visibility)
+        let alpha = Math.max(0.55, p.alpha);
+        let size = p.size;
+        
+        waves.forEach(w => {
+          if (Math.abs(w.y - py) < 100) {
+            alpha = Math.min(1.0, alpha + 0.35);
+            size *= 1.4;
+          }
+        });
+
+        // ─── If packet enters footer, override label with system states ───
+        const isFooterPath = path.id.includes('branch-footer-sync') || path.id.includes('footer');
+        let labelText = p.label;
+        if (isFooterPath && !p.isMaster) {
+          labelText = FOOTER_STATUSES[p.pathIndex % FOOTER_STATUSES.length];
+          packetColor = isDark ? `hsla(${(activeH + 120) % 360}, ${activeS}%, 65%, ` : `hsla(${(activeH + 120) % 360}, ${activeS}%, 35%, `; 
+        }
+
+        ctx.save();
+
+        // Draw square node lead dot
+        ctx.fillStyle = p.colorOverride || `${packetColor}${alpha})`;
+        ctx.shadowColor = p.colorOverride || `${packetColor}${alpha})`;
+        ctx.shadowBlur = p.isMaster ? 10 : 4;
+        ctx.fillRect(px - size / 2, screenY - size / 2, size, size);
+
+        // Draw small monospace text next to packet dot (using the bold theme-appropriate color, fully opaque)
+        ctx.fillStyle = p.isMaster ? (isDark ? '#FFFFFF' : '#0F172A') : `${packetColor}1.0)`;
+        ctx.font = 'bold 9.5px monospace';
+        ctx.shadowBlur = 0; // Disable text shadow to preserve performance
+        ctx.fillText(labelText, px + 7, screenY + 3.0);
+
+        ctx.restore();
+      });
+
+      ctx.globalAlpha = 1.0;
       ctx.shadowBlur = 0;
     };
 
-    rafId = requestAnimationFrame(render);
+    // Setup periodic layout measurement
+    const measureInterval = setInterval(measureSections, 4000);
+
+    render();
 
     return () => {
-      cancelAnimationFrame(rafId);
-      mq.removeEventListener('change', onMQ);
-      window.removeEventListener('resize', resize);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('mousemove', onMouse);
-      document.removeEventListener('mouseleave', onLeave);
-      clearInterval(gridInterval);
+      cancelAnimationFrame(animationFrameId);
+      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('hero-pulse', handleHeroPulse);
+      clearInterval(measureInterval);
     };
-  }, [resolvedTheme]);
+  }, [inViewport, resolvedTheme, accentHSL]);
 
   return (
-    <div className="fixed inset-0 w-full h-full pointer-events-none z-[11] overflow-hidden">
-      <canvas
+    <div 
+      ref={containerRef}
+      className="fixed inset-0 w-full h-full pointer-events-none z-15 overflow-hidden"
+    >
+      {/* Site-wide engineering grid background (works in Light and Dark Mode) */}
+      <div 
+        className="absolute inset-0 bg-left-top"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, hsla(${accentHSL.h}, ${accentHSL.s}%, ${accentHSL.l}%, 0.055) 1px, transparent 1px),
+            linear-gradient(to bottom, hsla(${accentHSL.h}, ${accentHSL.s}%, ${accentHSL.l}%, 0.055) 1px, transparent 1px)
+          `,
+          backgroundSize: '32px 32px',
+          maskImage: 'radial-gradient(ellipse at center, black 65%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse at center, black 65%, transparent 100%)'
+        }}
+      />
+      <canvas 
         ref={canvasRef}
         className="absolute inset-0 w-full h-full pointer-events-none"
       />
