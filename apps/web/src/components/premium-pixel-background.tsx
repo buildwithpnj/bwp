@@ -277,20 +277,31 @@ export function PremiumPixelBackground() {
     masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yJournalBase - GRID * 2, x2: leftTrunkX + GRID * 1, y2: yJournalBase });
     masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yJournalBase, x2: leftTrunkX, y2: yJournalBase });
 
-    // Left Trunk down to Newsletter (Subscribe) section
-    masterSegments.push({ x1: leftTrunkX, y1: yJournalBase, x2: leftTrunkX, y2: secPositions[7] + GRID });
+    // Left Trunk down to Mission Control section
+    masterSegments.push({ x1: leftTrunkX, y1: yJournalBase, x2: leftTrunkX, y2: secPositions[6] + GRID });
 
-    // 5. Newsletter Section (Left-to-Right, full-width elevated)
+    // 5. Mission Control Section (Left-to-Right, full-width elevated)
+    const yControlBase = secPositions[6] + GRID;
+    masterSegments.push({ x1: leftTrunkX, y1: yControlBase, x2: leftTrunkX + GRID * 1, y2: yControlBase });
+    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yControlBase, x2: leftTrunkX + GRID * 3, y2: yControlBase - GRID * 2 });
+    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yControlBase - GRID * 2, x2: rightTrunkX - GRID * 3, y2: yControlBase - GRID * 2 });
+    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: yControlBase - GRID * 2, x2: rightTrunkX - GRID * 1, y2: yControlBase });
+    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: yControlBase, x2: rightTrunkX, y2: yControlBase });
+
+    // Right Trunk down to Newsletter (Subscribe) section
+    masterSegments.push({ x1: rightTrunkX, y1: yControlBase, x2: rightTrunkX, y2: secPositions[7] + GRID });
+
+    // 6. Newsletter Section (Right-to-Left, full-width elevated)
     const yNewsletterBase = secPositions[7] + GRID;
-    masterSegments.push({ x1: leftTrunkX, y1: yNewsletterBase, x2: leftTrunkX + GRID * 1, y2: yNewsletterBase });
-    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yNewsletterBase, x2: leftTrunkX + GRID * 3, y2: yNewsletterBase - GRID * 2 });
-    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yNewsletterBase - GRID * 2, x2: rightTrunkX - GRID * 3, y2: yNewsletterBase - GRID * 2 });
-    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: yNewsletterBase - GRID * 2, x2: rightTrunkX - GRID * 1, y2: yNewsletterBase });
-    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: yNewsletterBase, x2: rightTrunkX, y2: yNewsletterBase });
+    masterSegments.push({ x1: rightTrunkX, y1: yNewsletterBase, x2: rightTrunkX - GRID * 1, y2: yNewsletterBase });
+    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: yNewsletterBase, x2: rightTrunkX - GRID * 3, y2: yNewsletterBase - GRID * 2 });
+    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: yNewsletterBase - GRID * 2, x2: leftTrunkX + GRID * 3, y2: yNewsletterBase - GRID * 2 });
+    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yNewsletterBase - GRID * 2, x2: leftTrunkX + GRID * 1, y2: yNewsletterBase });
+    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yNewsletterBase, x2: leftTrunkX, y2: yNewsletterBase });
 
-    // Right Trunk down to Footer section
-    masterSegments.push({ x1: rightTrunkX, y1: yNewsletterBase, x2: rightTrunkX, y2: secPositions[8] + GRID });
-    masterSegments.push({ x1: rightTrunkX, y1: secPositions[8] + GRID, x2: centerX, y2: secPositions[8] + GRID });
+    // Left Trunk down to Footer section
+    masterSegments.push({ x1: leftTrunkX, y1: yNewsletterBase, x2: leftTrunkX, y2: secPositions[8] + GRID });
+    masterSegments.push({ x1: leftTrunkX, y1: secPositions[8] + GRID, x2: centerX, y2: secPositions[8] + GRID });
 
     paths.push({
       id: 'master-data-flow',
