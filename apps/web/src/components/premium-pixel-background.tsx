@@ -23,10 +23,7 @@ interface Packet {
   size: number;
   alpha: number;
   isMaster: boolean;
-  label: string;
-  category: 'request' | 'inference' | 'memory' | 'broadcast' | 'success' | 'retry' | 'error';
-  colorOverride?: string;
-  lifeTime?: number;
+  color: 'red' | 'green' | 'gold';
 }
 
 interface CircuitSegment {
@@ -38,6 +35,7 @@ interface CircuitSegment {
 
 interface CircuitPath {
   id: string;
+  color: 'red' | 'green';
   segments: CircuitSegment[];
   length: number;
 }
@@ -86,32 +84,11 @@ function getPacketOpacityMultiplier(x: number, y: number, zones: ExclusionZone[]
     const zy2 = zone.y2 + zone.padding;
 
     if (x >= zx1 && x <= zx2 && y >= zy1 && y <= zy2) {
-      minMultiplier = Math.min(minMultiplier, 0.1);
+      minMultiplier = Math.min(minMultiplier, 0.15);
     }
   }
   return minMultiplier;
 }
-
-// ─── Telemetry Label Configurations ──────────────────────────────────────────
-
-const PACKET_LABES = {
-  request: ['REQ', 'ACK', 'RSP', 'API', 'POST', 'GET', 'PUT', 'JSON', 'JWT', 'AUTH'],
-  inference: ['LLM', 'RAG', 'MCP', 'TOK', 'EMB', 'MODEL', 'PLAN', 'EXEC'],
-  memory: ['MEM', 'CTX', 'VECTOR', 'SEARCH', 'SQL', 'CACHE'],
-  broadcast: ['SYNC', 'PING', 'PONG', 'WEBHOOK', 'QUEUE'],
-  success: ['200 OK', 'DONE', 'COMPLETE'],
-  retry: ['RETRY', 'TIMEOUT'],
-  error: ['LOST', '404 ERR', '500 ERR']
-};
-
-const FOOTER_STATUSES = [
-  'SYSTEM ONLINE',
-  'ALL SERVICES HEALTHY',
-  'LATENCY 18ms',
-  'AGENTS READY',
-  'MEMORY SYNC COMPLETE',
-  'BUILDWITHPNJ ACTIVE'
-];
 
 const SUBSYSTEM_NODES: SubSystemNode[] = [
   { id: 'hero-core', label: 'WARBORN PROCESSOR', sectionId: 'section-hero', align: 'left', yOffset: 128, status: 'SYS ACTIVE', pulseTimer: 0 },
@@ -147,6 +124,7 @@ export function PremiumPixelBackground() {
   const sectionPositionsRef = useRef<Record<string, number>>({});
   const sectionHeightsRef = useRef<Record<string, number>>({});
   const exclusionZonesRef = useRef<ExclusionZone[]>([]);
+  const viasRef = useRef<{ x: number; y: number; color: 'red' | 'green' | 'gold' }[]>([]);
   const pulseWavesRef = useRef<{ y: number; speed: number; alpha: number }[]>([]);
   
   // Track hover status per section
@@ -284,15 +262,18 @@ export function PremiumPixelBackground() {
     }
 
     const paths: CircuitPath[] = [];
+    const vias: { x: number; y: number; color: 'red' | 'green' | 'gold' }[] = [];
 
     // Left & Right continuous main trunks starting from startY (end of hero page)
     paths.push({
       id: 'left-trunk',
+      color: 'green',
       segments: [{ x1: leftTrunkX, y1: startY, x2: leftTrunkX, y2: Math.round((docH - 100) / GRID) * GRID }],
       length: docH - startY
     });
     paths.push({
       id: 'right-trunk',
+      color: 'green',
       segments: [{ x1: rightTrunkX, y1: startY, x2: rightTrunkX, y2: Math.round((docH - 100) / GRID) * GRID }],
       length: docH - startY
     });
@@ -315,13 +296,19 @@ export function PremiumPixelBackground() {
 
       paths.push({
         id: `branch-${node.id}`,
+        color: 'green',
         segments,
         length: GRID * 3
       });
+
+      // Add junction vias at node anchors
+      vias.push({ x: nodeX, y: targetY, color: 'green' });
+      vias.push({ x: trunkX, y: targetY, color: 'green' });
     });
 
     // Special Master Circuit path looping snapped exactly to grid (starting at startY)
     const masterSegments: CircuitSegment[] = [];
+    const parallelSegments: CircuitSegment[] = [];
     const secPositions = nodeStatesRef.current.map(n => Math.round((sectionPositionsRef.current[n.sectionId] || 500) / GRID) * GRID);
     const secHeights = nodeStatesRef.current.map(n => Math.round((sectionHeightsRef.current[n.sectionId] || 400) / GRID) * GRID);
 
@@ -359,112 +346,118 @@ export function PremiumPixelBackground() {
     const boxTop7 = pos7 + GRID * 3;
     const boxBottom7 = pos7 + h7 - GRID;
 
-    // Solutions Box
+    // Helper to register box trace segments and vias
+    const addBoxTraces = (topY: number, bottomY: number) => {
+      // Primary Trace (Outer Frame Red Layer)
+      masterSegments.push({ x1: leftTrunkX, y1: topY, x2: rightTrunkX, y2: topY });
+      masterSegments.push({ x1: rightTrunkX, y1: topY, x2: rightTrunkX, y2: bottomY });
+      masterSegments.push({ x1: rightTrunkX, y1: bottomY, x2: leftTrunkX, y2: bottomY });
+
+      // Parallel Trace (Shifted Inner Red Layer)
+      parallelSegments.push({ x1: leftTrunkX, y1: topY + GRID, x2: rightTrunkX, y2: topY + GRID });
+      parallelSegments.push({ x1: rightTrunkX - GRID, y1: topY + GRID, x2: rightTrunkX - GRID, y2: bottomY - GRID });
+      parallelSegments.push({ x1: rightTrunkX, y1: bottomY - GRID, x2: leftTrunkX, y2: bottomY - GRID });
+
+      // Corner junction vias representing authentic board connection contacts
+      vias.push({ x: leftTrunkX, y: topY, color: 'red' });
+      vias.push({ x: rightTrunkX, y: topY, color: 'red' });
+      vias.push({ x: rightTrunkX, y: bottomY, color: 'red' });
+      vias.push({ x: leftTrunkX, y: bottomY, color: 'red' });
+
+      vias.push({ x: leftTrunkX + GRID, y: topY + GRID, color: 'gold' });
+      vias.push({ x: rightTrunkX - GRID, y: topY + GRID, color: 'gold' });
+      vias.push({ x: rightTrunkX - GRID, y: bottomY - GRID, color: 'gold' });
+      vias.push({ x: leftTrunkX + GRID, y: bottomY - GRID, color: 'gold' });
+    };
+
+    // Solution Section Connect
     masterSegments.push({ x1: leftTrunkX, y1: startY, x2: leftTrunkX, y2: boxTop2 });
-    masterSegments.push({ x1: leftTrunkX, y1: boxTop2, x2: rightTrunkX, y2: boxTop2 });
-    masterSegments.push({ x1: rightTrunkX, y1: boxTop2, x2: rightTrunkX, y2: boxBottom2 });
-    masterSegments.push({ x1: rightTrunkX, y1: boxBottom2, x2: leftTrunkX, y2: boxBottom2 });
+    parallelSegments.push({ x1: leftTrunkX + GRID, y1: startY, x2: leftTrunkX + GRID, y2: boxTop2 + GRID });
 
-    // Projects Box
+    addBoxTraces(boxTop2, boxBottom2);
+
+    // Solutions to Projects Connect
     masterSegments.push({ x1: leftTrunkX, y1: boxBottom2, x2: leftTrunkX, y2: boxTop3 });
-    masterSegments.push({ x1: leftTrunkX, y1: boxTop3, x2: rightTrunkX, y2: boxTop3 });
-    masterSegments.push({ x1: rightTrunkX, y1: boxTop3, x2: rightTrunkX, y2: boxBottom3 });
-    masterSegments.push({ x1: rightTrunkX, y1: boxBottom3, x2: leftTrunkX, y2: boxBottom3 });
+    parallelSegments.push({ x1: leftTrunkX + GRID, y1: boxBottom2 - GRID, x2: leftTrunkX + GRID, y2: boxTop3 + GRID });
 
-    // R&D Labs Box
+    addBoxTraces(boxTop3, boxBottom3);
+
+    // Projects to Labs Connect
     masterSegments.push({ x1: leftTrunkX, y1: boxBottom3, x2: leftTrunkX, y2: boxTop4 });
-    masterSegments.push({ x1: leftTrunkX, y1: boxTop4, x2: rightTrunkX, y2: boxTop4 });
-    masterSegments.push({ x1: rightTrunkX, y1: boxTop4, x2: rightTrunkX, y2: boxBottom4 });
-    masterSegments.push({ x1: rightTrunkX, y1: boxBottom4, x2: leftTrunkX, y2: boxBottom4 });
+    parallelSegments.push({ x1: leftTrunkX + GRID, y1: boxBottom3 - GRID, x2: leftTrunkX + GRID, y2: boxTop4 + GRID });
 
-    // Technical Journal Box
+    addBoxTraces(boxTop4, boxBottom4);
+
+    // Labs to Technical Journal Connect
     masterSegments.push({ x1: leftTrunkX, y1: boxBottom4, x2: leftTrunkX, y2: boxTop5 });
-    masterSegments.push({ x1: leftTrunkX, y1: boxTop5, x2: rightTrunkX, y2: boxTop5 });
-    masterSegments.push({ x1: rightTrunkX, y1: boxTop5, x2: rightTrunkX, y2: boxBottom5 });
-    masterSegments.push({ x1: rightTrunkX, y1: boxBottom5, x2: leftTrunkX, y2: boxBottom5 });
+    parallelSegments.push({ x1: leftTrunkX + GRID, y1: boxBottom4 - GRID, x2: leftTrunkX + GRID, y2: boxTop5 + GRID });
 
-    // Mission Control Box
+    addBoxTraces(boxTop5, boxBottom5);
+
+    // Journal to Mission Control Connect
     masterSegments.push({ x1: leftTrunkX, y1: boxBottom5, x2: leftTrunkX, y2: boxTop6 });
-    masterSegments.push({ x1: leftTrunkX, y1: boxTop6, x2: rightTrunkX, y2: boxTop6 });
-    masterSegments.push({ x1: rightTrunkX, y1: boxTop6, x2: rightTrunkX, y2: boxBottom6 });
-    masterSegments.push({ x1: rightTrunkX, y1: boxBottom6, x2: leftTrunkX, y2: boxBottom6 });
+    parallelSegments.push({ x1: leftTrunkX + GRID, y1: boxBottom5 - GRID, x2: leftTrunkX + GRID, y2: boxTop6 + GRID });
 
-    // Newsletter Box
+    addBoxTraces(boxTop6, boxBottom6);
+
+    // Mission Control to Newsletter Connect
     masterSegments.push({ x1: leftTrunkX, y1: boxBottom6, x2: leftTrunkX, y2: boxTop7 });
-    masterSegments.push({ x1: leftTrunkX, y1: boxTop7, x2: rightTrunkX, y2: boxTop7 });
-    masterSegments.push({ x1: rightTrunkX, y1: boxTop7, x2: rightTrunkX, y2: boxBottom7 });
-    masterSegments.push({ x1: rightTrunkX, y1: boxBottom7, x2: leftTrunkX, y2: boxBottom7 });
+    parallelSegments.push({ x1: leftTrunkX + GRID, y1: boxBottom6 - GRID, x2: leftTrunkX + GRID, y2: boxTop7 + GRID });
 
-    // Footer section
+    addBoxTraces(boxTop7, boxBottom7);
+
+    // Newsletter to Footer Connect
     masterSegments.push({ x1: leftTrunkX, y1: boxBottom7, x2: leftTrunkX, y2: pos8 + GRID });
     masterSegments.push({ x1: leftTrunkX, y1: pos8 + GRID, x2: centerX, y2: pos8 + GRID });
 
+    parallelSegments.push({ x1: leftTrunkX + GRID, y1: boxBottom7 - GRID, x2: leftTrunkX + GRID, y2: pos8 + GRID + GRID });
+    parallelSegments.push({ x1: leftTrunkX + GRID, y1: pos8 + GRID + GRID, x2: centerX, y2: pos8 + GRID + GRID });
+
     paths.push({
       id: 'master-data-flow',
+      color: 'red',
       segments: masterSegments,
       length: docH * 2
     });
 
+    paths.push({
+      id: 'master-data-flow-parallel',
+      color: 'red',
+      segments: parallelSegments,
+      length: docH * 2
+    });
+
     pathsRef.current = paths;
+    viasRef.current = vias;
 
     // Initialize packets if empty
     if (packetsRef.current.length === 0) {
       const packets: Packet[] = [];
 
       // Spawn regular traffic packets (slowed speed & bright solid opacity)
-      for (let i = 0; i < 150; i++) {
+      for (let i = 0; i < 120; i++) {
         const pathIdx = Math.floor(Math.random() * paths.length);
-        const segmentIdx = Math.floor(Math.random() * paths[pathIdx].segments.length);
-        const category = getRandomCategory();
-        const label = getRandomLabel(category);
+        const path = paths[pathIdx];
+        if (!path || path.segments.length === 0) continue;
+
+        const segmentIdx = Math.floor(Math.random() * path.segments.length);
+        const color = path.color; // Match packet color to its signal layer
         
         packets.push({
           pathIndex: pathIdx,
           segmentIndex: segmentIdx,
           progress: Math.random(),
-          speed: 0.0012 + Math.random() * 0.0028, // Slowed down from 0.006 - 0.014
-          size: 3,
-          alpha: 0.8 + Math.random() * 0.2, // Bright visibility baseline
+          speed: 0.0008 + Math.random() * 0.0018, // Tasteful board speed
+          size: 3.2,
+          alpha: 0.75 + Math.random() * 0.25,
           isMaster: false,
-          label,
-          category
+          color
         });
       }
       packetsRef.current = packets;
     }
   };
 
-  const getRandomCategory = (): Packet['category'] => {
-    const roll = Math.random();
-    if (roll < 0.3) return 'request';
-    if (roll < 0.55) return 'inference';
-    if (roll < 0.75) return 'memory';
-    if (roll < 0.9) return 'broadcast';
-    return 'success';
-  };
-
-  const getRandomLabel = (cat: Packet['category'], nodeSection?: string | null): string => {
-    // Override labels based on section hovering
-    if (nodeSection === 'section-mission') {
-      const voiceLabels = ['STT', 'TTS', 'VOICE', 'AUDIO', 'STREAM'];
-      return voiceLabels[Math.floor(Math.random() * voiceLabels.length)];
-    }
-    if (nodeSection === 'section-projects') {
-      const projLabels = ['BUILD', 'DEPLOY', 'TEST', 'PROD', 'DONE'];
-      return projLabels[Math.floor(Math.random() * projLabels.length)];
-    }
-    if (nodeSection === 'section-labs') {
-      const labLabels = ['RESEARCH', 'HYPOTHESIS', 'RESULT', 'EXP', 'MATH'];
-      return labLabels[Math.floor(Math.random() * labLabels.length)];
-    }
-    if (nodeSection === 'section-journal') {
-      const journalLabels = ['POST', 'ARTICLE', 'JOURNAL', 'WRITE', 'ARCHIVE'];
-      return journalLabels[Math.floor(Math.random() * journalLabels.length)];
-    }
-
-    const labels = PACKET_LABES[cat];
-    return labels[Math.floor(Math.random() * labels.length)];
-  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -577,13 +570,11 @@ export function PremiumPixelBackground() {
               pathIndex: masterPathIdx,
               segmentIndex: 0,
               progress: 0,
-              speed: 0.0016, // Snaking pace
+              speed: 0.0012, // Snaking pace
               size: 5.5,
               alpha: 1.0,
               isMaster: true,
-              label: 'PNJ-MASTER',
-              category: 'broadcast',
-              colorOverride: '#FFFFFF'
+              color: 'gold'
             });
           }
         }
@@ -642,8 +633,8 @@ export function PremiumPixelBackground() {
 
       // ─── Draw Motherboard Circuits (With Segment-by-Segment Layout-Aware Opacity) ───
       pathsRef.current.forEach(path => {
-        const isMaster = path.id === 'master-data-flow';
-        const baseOpacity = isMaster ? 0.36 : 0.18;
+        const isMaster = path.id.includes('master');
+        const baseOpacity = isMaster ? 0.28 : 0.18;
 
         path.segments.forEach(seg => {
           // Absolute Y to screen-space Y
@@ -661,11 +652,17 @@ export function PremiumPixelBackground() {
           ctx.moveTo(seg.x1, y1);
           ctx.lineTo(seg.x2, y2);
 
-          // Make traces clearly visible
-          ctx.strokeStyle = isDark 
-            ? `hsla(${activeH}, ${activeS}%, ${activeL}%, ${finalOpacity})` 
-            : `rgba(148, 163, 184, ${finalOpacity * 0.85})`;
-          ctx.lineWidth = isMaster ? 2.5 : 1.8;
+          // Color based on PCB board layers: Layer 1 (Green) vs Layer 2 (Red/Amber)
+          if (path.color === 'green') {
+            ctx.strokeStyle = isDark 
+              ? `hsla(142, 70%, 45%, ${finalOpacity})` 
+              : `hsla(142, 60%, 35%, ${finalOpacity * 0.85})`;
+          } else {
+            ctx.strokeStyle = isDark 
+              ? `hsla(0, 75%, 52%, ${finalOpacity})` 
+              : `hsla(0, 65%, 42%, ${finalOpacity * 0.85})`;
+          }
+          ctx.lineWidth = isMaster ? 2.2 : 1.4;
           ctx.stroke();
         });
 
@@ -746,19 +743,6 @@ export function PremiumPixelBackground() {
         if (p.progress >= 1.0) {
           p.progress = 0;
           p.segmentIndex = (p.segmentIndex + 1) % path.segments.length;
-          
-          // Randomly trigger packet error loss (2% chance)
-          if (!p.isMaster && Math.random() < 0.02) {
-            p.category = 'error';
-            p.label = getRandomLabel('error');
-          } else if (p.category === 'error') {
-            // Recover as retry
-            p.category = 'retry';
-            p.label = getRandomLabel('retry');
-          } else {
-            // Cycle new label based on current section hover override
-            p.label = getRandomLabel(p.category, hoveredSectionRef.current);
-          }
         }
 
         const seg = path.segments[p.segmentIndex];
@@ -773,50 +757,25 @@ export function PremiumPixelBackground() {
         // Draw only if visible in viewport
         if (screenY < -20 || screenY > H + 20) return;
 
-        // Map background packet color strictly to the premium 3-color design system
-        let h = activeH;
-        let s = activeS;
-        let l = isDark ? activeL : (activeL - 10);
-
-        if (p.category === 'error' || p.category === 'retry') {
-          // Engineering Red
-          h = 358;
-          s = 76;
-          l = isDark ? 59 : 45;
-        } else if (p.category === 'broadcast') {
-          // Muted Slate
-          h = 215;
-          s = 16;
-          l = isDark ? 65 : 45;
+        // Color based on PCB signal glint color
+        let colorStr = '';
+        if (p.color === 'gold') {
+          colorStr = '#EAB308'; // Gold pulse
+        } else if (p.color === 'green') {
+          colorStr = isDark ? '#22C55E' : '#16A34A'; // Green trace glint
         } else {
-          // Dynamic Sync Color (Electric Blue default, transitions to hovered accent color)
-          h = activeH;
-          s = activeS;
-          l = isDark ? activeL : (activeL - 10);
+          colorStr = isDark ? '#EF4444' : '#DC2626'; // Red trace glint
         }
 
-        let packetColor = `hsla(${h}, ${s}%, ${l}%, `;
-
-        // Adjust alpha based on wave proximity (min baseline 0.55 for high visibility)
-        let alpha = Math.max(0.55, p.alpha);
+        // Adjust alpha based on wave proximity
+        let alpha = p.alpha;
         let size = p.size;
-        
         waves.forEach(w => {
           if (Math.abs(w.y - py) < 100) {
             alpha = Math.min(1.0, alpha + 0.35);
             size *= 1.4;
           }
         });
-
-        // ─── If packet enters footer, override label with system states ───
-        const isFooterPath = path.id.includes('branch-footer-sync') || path.id.includes('footer');
-        let labelText = p.label;
-        if (isFooterPath && !p.isMaster) {
-          labelText = FOOTER_STATUSES[p.pathIndex % FOOTER_STATUSES.length];
-          // Default footer path packets to Electric Blue
-          h = 217; s = 91; l = isDark ? 65 : 45;
-          packetColor = `hsla(${h}, ${s}%, ${l}%, `;
-        }
 
         // Calculate layout-aware packet dimming inside exclusion zones
         const packetMultiplier = getPacketOpacityMultiplier(px, py, exclusionZonesRef.current);
@@ -825,17 +784,37 @@ export function PremiumPixelBackground() {
         ctx.save();
         ctx.globalAlpha = finalAlpha;
 
-        // Draw square node lead dot
-        ctx.fillStyle = p.colorOverride || `${packetColor}1.0)`;
-        ctx.shadowColor = p.colorOverride || `${packetColor}1.0)`;
-        ctx.shadowBlur = p.isMaster ? 10 : 4;
+        // Draw square node lead dot (PCB signal glint)
+        ctx.fillStyle = colorStr;
+        ctx.shadowColor = colorStr;
+        ctx.shadowBlur = p.isMaster ? 8 : 2;
         ctx.fillRect(px - size / 2, screenY - size / 2, size, size);
 
-        // Draw small monospace text next to packet dot (using a clean terminal green color for all)
-        ctx.fillStyle = isDark ? '#22C55E' : '#15803D';
-        ctx.font = 'bold 9.5px monospace';
-        ctx.shadowBlur = 0; // Disable text shadow to preserve performance
-        ctx.fillText(labelText, px + 7, screenY + 3.0);
+        ctx.restore();
+      });
+
+      // ─── Draw PCB Junction Vias / Connection Pads ────────────────────────
+      viasRef.current.forEach(v => {
+        const screenY = v.y - scrollY;
+        if (screenY < -20 || screenY > H + 20) return;
+
+        const packetMultiplier = getPacketOpacityMultiplier(v.x, v.y, exclusionZonesRef.current);
+        const finalAlpha = 0.85 * packetMultiplier;
+
+        ctx.save();
+        ctx.globalAlpha = finalAlpha;
+
+        // Draw outer copper ring
+        ctx.beginPath();
+        ctx.arc(v.x, screenY, 4.2, 0, Math.PI * 2);
+        ctx.fillStyle = v.color === 'green' ? (isDark ? '#16A34A' : '#15803D') : (isDark ? '#DC2626' : '#B91C1C');
+        ctx.fill();
+
+        // Draw gold inner core
+        ctx.beginPath();
+        ctx.arc(v.x, screenY, 1.6, 0, Math.PI * 2);
+        ctx.fillStyle = '#EAB308'; // Plated gold contact center
+        ctx.fill();
 
         ctx.restore();
       });
