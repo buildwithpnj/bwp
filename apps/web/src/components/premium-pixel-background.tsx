@@ -233,75 +233,61 @@ export function PremiumPixelBackground() {
     const masterSegments: CircuitSegment[] = [];
     const secPositions = nodeStatesRef.current.map(n => Math.round((sectionPositionsRef.current[n.sectionId] || 500) / GRID) * GRID);
 
+    const pos1 = secPositions[1] || 500;
+    const pos2 = secPositions[2] || 1000;
+    const pos3 = secPositions[3] || 1500;
+    const pos4 = secPositions[4] || 2000;
+    const pos5 = secPositions[5] || 2500;
+    const pos6 = secPositions[6] || 3000;
+    const pos7 = secPositions[7] || 3500;
+    const pos8 = secPositions[8] || 4000;
+
+    const ySolutionBase = Math.round(((pos2 + pos1) / 2) / GRID) * GRID;
+    const yProjectBase = Math.round(((pos3 + pos2) / 2) / GRID) * GRID;
+    const yLabsBase = Math.round(((pos4 + pos3) / 2) / GRID) * GRID;
+    const yJournalBase = Math.round(((pos5 + pos4) / 2) / GRID) * GRID;
+    const yControlBase = Math.round(((pos6 + pos5) / 2) / GRID) * GRID;
+    const yNewsletterBase = Math.round(((pos7 + pos6) / 2) / GRID) * GRID;
+
     // Left Trunk down to Solutions section
-    masterSegments.push({ x1: leftTrunkX, y1: startY, x2: leftTrunkX, y2: secPositions[2] + GRID });
+    masterSegments.push({ x1: leftTrunkX, y1: startY, x2: leftTrunkX, y2: ySolutionBase });
     
-    // 1. Solutions Section (Left-to-Right, full-width elevated)
-    const ySolutionBase = secPositions[2] + GRID;
-    masterSegments.push({ x1: leftTrunkX, y1: ySolutionBase, x2: leftTrunkX + GRID * 1, y2: ySolutionBase });
-    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: ySolutionBase, x2: leftTrunkX + GRID * 3, y2: ySolutionBase - GRID * 2 });
-    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: ySolutionBase - GRID * 2, x2: rightTrunkX - GRID * 3, y2: ySolutionBase - GRID * 2 });
-    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: ySolutionBase - GRID * 2, x2: rightTrunkX - GRID * 1, y2: ySolutionBase });
-    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: ySolutionBase, x2: rightTrunkX, y2: ySolutionBase });
+    // 1. Solutions Section (Left-to-Right)
+    masterSegments.push({ x1: leftTrunkX, y1: ySolutionBase, x2: rightTrunkX, y2: ySolutionBase });
     
     // Right Trunk down to Projects section
-    masterSegments.push({ x1: rightTrunkX, y1: ySolutionBase, x2: rightTrunkX, y2: secPositions[3] + GRID });
+    masterSegments.push({ x1: rightTrunkX, y1: ySolutionBase, x2: rightTrunkX, y2: yProjectBase });
     
-    // 2. Projects Section (Right-to-Left, full-width elevated)
-    const yProjectBase = secPositions[3] + GRID;
-    masterSegments.push({ x1: rightTrunkX, y1: yProjectBase, x2: rightTrunkX - GRID * 1, y2: yProjectBase });
-    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: yProjectBase, x2: rightTrunkX - GRID * 3, y2: yProjectBase - GRID * 2 });
-    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: yProjectBase - GRID * 2, x2: leftTrunkX + GRID * 3, y2: yProjectBase - GRID * 2 });
-    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yProjectBase - GRID * 2, x2: leftTrunkX + GRID * 1, y2: yProjectBase });
-    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yProjectBase, x2: leftTrunkX, y2: yProjectBase });
+    // 2. Projects Section (Right-to-Left)
+    masterSegments.push({ x1: rightTrunkX, y1: yProjectBase, x2: leftTrunkX, y2: yProjectBase });
 
     // Left Trunk down to R&D Labs section
-    masterSegments.push({ x1: leftTrunkX, y1: yProjectBase, x2: leftTrunkX, y2: secPositions[4] + GRID });
+    masterSegments.push({ x1: leftTrunkX, y1: yProjectBase, x2: leftTrunkX, y2: yLabsBase });
 
-    // 3. R&D Labs Section (Left-to-Right, full-width elevated)
-    const yLabsBase = secPositions[4] + GRID;
-    masterSegments.push({ x1: leftTrunkX, y1: yLabsBase, x2: leftTrunkX + GRID * 1, y2: yLabsBase });
-    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yLabsBase, x2: leftTrunkX + GRID * 3, y2: yLabsBase - GRID * 2 });
-    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yLabsBase - GRID * 2, x2: rightTrunkX - GRID * 3, y2: yLabsBase - GRID * 2 });
-    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: yLabsBase - GRID * 2, x2: rightTrunkX - GRID * 1, y2: yLabsBase });
-    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: yLabsBase, x2: rightTrunkX, y2: yLabsBase });
+    // 3. R&D Labs Section (Left-to-Right)
+    masterSegments.push({ x1: leftTrunkX, y1: yLabsBase, x2: rightTrunkX, y2: yLabsBase });
 
     // Right Trunk down to Journal (Recent Articles) section
-    masterSegments.push({ x1: rightTrunkX, y1: yLabsBase, x2: rightTrunkX, y2: secPositions[5] + GRID });
+    masterSegments.push({ x1: rightTrunkX, y1: yLabsBase, x2: rightTrunkX, y2: yJournalBase });
 
-    // 4. Technical Journal Section (Right-to-Left, full-width elevated)
-    const yJournalBase = secPositions[5] + GRID;
-    masterSegments.push({ x1: rightTrunkX, y1: yJournalBase, x2: rightTrunkX - GRID * 1, y2: yJournalBase });
-    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: yJournalBase, x2: rightTrunkX - GRID * 3, y2: yJournalBase - GRID * 2 });
-    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: yJournalBase - GRID * 2, x2: leftTrunkX + GRID * 3, y2: yJournalBase - GRID * 2 });
-    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yJournalBase - GRID * 2, x2: leftTrunkX + GRID * 1, y2: yJournalBase });
-    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yJournalBase, x2: leftTrunkX, y2: yJournalBase });
+    // 4. Technical Journal Section (Right-to-Left)
+    masterSegments.push({ x1: rightTrunkX, y1: yJournalBase, x2: leftTrunkX, y2: yJournalBase });
 
     // Left Trunk down to Mission Control section
-    masterSegments.push({ x1: leftTrunkX, y1: yJournalBase, x2: leftTrunkX, y2: secPositions[6] + GRID });
+    masterSegments.push({ x1: leftTrunkX, y1: yJournalBase, x2: leftTrunkX, y2: yControlBase });
 
-    // 5. Mission Control Section (Left-to-Right, full-width elevated)
-    const yControlBase = secPositions[6] + GRID;
-    masterSegments.push({ x1: leftTrunkX, y1: yControlBase, x2: leftTrunkX + GRID * 1, y2: yControlBase });
-    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yControlBase, x2: leftTrunkX + GRID * 3, y2: yControlBase - GRID * 2 });
-    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yControlBase - GRID * 2, x2: rightTrunkX - GRID * 3, y2: yControlBase - GRID * 2 });
-    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: yControlBase - GRID * 2, x2: rightTrunkX - GRID * 1, y2: yControlBase });
-    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: yControlBase, x2: rightTrunkX, y2: yControlBase });
+    // 5. Mission Control Section (Left-to-Right)
+    masterSegments.push({ x1: leftTrunkX, y1: yControlBase, x2: rightTrunkX, y2: yControlBase });
 
     // Right Trunk down to Newsletter (Subscribe) section
-    masterSegments.push({ x1: rightTrunkX, y1: yControlBase, x2: rightTrunkX, y2: secPositions[7] + GRID });
+    masterSegments.push({ x1: rightTrunkX, y1: yControlBase, x2: rightTrunkX, y2: yNewsletterBase });
 
-    // 6. Newsletter Section (Right-to-Left, full-width elevated)
-    const yNewsletterBase = secPositions[7] + GRID;
-    masterSegments.push({ x1: rightTrunkX, y1: yNewsletterBase, x2: rightTrunkX - GRID * 1, y2: yNewsletterBase });
-    masterSegments.push({ x1: rightTrunkX - GRID * 1, y1: yNewsletterBase, x2: rightTrunkX - GRID * 3, y2: yNewsletterBase - GRID * 2 });
-    masterSegments.push({ x1: rightTrunkX - GRID * 3, y1: yNewsletterBase - GRID * 2, x2: leftTrunkX + GRID * 3, y2: yNewsletterBase - GRID * 2 });
-    masterSegments.push({ x1: leftTrunkX + GRID * 3, y1: yNewsletterBase - GRID * 2, x2: leftTrunkX + GRID * 1, y2: yNewsletterBase });
-    masterSegments.push({ x1: leftTrunkX + GRID * 1, y1: yNewsletterBase, x2: leftTrunkX, y2: yNewsletterBase });
+    // 6. Newsletter Section (Right-to-Left)
+    masterSegments.push({ x1: rightTrunkX, y1: yNewsletterBase, x2: leftTrunkX, y2: yNewsletterBase });
 
     // Left Trunk down to Footer section
-    masterSegments.push({ x1: leftTrunkX, y1: yNewsletterBase, x2: leftTrunkX, y2: secPositions[8] + GRID });
-    masterSegments.push({ x1: leftTrunkX, y1: secPositions[8] + GRID, x2: centerX, y2: secPositions[8] + GRID });
+    masterSegments.push({ x1: leftTrunkX, y1: yNewsletterBase, x2: leftTrunkX, y2: pos8 + GRID });
+    masterSegments.push({ x1: leftTrunkX, y1: pos8 + GRID, x2: centerX, y2: pos8 + GRID });
 
     paths.push({
       id: 'master-data-flow',
