@@ -42,6 +42,56 @@ interface CircuitPath {
   length: number;
 }
 
+interface ExclusionZone {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  padding: number;
+  id: string;
+}
+
+function getSegmentOpacityMultiplier(x1: number, y1: number, x2: number, y2: number, zones: ExclusionZone[]): number {
+  let minMultiplier = 1.0;
+  const segMinX = Math.min(x1, x2);
+  const segMaxX = Math.max(x1, x2);
+  const segMinY = Math.min(y1, y2);
+  const segMaxY = Math.max(y1, y2);
+
+  for (let i = 0; i < zones.length; i++) {
+    const zone = zones[i];
+    const zx1 = zone.x1 - zone.padding;
+    const zx2 = zone.x2 + zone.padding;
+    const zy1 = zone.y1 - zone.padding;
+    const zy2 = zone.y2 + zone.padding;
+
+    // Check box overlap
+    const overlapX = segMinX <= zx2 && segMaxX >= zx1;
+    const overlapY = segMinY <= zy2 && segMaxY >= zy1;
+
+    if (overlapX && overlapY) {
+      minMultiplier = Math.min(minMultiplier, 0.08);
+    }
+  }
+  return minMultiplier;
+}
+
+function getPacketOpacityMultiplier(x: number, y: number, zones: ExclusionZone[]): number {
+  let minMultiplier = 1.0;
+  for (let i = 0; i < zones.length; i++) {
+    const zone = zones[i];
+    const zx1 = zone.x1 - zone.padding;
+    const zx2 = zone.x2 + zone.padding;
+    const zy1 = zone.y1 - zone.padding;
+    const zy2 = zone.y2 + zone.padding;
+
+    if (x >= zx1 && x <= zx2 && y >= zy1 && y <= zy2) {
+      minMultiplier = Math.min(minMultiplier, 0.1);
+    }
+  }
+  return minMultiplier;
+}
+
 // ─── Telemetry Label Configurations ──────────────────────────────────────────
 
 const PACKET_LABES = {
@@ -96,6 +146,7 @@ export function PremiumPixelBackground() {
   const nodeStatesRef = useRef<SubSystemNode[]>(SUBSYSTEM_NODES);
   const sectionPositionsRef = useRef<Record<string, number>>({});
   const sectionHeightsRef = useRef<Record<string, number>>({});
+  const exclusionZonesRef = useRef<ExclusionZone[]>([]);
   const pulseWavesRef = useRef<{ y: number; speed: number; alpha: number }[]>([]);
   
   // Track hover status per section
@@ -168,6 +219,40 @@ export function PremiumPixelBackground() {
 
       sectionPositionsRef.current = heights;
       sectionHeightsRef.current = sectionHeights;
+
+      // Dynamic Exclusion Zones Scanner (Detects absolute locations of headings, cards, and buttons)
+      const zones: ExclusionZone[] = [];
+      const headings = document.querySelectorAll('h1, h2, h3, h4, .section-title, [class*="title"], [class*="heading"]');
+      headings.forEach((el, index) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          zones.push({
+            id: `heading-${index}`,
+            x1: rect.left + window.scrollX,
+            y1: rect.top + window.scrollY,
+            x2: rect.right + window.scrollX,
+            y2: rect.bottom + window.scrollY,
+            padding: 24
+          });
+        }
+      });
+
+      const cards = document.querySelectorAll('.group\\/card, [class*="card"], [class*="dashboard"], button, .section-divider');
+      cards.forEach((el, index) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          zones.push({
+            id: `card-${index}`,
+            x1: rect.left + window.scrollX,
+            y1: rect.top + window.scrollY,
+            x2: rect.right + window.scrollX,
+            y2: rect.bottom + window.scrollY,
+            padding: 16
+          });
+        }
+      });
+
+      exclusionZonesRef.current = zones;
       buildMotherboardCircuits();
     } catch { /* suppress */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -555,10 +640,12 @@ export function PremiumPixelBackground() {
         }
       }
 
-      // ─── Draw Motherboard Circuits ─────────────────────────────────────
+      // ─── Draw Motherboard Circuits (With Segment-by-Segment Layout-Aware Opacity) ───
       pathsRef.current.forEach(path => {
-        ctx.beginPath();
-        path.segments.forEach((seg, idx) => {
+        const isMaster = path.id === 'master-data-flow';
+        const baseOpacity = isMaster ? 0.36 : 0.18;
+
+        path.segments.forEach(seg => {
           // Absolute Y to screen-space Y
           const y1 = seg.y1 - scrollY;
           const y2 = seg.y2 - scrollY;
@@ -566,27 +653,29 @@ export function PremiumPixelBackground() {
           // Cull offscreen lines to preserve CPU usage
           if (Math.max(y1, y2) < -100 || Math.min(y1, y2) > H + 100) return;
 
-          if (idx === 0) {
-            ctx.moveTo(seg.x1, y1);
-          }
-          ctx.lineTo(seg.x2, y2);
-        });
+          // Calculate overlap opacity multiplier
+          const multiplier = getSegmentOpacityMultiplier(seg.x1, seg.y1, seg.x2, seg.y2, exclusionZonesRef.current);
+          const finalOpacity = baseOpacity * multiplier;
 
-        // Make traces clearly visible
-        ctx.strokeStyle = isDark ? `hsla(${activeH}, ${activeS}%, ${activeL}%, 0.42)` : 'rgba(148, 163, 184, 0.32)';
-        ctx.lineWidth = path.id === 'master-data-flow' ? 2.5 : 1.8;
-        ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(seg.x1, y1);
+          ctx.lineTo(seg.x2, y2);
+
+          // Make traces clearly visible
+          ctx.strokeStyle = isDark 
+            ? `hsla(${activeH}, ${activeS}%, ${activeL}%, ${finalOpacity})` 
+            : `rgba(148, 163, 184, ${finalOpacity * 0.85})`;
+          ctx.lineWidth = isMaster ? 2.5 : 1.8;
+          ctx.stroke();
+        });
 
         // Overlay glowing pulse waves traveling down paths
         waves.forEach(w => {
           path.segments.forEach(seg => {
-            const y1 = seg.y1 - scrollY;
-            const y2 = seg.y2 - scrollY;
-            
-            // If wave coordinates are within line range
             const minY = Math.min(seg.y1, seg.y2);
             const maxY = Math.max(seg.y1, seg.y2);
             
+            // If wave coordinates are within line range
             if (w.y >= minY && w.y <= maxY) {
               // Draw small highlighted sub-segment
               ctx.beginPath();
@@ -729,11 +818,16 @@ export function PremiumPixelBackground() {
           packetColor = `hsla(${h}, ${s}%, ${l}%, `;
         }
 
+        // Calculate layout-aware packet dimming inside exclusion zones
+        const packetMultiplier = getPacketOpacityMultiplier(px, py, exclusionZonesRef.current);
+        const finalAlpha = alpha * packetMultiplier;
+
         ctx.save();
+        ctx.globalAlpha = finalAlpha;
 
         // Draw square node lead dot
-        ctx.fillStyle = p.colorOverride || `${packetColor}${alpha})`;
-        ctx.shadowColor = p.colorOverride || `${packetColor}${alpha})`;
+        ctx.fillStyle = p.colorOverride || `${packetColor}1.0)`;
+        ctx.shadowColor = p.colorOverride || `${packetColor}1.0)`;
         ctx.shadowBlur = p.isMaster ? 10 : 4;
         ctx.fillRect(px - size / 2, screenY - size / 2, size, size);
 
