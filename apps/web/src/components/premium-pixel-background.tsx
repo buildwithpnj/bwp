@@ -95,6 +95,7 @@ export function PremiumPixelBackground() {
   const lastMasterSpawnRef = useRef<number>(0);
   const nodeStatesRef = useRef<SubSystemNode[]>(SUBSYSTEM_NODES);
   const sectionPositionsRef = useRef<Record<string, number>>({});
+  const sectionHeightsRef = useRef<Record<string, number>>({});
   const pulseWavesRef = useRef<{ y: number; speed: number; alpha: number }[]>([]);
   
   // Track hover status per section
@@ -137,12 +138,14 @@ export function PremiumPixelBackground() {
       heights['section-hero'] = hero ? hero.getBoundingClientRect().top + window.scrollY : 250;
 
       // Measure rest of sections
+      const sectionHeights: Record<string, number> = {};
       SUBSYSTEM_NODES.forEach(node => {
         if (node.sectionId === 'section-hero') return;
         const el = document.getElementById(node.sectionId) || document.querySelector(`[id*="${node.sectionId}"]`);
         if (el) {
           const rect = el.getBoundingClientRect();
           heights[node.sectionId] = rect.top + window.scrollY;
+          sectionHeights[node.sectionId] = rect.height;
         } else {
           // Fixed static grid-aligned Y coordinates for pages where these sections do not exist (guarantees locked lines across all routes)
           const fixedY = node.sectionId === 'section-mission' ? 640
@@ -154,14 +157,17 @@ export function PremiumPixelBackground() {
                        : node.sectionId === 'section-newsletter' ? 4480
                        : 5120;
           heights[node.sectionId] = fixedY;
+          sectionHeights[node.sectionId] = 400; // static default height fallback
         }
       });
 
       // Footer
       const footer = document.getElementById('section-footer') || document.querySelector('footer');
       heights['section-footer'] = footer ? footer.getBoundingClientRect().top + window.scrollY : docHeight - 200;
+      sectionHeights['section-footer'] = 120;
 
       sectionPositionsRef.current = heights;
+      sectionHeightsRef.current = sectionHeights;
       buildMotherboardCircuits();
     } catch { /* suppress */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -232,8 +238,8 @@ export function PremiumPixelBackground() {
     // Special Master Circuit path looping snapped exactly to grid (starting at startY)
     const masterSegments: CircuitSegment[] = [];
     const secPositions = nodeStatesRef.current.map(n => Math.round((sectionPositionsRef.current[n.sectionId] || 500) / GRID) * GRID);
+    const secHeights = nodeStatesRef.current.map(n => Math.round((sectionHeightsRef.current[n.sectionId] || 400) / GRID) * GRID);
 
-    const pos1 = secPositions[1] || 500;
     const pos2 = secPositions[2] || 1000;
     const pos3 = secPositions[3] || 1500;
     const pos4 = secPositions[4] || 2000;
@@ -242,51 +248,70 @@ export function PremiumPixelBackground() {
     const pos7 = secPositions[7] || 3500;
     const pos8 = secPositions[8] || 4000;
 
-    const ySolutionBase = Math.round(((pos2 + pos1) / 2) / GRID) * GRID;
-    const yProjectBase = Math.round(((pos3 + pos2) / 2) / GRID) * GRID;
-    const yLabsBase = Math.round(((pos4 + pos3) / 2) / GRID) * GRID;
-    const yJournalBase = Math.round(((pos5 + pos4) / 2) / GRID) * GRID;
-    const yControlBase = Math.round(((pos6 + pos5) / 2) / GRID) * GRID;
-    const yNewsletterBase = Math.round(((pos7 + pos6) / 2) / GRID) * GRID;
+    const h2 = secHeights[2] || 400;
+    const h3 = secHeights[3] || 400;
+    const h4 = secHeights[4] || 400;
+    const h5 = secHeights[5] || 400;
+    const h6 = secHeights[6] || 400;
+    const h7 = secHeights[7] || 400;
 
-    // Left Trunk down to Solutions section
-    masterSegments.push({ x1: leftTrunkX, y1: startY, x2: leftTrunkX, y2: ySolutionBase });
-    
-    // 1. Solutions Section (Left-to-Right)
-    masterSegments.push({ x1: leftTrunkX, y1: ySolutionBase, x2: rightTrunkX, y2: ySolutionBase });
-    
-    // Right Trunk down to Projects section
-    masterSegments.push({ x1: rightTrunkX, y1: ySolutionBase, x2: rightTrunkX, y2: yProjectBase });
-    
-    // 2. Projects Section (Right-to-Left)
-    masterSegments.push({ x1: rightTrunkX, y1: yProjectBase, x2: leftTrunkX, y2: yProjectBase });
+    // Define top and bottom bounds of content box per section (aligned below section header title space)
+    const boxTop2 = pos2 + GRID * 3;
+    const boxBottom2 = pos2 + h2 - GRID;
 
-    // Left Trunk down to R&D Labs section
-    masterSegments.push({ x1: leftTrunkX, y1: yProjectBase, x2: leftTrunkX, y2: yLabsBase });
+    const boxTop3 = pos3 + GRID * 3;
+    const boxBottom3 = pos3 + h3 - GRID;
 
-    // 3. R&D Labs Section (Left-to-Right)
-    masterSegments.push({ x1: leftTrunkX, y1: yLabsBase, x2: rightTrunkX, y2: yLabsBase });
+    const boxTop4 = pos4 + GRID * 3;
+    const boxBottom4 = pos4 + h4 - GRID;
 
-    // Right Trunk down to Journal (Recent Articles) section
-    masterSegments.push({ x1: rightTrunkX, y1: yLabsBase, x2: rightTrunkX, y2: yJournalBase });
+    const boxTop5 = pos5 + GRID * 3;
+    const boxBottom5 = pos5 + h5 - GRID;
 
-    // 4. Technical Journal Section (Right-to-Left)
-    masterSegments.push({ x1: rightTrunkX, y1: yJournalBase, x2: leftTrunkX, y2: yJournalBase });
+    const boxTop6 = pos6 + GRID * 3;
+    const boxBottom6 = pos6 + h6 - GRID;
 
-    // Left Trunk down to Mission Control section
-    masterSegments.push({ x1: leftTrunkX, y1: yJournalBase, x2: leftTrunkX, y2: yControlBase });
+    const boxTop7 = pos7 + GRID * 3;
+    const boxBottom7 = pos7 + h7 - GRID;
 
-    // 5. Mission Control Section (Left-to-Right)
-    masterSegments.push({ x1: leftTrunkX, y1: yControlBase, x2: rightTrunkX, y2: yControlBase });
+    // Solutions Box
+    masterSegments.push({ x1: leftTrunkX, y1: startY, x2: leftTrunkX, y2: boxTop2 });
+    masterSegments.push({ x1: leftTrunkX, y1: boxTop2, x2: rightTrunkX, y2: boxTop2 });
+    masterSegments.push({ x1: rightTrunkX, y1: boxTop2, x2: rightTrunkX, y2: boxBottom2 });
+    masterSegments.push({ x1: rightTrunkX, y1: boxBottom2, x2: leftTrunkX, y2: boxBottom2 });
 
-    // Right Trunk down to Newsletter (Subscribe) section
-    masterSegments.push({ x1: rightTrunkX, y1: yControlBase, x2: rightTrunkX, y2: yNewsletterBase });
+    // Projects Box
+    masterSegments.push({ x1: leftTrunkX, y1: boxBottom2, x2: leftTrunkX, y2: boxTop3 });
+    masterSegments.push({ x1: leftTrunkX, y1: boxTop3, x2: rightTrunkX, y2: boxTop3 });
+    masterSegments.push({ x1: rightTrunkX, y1: boxTop3, x2: rightTrunkX, y2: boxBottom3 });
+    masterSegments.push({ x1: rightTrunkX, y1: boxBottom3, x2: leftTrunkX, y2: boxBottom3 });
 
-    // 6. Newsletter Section (Right-to-Left)
-    masterSegments.push({ x1: rightTrunkX, y1: yNewsletterBase, x2: leftTrunkX, y2: yNewsletterBase });
+    // R&D Labs Box
+    masterSegments.push({ x1: leftTrunkX, y1: boxBottom3, x2: leftTrunkX, y2: boxTop4 });
+    masterSegments.push({ x1: leftTrunkX, y1: boxTop4, x2: rightTrunkX, y2: boxTop4 });
+    masterSegments.push({ x1: rightTrunkX, y1: boxTop4, x2: rightTrunkX, y2: boxBottom4 });
+    masterSegments.push({ x1: rightTrunkX, y1: boxBottom4, x2: leftTrunkX, y2: boxBottom4 });
 
-    // Left Trunk down to Footer section
-    masterSegments.push({ x1: leftTrunkX, y1: yNewsletterBase, x2: leftTrunkX, y2: pos8 + GRID });
+    // Technical Journal Box
+    masterSegments.push({ x1: leftTrunkX, y1: boxBottom4, x2: leftTrunkX, y2: boxTop5 });
+    masterSegments.push({ x1: leftTrunkX, y1: boxTop5, x2: rightTrunkX, y2: boxTop5 });
+    masterSegments.push({ x1: rightTrunkX, y1: boxTop5, x2: rightTrunkX, y2: boxBottom5 });
+    masterSegments.push({ x1: rightTrunkX, y1: boxBottom5, x2: leftTrunkX, y2: boxBottom5 });
+
+    // Mission Control Box
+    masterSegments.push({ x1: leftTrunkX, y1: boxBottom5, x2: leftTrunkX, y2: boxTop6 });
+    masterSegments.push({ x1: leftTrunkX, y1: boxTop6, x2: rightTrunkX, y2: boxTop6 });
+    masterSegments.push({ x1: rightTrunkX, y1: boxTop6, x2: rightTrunkX, y2: boxBottom6 });
+    masterSegments.push({ x1: rightTrunkX, y1: boxBottom6, x2: leftTrunkX, y2: boxBottom6 });
+
+    // Newsletter Box
+    masterSegments.push({ x1: leftTrunkX, y1: boxBottom6, x2: leftTrunkX, y2: boxTop7 });
+    masterSegments.push({ x1: leftTrunkX, y1: boxTop7, x2: rightTrunkX, y2: boxTop7 });
+    masterSegments.push({ x1: rightTrunkX, y1: boxTop7, x2: rightTrunkX, y2: boxBottom7 });
+    masterSegments.push({ x1: rightTrunkX, y1: boxBottom7, x2: leftTrunkX, y2: boxBottom7 });
+
+    // Footer section
+    masterSegments.push({ x1: leftTrunkX, y1: boxBottom7, x2: leftTrunkX, y2: pos8 + GRID });
     masterSegments.push({ x1: leftTrunkX, y1: pos8 + GRID, x2: centerX, y2: pos8 + GRID });
 
     paths.push({
