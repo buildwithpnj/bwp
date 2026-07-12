@@ -87,7 +87,7 @@ async def run_agent(request: AgentRequest, is_preview: bool = False) -> AgentRes
                     "max_tokens": AgentConfig.MAX_OUTPUT_LENGTH,
                     "temperature": 0.2
                 },
-                timeout=12.0
+                timeout=20.0
             )
             
             if res.status_code != 200:
