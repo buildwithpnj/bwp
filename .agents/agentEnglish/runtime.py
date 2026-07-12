@@ -14,15 +14,17 @@ logger = logging.getLogger("agent_english_runtime")
 async def classify_intent(message: str) -> str:
     """Classifies user intent using a simple keyword routing system (preview safe)."""
     msg = message.lower()
-    if any(k in msg for k in ["correct", "grammar", "spell", "check", "fix"]):
-        return "english_correction"
-    if any(k in msg for k in ["rewrite", "professional", "formal", "rephrase"]):
-        return "rewrite"
-    if any(k in msg for k in ["hinglish", "meaning", "translate", "hindi"]):
-        return "hinglish_to_english"
-    if any(k in msg for k in ["explain", "why", "what is", "grammar rule"]):
-        return "explanation"
-    return "general"
+    
+    # Block list for clearly off-topic requests to protect credits/abuse
+    off_topic_keywords = [
+        "code", "python", "javascript", "html", "css", "programming", "sql", "hack",
+        "write a script", "create a function", "mathematics", "calculate", "history of",
+        "who was", "geography", "tell me about"
+    ]
+    if any(k in msg for k in off_topic_keywords):
+        return "off_topic"
+        
+    return "allowed_preview"
 
 async def run_agent(request: AgentRequest, is_preview: bool = False) -> AgentResponse:
     logger.info(f"AgentEnglish executing session={request.session_id} is_preview={is_preview}")
@@ -32,9 +34,9 @@ async def run_agent(request: AgentRequest, is_preview: bool = False) -> AgentRes
         intent = await classify_intent(request.message)
         logger.info(f"Preview intent classification: {intent}")
         
-        if intent not in AgentConfig.ALLOWED_PREVIEW_INTENTS:
+        if intent == "off_topic":
             return AgentResponse(
-                message="Out of preview scope. Preview only supports English correction, rewrite, Hinglish translation, or short explanations.",
+                message="Out of preview scope. Preview only supports English coaching, translations, and rewrites.",
                 tokens_used=0,
                 cost_usd=0.0,
                 status="blocked"
