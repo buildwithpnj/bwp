@@ -59,6 +59,13 @@ interface GeoInfo {
   timezone: string;
 }
 
+interface MemoryProgress {
+  corrections_accepted: number;
+  streak: number;
+  weak_categories: string[];
+  mastered_patterns: string[];
+}
+
 const currencySymbols: Record<string, string> = {
   USD: '$',
   INR: '₹',
@@ -97,6 +104,7 @@ export default function MissionControlPage() {
   const [addictions, setAddictions] = useState<Addiction[]>([]);
   const [insight, setInsight] = useState<CoachInsight | null>(null);
   const [geo, setGeo] = useState<GeoInfo | null>(null);
+  const [memoryProgress, setMemoryProgress] = useState<MemoryProgress | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Time ticker
@@ -158,6 +166,9 @@ export default function MissionControlPage() {
 
       const iData = await api<CoachInsight>('/api/aicoach/insights');
       setInsight(iData);
+
+      const mData = await api<MemoryProgress>('/api/memory/progress');
+      setMemoryProgress(mData);
     } catch (err) {
       console.error('Failed to load Mission Control telemetry:', err);
     } finally {
@@ -383,6 +394,48 @@ export default function MissionControlPage() {
                   </div>
                 </div>
               ))
+            )}
+          </div>
+        </div>
+
+        {/* Cognitive Kernel & Personalization Memory */}
+        <div className="rounded-2xl border border-border bg-card/30 p-5 space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-border/40">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Brain className="h-4 w-4 text-primary" />
+              Cognitive Kernel Memory
+            </h2>
+            <Link href="/ai-memory" className="text-3xs text-primary hover:underline font-mono">EDIT MEMORY</Link>
+          </div>
+
+          <div className="space-y-3 font-mono text-xs">
+            {loading ? (
+              <p className="text-3xs text-muted-foreground italic">Syncing personalization memory...</p>
+            ) : !memoryProgress ? (
+              <p className="text-3xs text-muted-foreground italic">No personalization logs loaded.</p>
+            ) : (
+              <div className="space-y-2.5">
+                <div className="flex justify-between items-center bg-muted/20 border border-border/60 rounded-xl p-2.5">
+                  <span className="text-3xs text-muted-foreground uppercase">Accepted Corrections</span>
+                  <span className="text-emerald-400 font-bold">{memoryProgress.corrections_accepted}</span>
+                </div>
+                <div className="flex justify-between items-center bg-muted/20 border border-border/60 rounded-xl p-2.5">
+                  <span className="text-3xs text-muted-foreground uppercase">Grammar Streak</span>
+                  <span className="text-primary font-bold">{memoryProgress.streak} Days</span>
+                </div>
+                {memoryProgress.weak_categories.length > 0 && (
+                  <div className="bg-muted/15 border border-border/40 rounded-xl p-3 text-[10px] space-y-1">
+                    <span className="block text-3xs text-muted-foreground uppercase font-bold">Active Focus Categories:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {memoryProgress.weak_categories.slice(0, 3).map((w, idx) => (
+                        <span key={idx} className="bg-primary/10 border border-primary/20 text-primary px-1.5 py-0.5 rounded text-[9px]">
+                          {w}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
