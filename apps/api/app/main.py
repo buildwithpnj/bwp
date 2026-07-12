@@ -24,6 +24,7 @@ from app.routers import (
     public_preview,
     warborn_chat,
     governance_router,
+    memory_router,
 )
 from app.middleware.preview_rate_limit import PreviewRateLimitMiddleware
 
@@ -111,6 +112,7 @@ app.include_router(aicoach.router)
 app.include_router(public_preview.router)
 app.include_router(warborn_chat.router)
 app.include_router(governance_router.router)
+app.include_router(memory_router.router)
 
 from app.storage.routes import router as storage_router
 app.include_router(storage_router)

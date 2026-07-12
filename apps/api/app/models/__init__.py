@@ -13,6 +13,8 @@ from app.models.goals import Goal
 from app.models.calendar_event import CalendarEvent
 from app.models.ai_insight import AICoachInsight
 from app.models.governance import AccessRequest, PreviewSession, SystemConfig, AdminAuditLog
+from app.models.user_profile_memory import UserProfileMemory
+from app.models.learning_progress import LearningProgress
 
 __all__ = [
     "Base",
@@ -46,4 +48,6 @@ __all__ = [
     "PreviewSession",
     "SystemConfig",
     "AdminAuditLog",
+    "UserProfileMemory",
+    "LearningProgress",
 ]
