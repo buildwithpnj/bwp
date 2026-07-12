@@ -21,7 +21,11 @@ from app.routers import (
     gcalendar,
     recovery,
     aicoach,
+    public_preview,
+    warborn_chat,
 )
+from app.middleware.preview_rate_limit import PreviewRateLimitMiddleware
+
 
 
 @asynccontextmanager
@@ -80,6 +84,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(PreviewRateLimitMiddleware)
 
 
 @app.exception_handler(Exception)
@@ -102,9 +107,12 @@ app.include_router(habits.router)
 app.include_router(gcalendar.router)
 app.include_router(recovery.router)
 app.include_router(aicoach.router)
+app.include_router(public_preview.router)
+app.include_router(warborn_chat.router)
 
 from app.storage.routes import router as storage_router
 app.include_router(storage_router)
+
 
 
 @app.get("/api/health")
