@@ -15,6 +15,7 @@ from app.models.ai_insight import AICoachInsight
 from app.models.governance import AccessRequest, PreviewSession, SystemConfig, AdminAuditLog
 from app.models.user_profile_memory import UserProfileMemory
 from app.models.learning_progress import LearningProgress
+from app.models.action_models import ActionDefinition, ActionLog, ActionApproval
 
 __all__ = [
     "Base",
@@ -50,4 +51,7 @@ __all__ = [
     "AdminAuditLog",
     "UserProfileMemory",
     "LearningProgress",
+    "ActionDefinition",
+    "ActionLog",
+    "ActionApproval",
 ]
