@@ -1,7 +1,7 @@
 import os
 
 class AgentConfig:
-    OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY", "")
+    OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY", "") or os.environ.get("GEMINI_API_KEY", "")
     DEFAULT_MODEL: str = "gpt-4o-mini"
     
     # Public Preview Intent Constraints

@@ -48,7 +48,7 @@ async def run_agent(request: AgentRequest, is_preview: bool = False) -> AgentRes
         with open(prompt_path, "r", encoding="utf-8") as f:
             system_prompt = f.read()
 
-    # Call OpenAI model via httpx
+    # Call LLM model via httpx (supports OpenAI and Gemini OpenAI-compatible endpoints)
     api_key = AgentConfig.OPENAI_API_KEY
     if not api_key:
         # Fallback Mock response for test/dev modes when API key is missing
@@ -58,17 +58,26 @@ async def run_agent(request: AgentRequest, is_preview: bool = False) -> AgentRes
             cost_usd=0.0001,
             status="success"
         )
+
+    # Auto-detect Google Gemini API Keys (usually starting with AIza or AQ.)
+    is_gemini = api_key.startswith("AIza") or api_key.startswith("AQ.")
+    if is_gemini:
+        url = "https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions"
+        model_name = os.environ.get("LLM_MODEL") or "gemini-2.5-flash"
+    else:
+        url = "https://api.openai.com/v1/chat/completions"
+        model_name = AgentConfig.DEFAULT_MODEL
         
     try:
         async with httpx.AsyncClient() as client:
             res = await client.post(
-                "https://api.openai.com/v1/chat/completions",
+                url,
                 headers={
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": AgentConfig.DEFAULT_MODEL,
+                    "model": model_name,
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": request.message}
