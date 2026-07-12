@@ -2,7 +2,7 @@ import asyncio
 from typing import Callable, Any
 
 class PreviewTimeoutHandler:
-    TIMEOUT_LIMIT = 5.0  # 5 seconds limit for public preview runs
+    TIMEOUT_LIMIT = 10.0  # 10 seconds limit for public preview runs
 
     @classmethod
     async def execute_with_timeout(cls, func: Callable[[], Any], *args, **kwargs) -> Any:
