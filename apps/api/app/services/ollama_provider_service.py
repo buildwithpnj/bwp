@@ -40,7 +40,7 @@ class OllamaProviderService:
 
         async with httpx.AsyncClient(timeout=timeout) as client:
             try:
-                response = await client.post(url, json=payload)
+                response = await client.post(url, json=payload, headers={"ngrok-skip-browser-warning": "1"})
                 response.raise_for_status()
                 res_data = response.json()
                 

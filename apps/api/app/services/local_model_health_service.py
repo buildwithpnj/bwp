@@ -18,7 +18,7 @@ class LocalModelHealthService:
         
         async with httpx.AsyncClient(timeout=timeout) as client:
             try:
-                response = await client.get(url)
+                response = await client.get(url, headers={"ngrok-skip-browser-warning": "1"})
                 if response.status_code == 200:
                     return {
                         "status": "healthy",
