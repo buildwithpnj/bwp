@@ -133,13 +133,15 @@ export default function PublicMissionControlPage() {
       }
     } else {
       // Fallback mock logs if git command is not available (e.g. serverless containers)
-      totalCommits = 947;
+      totalCommits = 952;
       commitsList = [
         { hash: 'e45a2c4', subject: sanitizeSubject('feat(agent): V42-V45 Unified Looping Agent Orchestrator & Critic Reflection Runtime'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
         { hash: 'd19c0a2', subject: sanitizeSubject('feat(knowledge): Recursive Directory Discovery pipeline (.py, .ts, .json, .yml) + SafeMarkdownRenderer Inline formatting'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
         { hash: 'b39a2f1', subject: sanitizeSubject('fix(api): clean up duplicate governance_router mount from main.py and resolve route conflicts'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
         { hash: 'a12c8b0', subject: sanitizeSubject('fix(action): implement IdempotencyGuard & JobEnqueuer in ActionExecutionService to pass lifecycle tests'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
-        { hash: '87f3b14', subject: sanitizeSubject('feat(version): normalize system version tags to 0.x layout globally across backend/UI'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
+        { hash: 'f98a3c2', subject: sanitizeSubject('feat(memory): introduce UserProfileMemory & personalization streaks context logic'), author: 'buildwithpnj', date: '2026-07-12', project: 'Dashboard' },
+        { hash: 'd76a210', subject: sanitizeSubject('refactor(db): backfill default roles in Alembic migration & enforce strict mypy checks'), author: 'buildwithpnj', date: '2026-07-11', project: 'Dashboard' },
+        { hash: 'b12c87e', subject: sanitizeSubject('feat(storage): Google Drive Multi-Account Virtual Storage Failover & Sobriety tracking'), author: 'buildwithpnj', date: '2026-07-10', project: 'Dashboard' },
         { hash: 'c2ab969', subject: sanitizeSubject('fix(api): replace asyncio.run() seeding with synchronous psycopg2 seed to eliminate event loop corruption'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' }
       ];
       heatmapCells = Array.from({ length: 52 * 7 }, (_, i) => {
