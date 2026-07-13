@@ -128,51 +128,156 @@ class CopilotRouterService:
         query_lower = query.lower()
         suggested_action: Dict[str, Any] = {}
 
+        # Helper function to cleanse common payload mistakes by the LLM
+        def cleanse_payload(action_name: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+            cleansed = {}
+            if action_name == "create_task":
+                cleansed["title"] = payload.get("title") or payload.get("name") or "New Task"
+                cleansed["description"] = payload.get("description") or payload.get("notes") or payload.get("content") or payload.get("details")
+                cleansed["category"] = payload.get("category") or payload.get("tag") or payload.get("type")
+            elif action_name == "create_note":
+                cleansed["title"] = payload.get("title") or payload.get("name") or "New Note"
+                cleansed["content"] = payload.get("content") or payload.get("body") or payload.get("text") or "Empty Content"
+                cleansed["tags"] = payload.get("tags")
+            elif action_name == "create_project":
+                cleansed["name"] = payload.get("name") or payload.get("title") or "New Project"
+                cleansed["description"] = payload.get("description") or payload.get("notes") or payload.get("content")
+            elif action_name == "create_book":
+                cleansed["title"] = payload.get("title") or payload.get("name") or "Untitled Book"
+                cleansed["author"] = payload.get("author") or payload.get("writer") or "Unknown"
+                cleansed["status"] = payload.get("status") or "to-read"
+            elif action_name == "create_calendar_event":
+                from datetime import datetime, timedelta, timezone
+                now_utc = datetime.now(timezone.utc)
+                cleansed["title"] = payload.get("title") or payload.get("name") or "Calendar Event"
+                cleansed["start_time"] = payload.get("start_time") or payload.get("start") or (now_utc + timedelta(hours=1)).isoformat()
+                cleansed["end_time"] = payload.get("end_time") or payload.get("end") or (now_utc + timedelta(hours=2)).isoformat()
+                cleansed["description"] = payload.get("description") or payload.get("notes") or payload.get("content")
+            elif action_name == "create_habit":
+                cleansed["name"] = payload.get("name") or payload.get("title") or "New Habit"
+                cleansed["cadence"] = payload.get("cadence") or "daily"
+                try:
+                    cleansed["target"] = int(payload.get("target", 1))
+                except Exception:
+                    cleansed["target"] = 1
+            elif action_name == "create_addiction_tracker":
+                from datetime import datetime, timezone
+                cleansed["name"] = payload.get("name") or payload.get("title") or "Recovery Tracker"
+                cleansed["quit_date"] = payload.get("quit_date") or payload.get("date") or payload.get("start_date") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            else:
+                # Fallback: copy keys as is
+                cleansed = payload
+            return {k: v for k, v in cleansed.items() if v is not None}
+
         # 1. Parse JSON inside <action>...</action> tags
         import re
+        import json
         action_match = re.search(r"<action>(.*?)</action>", reply_text, re.DOTALL)
+        
         if action_match:
             try:
                 raw_json = action_match.group(1).strip()
                 parsed = json.loads(raw_json)
                 action_name = parsed.get("action_name")
-                payload = parsed.get("payload", {})
+                raw_payload = parsed.get("payload", {})
+                
+                # Apply parameter mapping and auto-correction
+                cleansed_pay = cleanse_payload(action_name, raw_payload)
                 
                 # Validate using registry
                 from app.services.copilot_action_registry import CopilotActionRegistry
-                if CopilotActionRegistry.get_action(action_name) and CopilotActionRegistry.validate_inputs(action_name, payload):
+                if CopilotActionRegistry.get_action(action_name) and CopilotActionRegistry.validate_inputs(action_name, cleansed_pay):
                     suggested_action = {
                         "action_name": action_name,
-                        "payload": payload
+                        "payload": cleansed_pay
                     }
-                    # Strip action tag from user-facing reply text
-                    reply_text = re.sub(r"<action>.*?</action>", "", reply_text, flags=re.DOTALL).strip()
+                # Always strip action tag from user-facing reply text to keep drawer UX clean
+                reply_text = re.sub(r"<action>.*?</action>", "", reply_text, flags=re.DOTALL).strip()
             except Exception as e:
                 logger.error(f"Failed to parse action tags: {e}")
+                # Strip the tag even on parse errors so raw JSON is not dumped in chat
+                reply_text = re.sub(r"<action>.*?</action>", "", reply_text, flags=re.DOTALL).strip()
 
-        # 2. Fallback note/task extraction logic for simple direct queries
+        # 2. Fallback heuristics for note/task/habit/addiction/calendar actions
         if not suggested_action:
-            has_create = any(w in query_lower for w in ["create", "add", "new", "save", "make", "write", "tes", "hii"])
-            has_note = any(w in query_lower for w in ["note", "notes", "memo"])
-
-            if has_create and has_note:
+            has_create = any(w in query_lower for w in ["create", "add", "new", "save", "make", "write", "track"])
+            
+            # Note Fallback
+            if has_create and any(w in query_lower for w in ["note", "notes", "memo"]):
                 title = "Copilot Note"
                 title_match = re.search(r"(?:named|titled|called)\s+([a-zA-Z0-9_\-\s]{1,50})", query, re.IGNORECASE)
                 if title_match:
                     title = title_match.group(1).strip()
-                elif "tes" in query_lower:
-                    title = "tes"
-                
-                content = "hii" if "hii" in query_lower else reply_text
                 suggested_action = {
                     "action_name": "create_note",
                     "payload": {
                         "title": title,
-                        "content": content
+                        "content": reply_text
                     }
                 }
+            # Task Fallback (Matches Quit Addiction Task or Regular Task)
+            elif has_create and "task" in query_lower:
+                title = "New Task"
+                title_match = re.search(r"(?:task for|task named|task titled|task to|task)\s+([a-zA-Z0-9_\-\s]{1,50})", query, re.IGNORECASE)
+                if title_match:
+                    title = title_match.group(1).strip().capitalize()
+                
+                category = "general"
+                if "addiction" in query_lower or "alcohol" in query_lower or "sobriety" in query_lower or "quit" in query_lower:
+                    category = "recovery"
+                
+                suggested_action = {
+                    "action_name": "create_task",
+                    "payload": {
+                        "title": title,
+                        "description": f"Created via Copilot: {query}",
+                        "category": category
+                    }
+                }
+            # Addiction Tracker Fallback
+            elif has_create and any(w in query_lower for w in ["addiction", "sobriety", "quit"]):
+                from datetime import datetime, timezone
+                name = "Recovery Tracker"
+                name_match = re.search(r"(?:tracker for|tracker named|tracker to|quit|addiction)\s+([a-zA-Z0-9_\-\s]{1,50})", query, re.IGNORECASE)
+                if name_match:
+                    name = name_match.group(1).strip().capitalize()
+                suggested_action = {
+                    "action_name": "create_addiction_tracker",
+                    "payload": {
+                        "name": name,
+                        "quit_date": datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                    }
+                }
+            # Habit Fallback
+            elif has_create and "habit" in query_lower:
+                name = "New Habit"
+                name_match = re.search(r"(?:habit for|habit named|habit called|habit to|habit)\s+([a-zA-Z0-9_\-\s]{1,50})", query, re.IGNORECASE)
+                if name_match:
+                    name = name_match.group(1).strip().capitalize()
+                suggested_action = {
+                    "action_name": "create_habit",
+                    "payload": {
+                        "name": name,
+                        "cadence": "daily",
+                        "target": 1
+                    }
+                }
+            # Navigation Fallback
             elif "navigate" in query_lower or "go to" in query_lower:
-                suggested_action = {"action_name": "navigate_dashboard", "payload": {"target": "/dashboard"}}
+                target = "/dashboard"
+                if "task" in query_lower:
+                    target = "/tasks"
+                elif "note" in query_lower:
+                    target = "/notes"
+                elif "habit" in query_lower:
+                    target = "/habits"
+                elif "book" in query_lower:
+                    target = "/books"
+                elif "recovery" in query_lower or "addiction" in query_lower:
+                    target = "/recovery"
+                elif "finance" in query_lower:
+                    target = "/finance"
+                suggested_action = {"action_name": "navigate_dashboard", "payload": {"target": target}}
 
         # Cleanse response from banned casual phrases
         banned_phrases = {
