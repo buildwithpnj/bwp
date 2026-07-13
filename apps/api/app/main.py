@@ -70,7 +70,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="WarBorn OS API",
     description="Single-user WarBorn operating system backend",
-    version="0.45",
+    version="0.50",
     lifespan=lifespan,
 )
 
@@ -237,5 +237,5 @@ app.include_router(llm_diagnostics_router)
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "0.45"}
+    return {"status": "ok", "version": "0.50"}
 
