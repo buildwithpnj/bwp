@@ -137,14 +137,14 @@ export default function PublicMissionControlPage() {
       // Fallback mock logs if git command is not available (e.g. serverless containers)
       totalCommits = 952;
       commitsList = [
+        { hash: '8f4407f', subject: sanitizeSubject('feat(agent): V0.50 Live Action Layer Hardening, DB Verifiers, & Professional Formatter'), author: 'buildwithpnj', date: '2026-07-14', project: 'Dashboard' },
+        { hash: 'f2c90ab', subject: sanitizeSubject('feat(ux): ActionResultCard component with modern badges, scopes, details, & next steps'), author: 'buildwithpnj', date: '2026-07-14', project: 'Dashboard' },
+        { hash: 'c90d8a1', subject: sanitizeSubject('fix(ollama): remote ngrok tunnel skips browser warning & overrides host headers'), author: 'buildwithpnj', date: '2026-07-14', project: 'Dashboard' },
         { hash: 'e45a2c4', subject: sanitizeSubject('feat(agent): V42-V45 Unified Looping Agent Orchestrator & Critic Reflection Runtime'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
         { hash: 'd19c0a2', subject: sanitizeSubject('feat(knowledge): Recursive Directory Discovery pipeline (.py, .ts, .json, .yml) + SafeMarkdownRenderer Inline formatting'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
         { hash: 'b39a2f1', subject: sanitizeSubject('fix(api): clean up duplicate governance_router mount from main.py and resolve route conflicts'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
         { hash: 'a12c8b0', subject: sanitizeSubject('fix(action): implement IdempotencyGuard & JobEnqueuer in ActionExecutionService to pass lifecycle tests'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
-        { hash: 'f98a3c2', subject: sanitizeSubject('feat(memory): introduce UserProfileMemory & personalization streaks context logic'), author: 'buildwithpnj', date: '2026-07-12', project: 'Dashboard' },
-        { hash: 'd76a210', subject: sanitizeSubject('refactor(db): backfill default roles in Alembic migration & enforce strict mypy checks'), author: 'buildwithpnj', date: '2026-07-11', project: 'Dashboard' },
-        { hash: 'b12c87e', subject: sanitizeSubject('feat(storage): Google Drive Multi-Account Virtual Storage Failover & Sobriety tracking'), author: 'buildwithpnj', date: '2026-07-10', project: 'Dashboard' },
-        { hash: 'c2ab969', subject: sanitizeSubject('fix(api): replace asyncio.run() seeding with synchronous psycopg2 seed to eliminate event loop corruption'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' }
+        { hash: 'f98a3c2', subject: sanitizeSubject('feat(memory): introduce UserProfileMemory & personalization streaks context logic'), author: 'buildwithpnj', date: '2026-07-12', project: 'Dashboard' }
       ];
       heatmapCells = Array.from({ length: 52 * 7 }, (_, i) => {
         const factor = Math.sin(i / 15) * Math.cos(i / 30);
@@ -234,26 +234,26 @@ export default function PublicMissionControlPage() {
         <div className="lg:col-span-7 p-6 rounded-2xl border border-border bg-card flex flex-col gap-4">
           <h3 className="font-pixel text-xs text-foreground tracking-wider uppercase">{"// CURRENT FOCUS"}</h3>
           <div className="flex flex-col gap-1">
-            <h4 className="text-lg font-bold text-foreground leading-none">Personal OS — Advanced RAG Loop & Discovery</h4>
-            <span className="text-xs text-muted-foreground font-mono mt-1 block">Status: Active · Sprint 16 · Jul 13, 2026</span>
+            <h4 className="text-lg font-bold text-foreground leading-none">Personal OS — Live Action Reliability & Tonality</h4>
+            <span className="text-xs text-muted-foreground font-mono mt-1 block">Status: Active · Sprint 17 · Jul 14, 2026</span>
           </div>
 
           <div className="flex flex-col gap-3 font-mono text-xs text-muted-foreground bg-background p-4 rounded-xl border border-border">
             <div className="flex items-center gap-2">
               <span className="text-positive">☑</span>
-              <span>Advanced RAG Loop orchestrator runtime (V42–V45)</span>
+              <span>Live action execution verifiers and persistence checks</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-positive">☑</span>
-              <span>Recursive workspace directory indexer for Knowledge Base</span>
+              <span>Professional response formatting tone filter layer</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-positive">☑</span>
-              <span>FastAPI double router mount cleanup & action lifecycles</span>
+              <span>ActionResultCard Next.js frontend UI component</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-positive">☑</span>
-              <span>Version normalization pass to 0.x format</span>
+              <span>Host-rewriting remote ngrok tunnel verification</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">☐</span>
@@ -265,10 +265,10 @@ export default function PublicMissionControlPage() {
           <div className="flex flex-col gap-1.5 mt-2">
             <div className="flex justify-between items-center text-xs font-mono">
               <span className="text-muted-foreground">Sprint Progress</span>
-              <span className="text-foreground">92%</span>
+              <span className="text-foreground">95%</span>
             </div>
             <div className="w-full h-2 rounded-full bg-background overflow-hidden border border-border">
-              <div className="h-full bg-primary rounded-full" style={{ width: '92%' }} />
+              <div className="h-full bg-primary rounded-full" style={{ width: '95%' }} />
             </div>
           </div>
         </div>
