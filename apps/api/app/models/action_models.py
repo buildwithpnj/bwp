@@ -58,3 +58,12 @@ class ActionApproval(Base, UUIDMixin, TimestampMixin):
     user_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(50), default="pending")  # pending, approved, rejected, expired
     decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+
+class TrashItem(Base, UUIDMixin, TimestampMixin):
+    __tablename__ = "trash_items"
+
+    user_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    item_type: Mapped[str] = mapped_column(String(50), nullable=False)  # e.g., "note", "task", "project", "book", "habit"
+    item_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    original_data: Mapped[dict] = mapped_column(JSON, nullable=False)
+

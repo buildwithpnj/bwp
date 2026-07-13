@@ -1,31 +1,39 @@
-# Task Checklist - Warborn OS V0.50 Release
+# Task Checklist - Warborn OS V0.50 Full Copilot Control Plane & 50-Test Suite
 
-- `[x]` Phase 1: Action Surface Audit
-  - `[x]` Create `app/services/action_capability_audit_service.py`
-  - `[x]` Create `app/services/action_registry_inspector.py`
-  - `[x]` Create `app/services/live_action_diagnostics_service.py`
-  - `[x]` Create `tests/test_action_capability_audit.py`
-- `[x]` Phase 2: Action Contract Hardening
-  - `[x]` Update `app/services/action_registry.py` with missing actions
-  - `[x]` Re-architect `app/services/action_contract_validator.py`
-  - `[x]` Update `app/services/action_result_verifier.py`
-  - `[x]` Create `app/services/action_persistence_guard.py`
-  - `[x]` Create tests for contract validator & verifier
-- `[x]` Phase 3: Professional Response Layer
-  - `[x]` Create `app/services/action_response_formatter.py`
-  - `[x]` Create `app/services/copilot_response_style_service.py`
-  - `[x]` Create `app/services/user_facing_outcome_renderer.py`
-  - `[x]` Create `app/services/error_explanation_service.py`
-- `[x]` Phase 4: Live Action Coverage Expansion
-  - `[x]` Create `app/models/project_item.py` database model & run Alembic migration
-  - `[x]` Create `app/services/project_action_service.py`
-  - `[x]` Create `app/services/calendar_action_service.py`
-  - `[x]` Create `app/services/memory_action_service.py`
-- `[x]` Phase 5: Loop Runtime Integration
-  - `[x]` Integrate state checkers into `app/services/full_loop_runtime.py` and criticize claims
-- `[x]` Phase 6: UI Result States (Next.js components)
-  - `[x]` Create `ActionResultCard.tsx` and custom hooks
-- `[x]` Phase 7: Live/Local Mode Split
-  - `[x]` Create runtime mode config
-- `[x]` Phase 8-9: Observability, telemetry & Evals
-  - `[x]` Run evaluations and verify all 10 release gates
+- `[x]` Phase 1: Unified Copilot Action Registry
+  - `[x]` Create `apps/api/app/services/copilot_action_registry.py` (56 actions registered)
+  - `[x]` Create `apps/api/app/services/action_policy_registry.py`
+  - `[x]` Create `apps/api/app/services/action_schema_registry.py`
+  - `[x]` Create `apps/api/tests/test_copilot_action_registry.py`
+  - `[x]` Create `apps/api/tests/test_action_schema_registry.py`
+- `[x]` Phase 2: Action Execution Runtime
+  - `[x]` Implement robust `ActionExecutionService` router
+  - `[x]` Implement parameter validation & persistence verification
+  - `[x]` Standardize JSON outputs & mode gates (local_sync, live_async, hybrid)
+- `[x]` Phase 3: Module Executors
+  - `[x]` Note Action Service (create, update, delete, restore, search)
+  - `[x]` Task Action Service (create, update, complete, prioritize, trash)
+  - `[x]` Project Action Service (create, update status, complete)
+  - `[x]` Book Action Service (add, update reading logs, archive)
+  - `[x]` Calendar Action Service (schedule, update, cancel)
+  - `[x]` Habit Action Service (create, log check-in)
+  - `[x]` Other modules (quit addiction, memory, knowledge, settings, trash)
+- `[x]` Phase 4: Planner + Loop Integration
+  - `[x]` Enforce registered action schema in planner payload validation
+  - `[x]` critic feedback loop & stop rules
+- `[x]` Phase 5: Professional Response Layer
+  - `[x]` Filter out banned phrases & enforce structured layout (Status, Action, Result, Scope, Next)
+- `[ ]` Phase 6: Dashboard UI Control Feedback
+  - `[ ]` Next.js frontend components (ActionResultCard, ActionTimeline)
+- `[ ]` Phase 7: Approval + Destructive Control
+  - `[ ]` Policy gating (`confirm_first`, `admin_only`, `destructive_confirmed`)
+- `[ ]` Phase 8: Tenant Safety & Data Integrity
+  - `[ ]` Tenant ID checks on all DB queries and updates
+- `[x]` Phase 9: Mission Control Integration
+  - `[x]` Track telemetry panel status for recent executions, failures, and latency
+- `[x]` Phase 10: Observability Metrics
+  - `[x]` DB logging for attempted, failed, and blocked actions
+- `[x]` Phase 11: 50 End-To-End Validation Tests
+  - `[x]` Write and verify 50 E2E tests in `tests/e2e/test_v050_full_control.py`
+- `[x]` Phase 12: Release Gate check & Walkthrough
+

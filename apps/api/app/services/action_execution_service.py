@@ -3,6 +3,8 @@ from typing import Dict, Any, Optional
 from app.models.action_models import ActionLog
 from app.models.action_execution_state import ActionExecutionStatus
 from app.services.action_registry import ActionRegistry
+from app.services.copilot_action_registry import CopilotActionRegistry
+from app.services.action_policy_registry import ActionPolicyTier
 from app.services.action_approval_service import ActionApprovalService
 from app.services.idempotency_guard import IdempotencyGuard, DuplicateRequestException
 from app.services.job_enqueuer import JobEnqueuer
@@ -27,12 +29,18 @@ class ActionExecutionService:
             return {"status": "failed", "error": "Action execution restricted to approved users."}
 
         # 2. Check Action Registry Definitions
-        action = ActionRegistry.get_action(action_name)
+        action = CopilotActionRegistry.get_action(action_name) or ActionRegistry.get_action(action_name)
         if not action:
             return {"status": "failed", "error": "Action not found."}
 
         # 3. Validate input schemas parameters
-        if not ActionRegistry.validate_inputs(action_name, payload):
+        is_valid = False
+        if CopilotActionRegistry.get_action(action_name):
+            is_valid = CopilotActionRegistry.validate_inputs(action_name, payload)
+        else:
+            is_valid = ActionRegistry.validate_inputs(action_name, payload)
+            
+        if not is_valid:
             return {"status": "failed", "error": "Input payload schema validation failed."}
 
         # 4. Check role rights gating
@@ -115,6 +123,25 @@ class ActionExecutionService:
         from app.services.actions.search_knowledge import SearchKnowledgeAction
         from app.services.actions.get_recent_updates import GetRecentUpdatesAction
 
+        # New v0.50 executors
+        from app.services.actions.v050_executors import (
+            DeleteNoteAction, RestoreNoteAction, SearchNotesAction,
+            PrioritizeTaskAction, DeleteTaskAction, RestoreTaskAction,
+            CreateProjectAction, UpdateProjectAction, CompleteProjectAction, DeleteProjectAction,
+            CreateBookAction, UpdateBookProgressAction, ArchiveBookAction, DeleteBookAction,
+            CreateAssetAction, UpdateAssetAction, DeleteAssetAction,
+            UploadMediaMetadataAction, UpdateMediaMetadataAction, DeleteMediaMetadataAction,
+            GetStorageStatusAction, CleanupStorageAction,
+            UpdateCalendarEventAction, CancelCalendarEventAction,
+            CreateHabitAction, LogHabitCheckinAction, DeleteHabitAction,
+            CreateAddictionTrackerAction, LogAddictionRelapseAction, GetSobrietyStatsAction,
+            UpdateMemoryItemAction, DeleteMemoryItemAction,
+            CreateKnowledgeItemAction, DeleteKnowledgeItemAction,
+            GetTelemetryStatusAction, TriggerSystemSyncAction,
+            UpdateReminderPreferencesAction,
+            ListTrashItemsAction, RestoreTrashItemAction, PermanentPurgeItemAction
+        )
+
         executors: Dict[str, Any] = {
             "save_corrected_example": SaveCorrectedExampleAction,
             "create_lesson_note": CreateLessonNoteAction,
@@ -131,7 +158,49 @@ class ActionExecutionService:
             "create_calendar_event": CreateCalendarEventAction,
             "create_memory_item": CreateMemoryItemAction,
             "search_knowledge": SearchKnowledgeAction,
-            "get_recent_updates": GetRecentUpdatesAction
+            "get_recent_updates": GetRecentUpdatesAction,
+
+            # New v0.50 executors registration
+            "delete_note": DeleteNoteAction,
+            "restore_note": RestoreNoteAction,
+            "search_notes": SearchNotesAction,
+            "prioritize_task": PrioritizeTaskAction,
+            "delete_task": DeleteTaskAction,
+            "restore_task": RestoreTaskAction,
+            "create_project": CreateProjectAction,
+            "update_project": UpdateProjectAction,
+            "complete_project": CompleteProjectAction,
+            "delete_project": DeleteProjectAction,
+            "create_book": CreateBookAction,
+            "update_book_progress": UpdateBookProgressAction,
+            "archive_book": ArchiveBookAction,
+            "delete_book": DeleteBookAction,
+            "create_asset": CreateAssetAction,
+            "update_asset": UpdateAssetAction,
+            "delete_asset": DeleteAssetAction,
+            "upload_media_metadata": UploadMediaMetadataAction,
+            "update_media_metadata": UpdateMediaMetadataAction,
+            "delete_media_metadata": DeleteMediaMetadataAction,
+            "get_storage_status": GetStorageStatusAction,
+            "cleanup_storage": CleanupStorageAction,
+            "update_calendar_event": UpdateCalendarEventAction,
+            "cancel_calendar_event": CancelCalendarEventAction,
+            "create_habit": CreateHabitAction,
+            "log_habit_checkin": LogHabitCheckinAction,
+            "delete_habit": DeleteHabitAction,
+            "create_addiction_tracker": CreateAddictionTrackerAction,
+            "log_addiction_relapse": LogAddictionRelapseAction,
+            "get_sobriety_stats": GetSobrietyStatsAction,
+            "update_memory_item": UpdateMemoryItemAction,
+            "delete_memory_item": DeleteMemoryItemAction,
+            "create_knowledge_item": CreateKnowledgeItemAction,
+            "delete_knowledge_item": DeleteKnowledgeItemAction,
+            "get_telemetry_status": GetTelemetryStatusAction,
+            "trigger_system_sync": TriggerSystemSyncAction,
+            "update_reminder_preferences": UpdateReminderPreferencesAction,
+            "list_trash_items": ListTrashItemsAction,
+            "restore_trash_item": RestoreTrashItemAction,
+            "permanent_purge_item": PermanentPurgeItemAction
         }
 
         executor = executors.get(log.action_name)

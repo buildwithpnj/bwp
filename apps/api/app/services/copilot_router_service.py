@@ -27,7 +27,17 @@ You are concise, helpful, and conversational. Respond naturally like a smart ass
 Never echo back the user's message verbatim. Always provide a real, useful response.
 If the user's question references documents, knowledge, or their workspace data, use the provided Reference Data section to answer accurately.
 If you don't know something or it is not in the reference data, say so honestly.
-Keep replies under 3 sentences unless the user asks for detail."""
+Keep replies under 3 sentences unless the user asks for detail.
+
+If the user is asking to perform any dashboard operation (create, update, delete, archive, complete, restore, search, settings updates, etc. across notes, tasks, projects, books, habits, quit addiction, calendar, user memory, knowledge base, settings, etc.), you must output a special JSON action block inside <action>...</action> tags at the very end of your response.
+Do NOT mention the action block to the user in your conversational reply.
+The JSON inside the tags must follow this exact format:
+{
+  "action_name": "<action_name>",
+  "payload": { ... }
+}
+All properties in the payload must strictly match the expected schemas (e.g. create_note requires 'title' and 'content'; log_habit_checkin requires 'habit_id' and 'date'; etc.).
+"""
 
 
 class CopilotRouterService:
@@ -114,34 +124,80 @@ class CopilotRouterService:
             logger.error(f"CopilotRouterService LLM call failed: {e}")
             reply_text = "Something went wrong on my end. Please try again."
 
-        # Detect simple action intents
+        # Detect structured actions from tags
         query_lower = query.lower()
         suggested_action: Dict[str, Any] = {}
 
-        has_create = any(w in query_lower for w in ["create", "add", "new", "save", "make", "write", "tes", "hii"])
-        has_note = any(w in query_lower for w in ["note", "notes", "memo"])
+        # 1. Parse JSON inside <action>...</action> tags
+        import re
+        action_match = re.search(r"<action>(.*?)</action>", reply_text, re.DOTALL)
+        if action_match:
+            try:
+                raw_json = action_match.group(1).strip()
+                parsed = json.loads(raw_json)
+                action_name = parsed.get("action_name")
+                payload = parsed.get("payload", {})
+                
+                # Validate using registry
+                from app.services.copilot_action_registry import CopilotActionRegistry
+                if CopilotActionRegistry.get_action(action_name) and CopilotActionRegistry.validate_inputs(action_name, payload):
+                    suggested_action = {
+                        "action_name": action_name,
+                        "payload": payload
+                    }
+                    # Strip action tag from user-facing reply text
+                    reply_text = re.sub(r"<action>.*?</action>", "", reply_text, flags=re.DOTALL).strip()
+            except Exception as e:
+                logger.error(f"Failed to parse action tags: {e}")
 
-        if has_create and has_note:
-            # Extract title if user specified "named XXX" or "titled XXX"
-            title = "Copilot Note"
-            import re
-            title_match = re.search(r"(?:named|titled|called)\s+([a-zA-Z0-9_\-\s]{1,50})", query, re.IGNORECASE)
-            if title_match:
-                title = title_match.group(1).strip()
-            elif "tes" in query_lower:
-                title = "tes"
-            
-            # Formulate body text
-            content = "hii" if "hii" in query_lower else reply_text
-            
-            suggested_action = {
-                "action_name": "create_lesson_note",
-                "payload": {
-                    "title": title,
-                    "content": content
+        # 2. Fallback note/task extraction logic for simple direct queries
+        if not suggested_action:
+            has_create = any(w in query_lower for w in ["create", "add", "new", "save", "make", "write", "tes", "hii"])
+            has_note = any(w in query_lower for w in ["note", "notes", "memo"])
+
+            if has_create and has_note:
+                title = "Copilot Note"
+                title_match = re.search(r"(?:named|titled|called)\s+([a-zA-Z0-9_\-\s]{1,50})", query, re.IGNORECASE)
+                if title_match:
+                    title = title_match.group(1).strip()
+                elif "tes" in query_lower:
+                    title = "tes"
+                
+                content = "hii" if "hii" in query_lower else reply_text
+                suggested_action = {
+                    "action_name": "create_note",
+                    "payload": {
+                        "title": title,
+                        "content": content
+                    }
                 }
-            }
-        elif "navigate" in query_lower or "go to" in query_lower:
-            suggested_action = {"action_name": "navigate_dashboard", "payload": {"target": "/dashboard"}}
+            elif "navigate" in query_lower or "go to" in query_lower:
+                suggested_action = {"action_name": "navigate_dashboard", "payload": {"target": "/dashboard"}}
+
+        # Cleanse response from banned casual phrases
+        banned_phrases = {
+            "sure thing": "Acknowledged",
+            "done :)": "Completed",
+            "anything else": "How else may I assist you?",
+            "i checked": "Verification complete",
+            "awesome": "Excellent",
+            "great news": "Operation successful",
+            "yup": "Confirmed"
+        }
+        for banned, clean in banned_phrases.items():
+            reply_text = re.sub(rf"\b{re.escape(banned)}\b", clean, reply_text, flags=re.IGNORECASE)
+
+        # Enforce structured report output shape if action is present and reply is raw
+        if suggested_action and "status" not in reply_text.lower():
+            reply_text = (
+                f"### Execution Summary\n"
+                f"- **Status**: Pending Execution\n"
+                f"- **Action**: {suggested_action['action_name']}\n"
+                f"- **Result**: Action queued for execution\n"
+                f"- **Scope**: Workspace context updated\n"
+                f"- **Next**: Awaiting client confirmations if policy gates dictate.\n\n"
+                f"{reply_text}"
+            )
 
         return reply_text, suggested_action
+

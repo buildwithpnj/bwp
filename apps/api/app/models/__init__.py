@@ -15,7 +15,7 @@ from app.models.ai_insight import AICoachInsight
 from app.models.governance import AccessRequest, PreviewSession, SystemConfig, AdminAuditLog
 from app.models.user_profile_memory import UserProfileMemory
 from app.models.learning_progress import LearningProgress
-from app.models.action_models import ActionDefinition, ActionLog, ActionApproval
+from app.models.action_models import ActionDefinition, ActionLog, ActionApproval, TrashItem
 from app.models.project_item import ProjectItem
 
 # V37-V39 Models
@@ -76,6 +76,7 @@ __all__ = [
     "ActionLog",
     "ActionApproval",
     "ProjectItem",
+    "TrashItem",
     
     # V37-V39 Models
     "TelemetryEvent",
