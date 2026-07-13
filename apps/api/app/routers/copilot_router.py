@@ -34,7 +34,7 @@ async def submit_copilot_query(
     act_log_id = None
     if action:
         act_log_id = await UiActionBridge.bridge_action_to_runner(
-            db, action["action_name"], action["payload"]
+            db, action["action_name"], action["payload"], current_user.id
         )
         
     return {

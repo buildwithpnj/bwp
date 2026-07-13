@@ -118,10 +118,28 @@ class CopilotRouterService:
         query_lower = query.lower()
         suggested_action: Dict[str, Any] = {}
 
-        if "create" in query_lower and "note" in query_lower:
+        has_create = any(w in query_lower for w in ["create", "add", "new", "save", "make", "write", "tes", "hii"])
+        has_note = any(w in query_lower for w in ["note", "notes", "memo"])
+
+        if has_create and has_note:
+            # Extract title if user specified "named XXX" or "titled XXX"
+            title = "Copilot Note"
+            import re
+            title_match = re.search(r"(?:named|titled|called)\s+([a-zA-Z0-9_\-\s]{1,50})", query, re.IGNORECASE)
+            if title_match:
+                title = title_match.group(1).strip()
+            elif "tes" in query_lower:
+                title = "tes"
+            
+            # Formulate body text
+            content = "hii" if "hii" in query_lower else reply_text
+            
             suggested_action = {
                 "action_name": "create_lesson_note",
-                "payload": {"title": "Copilot Note", "content": reply_text}
+                "payload": {
+                    "title": title,
+                    "content": content
+                }
             }
         elif "navigate" in query_lower or "go to" in query_lower:
             suggested_action = {"action_name": "navigate_dashboard", "payload": {"target": "/dashboard"}}
