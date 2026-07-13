@@ -75,7 +75,7 @@ export default function PublicAboutPage() {
             Principal AI Product Engineer @ buildwithpnj
           </p>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-2">
-            I build production-grade AI applications, custom voice agents, and high-performance retrieval architectures that solve real-world problems. Operating under the brand **buildwithpnj**, I specialize in taking systems from initial design into robust, live customer production environments.
+            I build production-grade AI applications, custom voice agents, and high-performance retrieval architectures that solve real-world problems. Operating under the brand <strong className="font-semibold text-primary">buildwithpnj</strong>, I specialize in taking systems from initial design into robust, live customer production environments.
           </p>
           
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 p-4 rounded-xl border border-border/30 bg-card/25 backdrop-blur-sm font-mono text-[9px]">
@@ -165,7 +165,7 @@ export default function PublicAboutPage() {
             </span>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Building a strong AI engineering brand as **buildwithpnj** while shipping revenue-generating verticals and production systems. We skip theoretical delay and focus on shipping working software.
+            Building a strong AI engineering brand as <strong className="font-semibold text-primary">buildwithpnj</strong> while shipping revenue-generating verticals and production systems. We skip theoretical delay and focus on shipping working software.
           </p>
           <div className="flex flex-col gap-3">
             <div className="text-[10px] font-pixel text-muted-foreground tracking-widest uppercase">
@@ -270,8 +270,8 @@ export default function PublicAboutPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] font-mono">
           <div className="p-4 rounded-xl border border-border/40 bg-card/25 backdrop-blur-sm flex items-center justify-between gap-4 shadow-sm hover:border-primary/20 transition-all">
             <div className="flex items-center gap-3 text-muted-foreground">
-              <CheckCircle2 className="h-4.5 w-4.5 text-emerald-400 shrink-0" />
-              <span>Launch Personal OS v1.0 Container</span>
+              <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+              <span>Launch Personal OS v0.45 Container</span>
             </div>
             <span className="text-emerald-400 font-bold px-1.5 py-0.5 rounded bg-emerald-500/5 border border-emerald-500/10 text-[9px]">
               [ COMPLETED ]
@@ -280,7 +280,7 @@ export default function PublicAboutPage() {
 
           <div className="p-4 rounded-xl border border-border/40 bg-card/25 backdrop-blur-sm flex items-center justify-between gap-4 shadow-sm hover:border-primary/20 transition-all">
             <div className="flex items-center gap-3 text-muted-foreground">
-              <CheckCircle2 className="h-4.5 w-4.5 text-emerald-400 shrink-0" />
+              <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
               <span>Publish 5 Systems Architecture Log files</span>
             </div>
             <span className="text-emerald-400 font-bold px-1.5 py-0.5 rounded bg-emerald-500/5 border border-emerald-500/10 text-[9px]">
@@ -290,7 +290,7 @@ export default function PublicAboutPage() {
 
           <div className="p-4 rounded-xl border border-border/40 bg-card/25 backdrop-blur-sm flex items-center justify-between gap-4 shadow-sm hover:border-primary/20 transition-all">
             <div className="flex items-center gap-3 text-muted-foreground">
-              <Circle className="h-4.5 w-4.5 text-primary shrink-0" />
+              <Circle className="h-4 w-4 text-primary shrink-0" />
               <span>Ship Experiment-002: Voice Personal OS</span>
             </div>
             <span className="text-primary font-bold px-1.5 py-0.5 rounded bg-primary/5 border border-primary/10 text-[9px]">
@@ -300,7 +300,7 @@ export default function PublicAboutPage() {
 
           <div className="p-4 rounded-xl border border-border/40 bg-card/25 backdrop-blur-sm flex items-center justify-between gap-4 shadow-sm hover:border-primary/20 transition-all">
             <div className="flex items-center gap-3 text-muted-foreground">
-              <Circle className="h-4.5 w-4.5 text-primary shrink-0" />
+              <Circle className="h-4 w-4 text-primary shrink-0" />
               <span>Grow local newsletter crew to 1K subscribers</span>
             </div>
             <span className="text-primary font-bold px-1.5 py-0.5 rounded bg-primary/5 border border-primary/10 text-[9px]">

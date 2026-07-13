@@ -148,7 +148,7 @@ export function Terminal({ title = 'warborn_telemetry.log', lines, className, sh
           '  | |/ |/ / _ `/ __/ / _ \\/ _ \\/ __/ _ \\   ',
           '  |__/|__/\\_,_/_/   /_.__/\\___/_/  \\___/   ',
           '  --------------------------------------   ',
-          '  OS      : Warborn OS v1.0.4',
+          '  OS      : Warborn OS v0.45',
           '  HOST    : buildwithpnj.studio',
           '  KERNEL  : Linux 6.1.0-py-agent',
           '  SHELL   : pnj-sh 2.0',

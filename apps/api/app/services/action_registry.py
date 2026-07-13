@@ -46,6 +46,73 @@ class ActionRegistry:
             "input_schema": {
                 "task_description": str
             }
+        },
+        "create_summary_note": {
+            "description": "Generates a summary of the current user conversation context.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "topic": str,
+                "notes": str
+            }
+        },
+        "generate_weekly_review": {
+            "description": "Aggregates learning metrics for the week.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "week_offset": int
+            }
+        },
+        "build_practice_plan": {
+            "description": "Assembles a custom checklist of correction practices.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": True,
+            "input_schema": {
+                "focus_area": str,
+                "num_tasks": int
+            }
+        },
+        "schedule_followup_check": {
+            "description": "Sets a timed callback for feedback reviews.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": True,
+            "input_schema": {
+                "due_hours": int
+            }
+        },
+        "update_reminder_preferences": {
+            "description": "Customizes frequency of notifications.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "frequency": str
+            }
+        },
+        "generate_contextual_coaching_prompt": {
+            "description": "Drafts a custom coaching prompt based on weakness areas.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "weakness": str
+            }
+        },
+        "create_parent_checkin_summary": {
+            "description": "Creates a study progress email report draft.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": True,
+            "input_schema": {
+                "parent_email": str,
+                "progress_percentage": int
+            }
+        },
+        "prepare_escalation_message_draft": {
+            "description": "Drafts an escalation message when confidence score drops.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": True,
+            "input_schema": {
+                "reason": str
+            }
         }
     }
 

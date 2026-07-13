@@ -1,0 +1,7 @@
+[
+  {
+    "tenant_id": "tenant_123",
+    "visibility_scope": "internal",
+    "expected_filters_count": 2
+  }
+]

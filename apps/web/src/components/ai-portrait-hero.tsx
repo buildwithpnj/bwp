@@ -1431,10 +1431,10 @@ export function AIPortraitHero() {
                 <FlowStackItem label="Voice AI • Automation" desc="Trigger logic routing pipelines" />
                 
                 {/* Product Stack Cards */}
-                <FlowCardItem label="AI Automation Platform" status="ACTIVE" desc="Workflow Trigger routing pipes." version="v1.0" />
-                <FlowCardItem label="Customer Support AI" status="ONLINE" desc="Multi-agent CRM ticket resolver." version="v1.8" />
-                <FlowCardItem label="Warborn OS" status="BUILDING" desc="Agentic desktop workspace." version="v0.2" color="bg-amber-500" />
-                <FlowCardItem label="AI Growth Agent" status="DEPLOYED" desc="Autonomous lead outreach engine." version="v2.1" />
+                <FlowCardItem label="AI Automation Platform" status="ACTIVE" desc="Workflow Trigger routing pipes." version="v0.10" />
+                <FlowCardItem label="Customer Support AI" status="ONLINE" desc="Multi-agent CRM ticket resolver." version="v0.18" />
+                <FlowCardItem label="Warborn OS" status="BUILDING" desc="Agentic desktop workspace." version="v0.45" color="bg-amber-500" />
+                <FlowCardItem label="AI Growth Agent" status="DEPLOYED" desc="Autonomous lead outreach engine." version="v0.21" />
               </div>
 
               {/* Hover secondary tech disclosures panel */}

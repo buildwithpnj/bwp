@@ -1,0 +1,7 @@
+[
+  {
+    "task_id": "eval_full_1",
+    "prompt": "run complete task loop",
+    "expected_status": "success"
+  }
+]

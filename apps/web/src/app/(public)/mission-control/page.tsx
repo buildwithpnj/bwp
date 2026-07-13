@@ -133,14 +133,14 @@ export default function PublicMissionControlPage() {
       }
     } else {
       // Fallback mock logs if git command is not available (e.g. serverless containers)
-      totalCommits = 880;
+      totalCommits = 947;
       commitsList = [
-        { hash: 'c2ab969', subject: sanitizeSubject('fix(api): replace asyncio.run() seeding with synchronous psycopg2 seed to eliminate event loop corruption on login'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
-        { hash: '21a52f5', subject: sanitizeSubject('fix(alembic): escape percent signs for configparser in env.py'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
-        { hash: '562c032', subject: sanitizeSubject('fix(api): disable statement cache in SQLAlchemy and Alembic for PgBouncer compatibility'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
-        { hash: '21c555e', subject: sanitizeSubject('feat(homepage): Module 2.3 — Propagate dynamic photo-synced colors globally across entire homepage'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
-        { hash: 'c00a210', subject: sanitizeSubject('feat(hero): Module 1.3 — Extract dominant pixel color from portrait and synchronize system glows'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' },
-        { hash: 'ca41b76', subject: sanitizeSubject('feat(telemetry): Implement SystemTelemetryTicker LED status bar and biometric laser sweep on about page'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' }
+        { hash: 'e45a2c4', subject: sanitizeSubject('feat(agent): V42-V45 Unified Looping Agent Orchestrator & Critic Reflection Runtime'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
+        { hash: 'd19c0a2', subject: sanitizeSubject('feat(knowledge): Recursive Directory Discovery pipeline (.py, .ts, .json, .yml) + SafeMarkdownRenderer Inline formatting'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
+        { hash: 'b39a2f1', subject: sanitizeSubject('fix(api): clean up duplicate governance_router mount from main.py and resolve route conflicts'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
+        { hash: 'a12c8b0', subject: sanitizeSubject('fix(action): implement IdempotencyGuard & JobEnqueuer in ActionExecutionService to pass lifecycle tests'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
+        { hash: '87f3b14', subject: sanitizeSubject('feat(version): normalize system version tags to 0.x layout globally across backend/UI'), author: 'buildwithpnj', date: '2026-07-13', project: 'Dashboard' },
+        { hash: 'c2ab969', subject: sanitizeSubject('fix(api): replace asyncio.run() seeding with synchronous psycopg2 seed to eliminate event loop corruption'), author: 'buildwithpnj', date: '2026-07-09', project: 'Dashboard' }
       ];
       heatmapCells = Array.from({ length: 52 * 7 }, (_, i) => {
         const factor = Math.sin(i / 15) * Math.cos(i / 30);
@@ -230,30 +230,30 @@ export default function PublicMissionControlPage() {
         <div className="lg:col-span-7 p-6 rounded-2xl border border-border bg-card flex flex-col gap-4">
           <h3 className="font-pixel text-xs text-foreground tracking-wider uppercase">{"// CURRENT FOCUS"}</h3>
           <div className="flex flex-col gap-1">
-            <h4 className="text-lg font-bold text-foreground leading-none">Personal OS — Homepage + Deployment</h4>
-            <span className="text-xs text-muted-foreground font-mono mt-1 block">Status: Active · Sprint 15 · Jul 9, 2026</span>
+            <h4 className="text-lg font-bold text-foreground leading-none">Personal OS — Advanced RAG Loop & Discovery</h4>
+            <span className="text-xs text-muted-foreground font-mono mt-1 block">Status: Active · Sprint 16 · Jul 13, 2026</span>
           </div>
 
           <div className="flex flex-col gap-3 font-mono text-xs text-muted-foreground bg-background p-4 rounded-xl border border-border">
             <div className="flex items-center gap-2">
               <span className="text-positive">☑</span>
-              <span>Canvas pixel color extraction → dynamic design system</span>
+              <span>Advanced RAG Loop orchestrator runtime (V42–V45)</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-positive">☑</span>
-              <span>SystemTelemetryTicker LED bar + project terminal sims</span>
+              <span>Recursive workspace directory indexer for Knowledge Base</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-positive">☑</span>
-              <span>Fix asyncio event loop corruption on Render deploy</span>
+              <span>FastAPI double router mount cleanup & action lifecycles</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-positive">☑</span>
-              <span>Live login verified for admin account</span>
+              <span>Version normalization pass to 0.x format</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">☐</span>
-              <span>Warborn OS dashboard full feature integration</span>
+              <span>Graph RAG entity-relation indexing pipeline integrations</span>
             </div>
           </div>
 

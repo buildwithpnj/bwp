@@ -17,6 +17,26 @@ from app.models.user_profile_memory import UserProfileMemory
 from app.models.learning_progress import LearningProgress
 from app.models.action_models import ActionDefinition, ActionLog, ActionApproval
 
+# V37-V39 Models
+from app.models.telemetry_event import TelemetryEvent
+from app.models.telemetry_metric_snapshot import TelemetryMetricSnapshot
+from app.models.anomaly_incident import AnomalyIncident
+from app.models.anomaly_correlation_link import AnomalyCorrelationLink
+from app.models.resilience_state import ResilienceState
+from app.models.degraded_mode_activation import DegradedModeActivation
+from app.models.recovery_transition import RecoveryTransition
+from app.models.ops_risk_snapshot import OpsRiskSnapshot
+from app.models.predictive_incident_signal import PredictiveIncidentSignal
+from app.models.pattern_regression_case import PatternRegressionCase
+
+# RAG Models
+from app.models.knowledge_document import KnowledgeDocument
+from app.models.knowledge_chunk import KnowledgeChunk
+from app.models.knowledge_source import KnowledgeSource
+from app.models.knowledge_index_run import KnowledgeIndexRun
+from app.models.retrieval_trace import RetrievalTrace
+from app.models.retrieval_feedback import RetrievalFeedback
+
 __all__ = [
     "Base",
     "TimestampMixin",
@@ -54,4 +74,24 @@ __all__ = [
     "ActionDefinition",
     "ActionLog",
     "ActionApproval",
+    
+    # V37-V39 Models
+    "TelemetryEvent",
+    "TelemetryMetricSnapshot",
+    "AnomalyIncident",
+    "AnomalyCorrelationLink",
+    "ResilienceState",
+    "DegradedModeActivation",
+    "RecoveryTransition",
+    "OpsRiskSnapshot",
+    "PredictiveIncidentSignal",
+    "PatternRegressionCase",
+    
+    # RAG Models
+    "KnowledgeDocument",
+    "KnowledgeChunk",
+    "KnowledgeSource",
+    "KnowledgeIndexRun",
+    "RetrievalTrace",
+    "RetrievalFeedback",
 ]

@@ -1,4 +1,4 @@
-from sqlalchemy import String, ForeignKey, JSON, Boolean, Text, DateTime
+from sqlalchemy import String, ForeignKey, JSON, Boolean, Text, DateTime, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import Base, TimestampMixin, UUIDMixin
 from datetime import datetime
@@ -25,6 +25,31 @@ class ActionLog(Base, UUIDMixin, TimestampMixin):
     approval_status: Mapped[str] = mapped_column(String(50), default="auto_approved")  # auto_approved, pending, approved, rejected
     error_message: Mapped[str] = mapped_column(Text, nullable=True)
     completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # V15 Lifecycle and Reliability columns
+    suggested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    queued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    execution_started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    failed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    rolled_back_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    max_retries: Mapped[int] = mapped_column(Integer, default=3, nullable=False)
+    last_error: Mapped[str] = mapped_column(Text, nullable=True)
+    
+    execution_status: Mapped[str] = mapped_column(String(50), default="suggested", nullable=False)
+    recovery_status: Mapped[str] = mapped_column(String(50), default="none", nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(255), nullable=True, index=True)
+
+    # V16 Queue/Worker columns
+    queued_job_id: Mapped[str] = mapped_column(String(255), nullable=True)
+    queue_name: Mapped[str] = mapped_column(String(255), nullable=True)
+    worker_id: Mapped[str] = mapped_column(String(255), nullable=True)
+    retry_scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    dead_lettered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    execution_source: Mapped[str] = mapped_column(String(50), default="api", nullable=False)
 
 class ActionApproval(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "action_approvals"

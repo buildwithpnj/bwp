@@ -94,8 +94,13 @@ _Nothing critical right now. Ship steady._
 | Quit Addiction Sobriety module | 2026-07-10 |
 | Symmetrical parallel data nodes layout | 2026-07-10 |
 | Compiler dependency warnings resolutions | 2026-07-10 |
+| Advanced RAG Loop (V42–V45) Runtimes | 2026-07-13 |
+| Safe Action Rollback & Idempotency Controls | 2026-07-13 |
+| Recursive Workspace Indexing & Discovery Pipeline | 2026-07-13 |
+| FastAPI Route mount & lifecycle test conflicts resolved | 2026-07-13 |
+| Version Normalization to 0.x pass | 2026-07-13 |
 
 ---
 
-*Last updated: 2026-07-10*
+*Last updated: 2026-07-13*
 

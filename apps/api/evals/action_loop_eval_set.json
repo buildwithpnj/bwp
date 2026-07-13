@@ -1,0 +1,7 @@
+[
+  {
+    "task_id": "eval_action_1",
+    "action": "create_note",
+    "policy": "safe_auto"
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "query": "policy sync configuration",
+    "expected_document_slug": "governance_sync_policy",
+    "expected_section": "root"
+  }
+]

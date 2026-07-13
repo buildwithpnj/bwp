@@ -1,0 +1,9 @@
+[
+  {
+    "task_id": "eval_graph_1",
+    "tenant_id": "tenant_123",
+    "query": "rollout validation checklist",
+    "expected_depth": 2,
+    "success_criteria": "retrieves both deployment gate policy and canary rollback configuration"
+  }
+]

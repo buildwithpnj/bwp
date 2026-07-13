@@ -12,6 +12,8 @@ import { QuickCapture } from '@/components/quick-capture';
 import { UploadCenter } from '@/components/upload-center';
 import { useUploadCenter } from '@/hooks/use-upload-center';
 import { cn } from '@/lib/utils';
+import { GlobalCopilotShell } from '@/components/copilot/GlobalCopilotShell';
+import { OperatingThreadBar } from '@/components/threads/OperatingThreadBar';
 
 export function AppLayoutClient({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -83,6 +85,7 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
         )}
       >
         <Header />
+        <OperatingThreadBar />
         <main className="p-4">{children}</main>
       </div>
 
@@ -91,6 +94,7 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
       <ShortcutCheatsheet />
       <QuickCapture />
       <UploadCenter />
+      <GlobalCopilotShell />
     </div>
   );
 }

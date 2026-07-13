@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { KnowledgeExplorer } from '@/components/knowledge/KnowledgeExplorer';
 import { 
   BookOpen, 
   Search, 
@@ -45,6 +46,95 @@ interface MarkdownRecord {
   description: string;
 }
 
+// Helper to render inline markdown styles like bold, italic, code, and links
+function renderInlineMarkdown(text: string): React.ReactNode[] {
+  const tokens: { type: 'text' | 'bold' | 'italic' | 'code' | 'link'; text: string; href?: string }[] = [];
+  
+  function tokenize(str: string) {
+    if (!str) return;
+    
+    const boldRegex = /\*\*([^*]+)\*\*/;
+    const italicRegex = /_([^_]+)_|\*([^*]+)\*/;
+    const codeRegex = /`([^`]+)`/;
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/;
+    
+    let earliestIdx = Infinity;
+    let matchType: 'bold' | 'italic' | 'code' | 'link' | null = null;
+    let match: RegExpExecArray | null = null;
+    
+    const boldMatch = boldRegex.exec(str);
+    if (boldMatch && boldMatch.index < earliestIdx) {
+      earliestIdx = boldMatch.index;
+      matchType = 'bold';
+      match = boldMatch;
+    }
+    
+    const italicMatch = italicRegex.exec(str);
+    if (italicMatch && italicMatch.index < earliestIdx) {
+      earliestIdx = italicMatch.index;
+      matchType = 'italic';
+      match = italicMatch;
+    }
+    
+    const codeMatch = codeRegex.exec(str);
+    if (codeMatch && codeMatch.index < earliestIdx) {
+      earliestIdx = codeMatch.index;
+      matchType = 'code';
+      match = codeMatch;
+    }
+    
+    const linkMatch = linkRegex.exec(str);
+    if (linkMatch && linkMatch.index < earliestIdx) {
+      earliestIdx = linkMatch.index;
+      matchType = 'link';
+      match = linkMatch;
+    }
+    
+    if (matchType === null || match === null) {
+      tokens.push({ type: 'text', text: str });
+      return;
+    }
+    
+    if (earliestIdx > 0) {
+      tokens.push({ type: 'text', text: str.substring(0, earliestIdx) });
+    }
+    
+    if (matchType === 'bold') {
+      tokens.push({ type: 'bold', text: match[1] });
+    } else if (matchType === 'italic') {
+      tokens.push({ type: 'italic', text: match[1] || match[2] });
+    } else if (matchType === 'code') {
+      tokens.push({ type: 'code', text: match[1] });
+    } else if (matchType === 'link') {
+      tokens.push({ type: 'link', text: match[1], href: match[2] });
+    }
+    
+    const remainingStr = str.substring(earliestIdx + match[0].length);
+    tokenize(remainingStr);
+  }
+  
+  tokenize(text);
+  
+  return tokens.map((token, idx) => {
+    switch (token.type) {
+      case 'bold':
+        return <strong key={idx} className="font-bold text-foreground">{token.text}</strong>;
+      case 'italic':
+        return <em key={idx} className="italic">{token.text}</em>;
+      case 'code':
+        return <code key={idx} className="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px] text-primary">{token.text}</code>;
+      case 'link':
+        return (
+          <a key={idx} href={token.href} className="text-primary hover:underline font-semibold" target="_blank" rel="noopener noreferrer">
+            {token.text}
+          </a>
+        );
+      default:
+        return <span key={idx}>{token.text}</span>;
+    }
+  });
+}
+
 // Custom Markdown renderer that compiles common markdown elements into standard React JSX elements.
 // This is used to render markdown safely and responsively on-the-fly without third-party dependencies.
 function SafeMarkdownRenderer({ content }: { content: string }) {
@@ -87,19 +177,19 @@ function SafeMarkdownRenderer({ content }: { content: string }) {
 
     // Render Headings
     if (line.startsWith('# ')) {
-      renderedElements.push(<h1 key={`h1-${i}`} className="text-xl sm:text-2xl font-black mt-6 mb-2 border-b border-border/40 pb-1 text-foreground">{line.slice(2)}</h1>);
+      renderedElements.push(<h1 key={`h1-${i}`} className="text-xl sm:text-2xl font-black mt-6 mb-2 border-b border-border/40 pb-1 text-foreground">{renderInlineMarkdown(line.slice(2))}</h1>);
       continue;
     }
     if (line.startsWith('## ')) {
-      renderedElements.push(<h2 key={`h2-${i}`} className="text-lg sm:text-xl font-bold mt-5 mb-2 text-foreground">{line.slice(3)}</h2>);
+      renderedElements.push(<h2 key={`h2-${i}`} className="text-lg sm:text-xl font-bold mt-5 mb-2 text-foreground">{renderInlineMarkdown(line.slice(3))}</h2>);
       continue;
     }
     if (line.startsWith('### ')) {
-      renderedElements.push(<h3 key={`h3-${i}`} className="text-sm sm:text-base font-bold mt-4 mb-1.5 text-foreground">{line.slice(4)}</h3>);
+      renderedElements.push(<h3 key={`h3-${i}`} className="text-sm sm:text-base font-bold mt-4 mb-1.5 text-foreground">{renderInlineMarkdown(line.slice(4))}</h3>);
       continue;
     }
     if (line.startsWith('#### ')) {
-      renderedElements.push(<h4 key={`h4-${i}`} className="text-xs sm:text-sm font-bold mt-3 mb-1 text-foreground">{line.slice(5)}</h4>);
+      renderedElements.push(<h4 key={`h4-${i}`} className="text-xs sm:text-sm font-bold mt-3 mb-1 text-foreground">{renderInlineMarkdown(line.slice(5))}</h4>);
       continue;
     }
 
@@ -107,7 +197,7 @@ function SafeMarkdownRenderer({ content }: { content: string }) {
     if (line.startsWith('> ')) {
       renderedElements.push(
         <blockquote key={`bq-${i}`} className="border-l-2 border-primary/50 pl-4 py-1 italic text-muted-foreground bg-secondary/15 rounded-r-lg my-2 text-xs">
-          {line.slice(2)}
+          {renderInlineMarkdown(line.slice(2))}
         </blockquote>
       );
       continue;
@@ -117,7 +207,7 @@ function SafeMarkdownRenderer({ content }: { content: string }) {
     if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
       renderedElements.push(
         <li key={`li-${i}`} className="text-xs sm:text-sm text-muted-foreground list-disc ml-5 my-1">
-          {line.trim().slice(2)}
+          {renderInlineMarkdown(line.trim().slice(2))}
         </li>
       );
       continue;
@@ -127,7 +217,7 @@ function SafeMarkdownRenderer({ content }: { content: string }) {
       continue;
     }
 
-    renderedElements.push(<p key={`p-${i}`} className="text-xs sm:text-sm text-muted-foreground leading-relaxed my-2">{line}</p>);
+    renderedElements.push(<p key={`p-${i}`} className="text-xs sm:text-sm text-muted-foreground leading-relaxed my-2">{renderInlineMarkdown(line)}</p>);
   }
 
   return <div className="space-y-1">{renderedElements}</div>;
@@ -141,7 +231,7 @@ export default function KnowledgeBasePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'updated' | 'created' | 'title' | 'wordCount' | 'readingTime'>('updated');
-  const [activeTab, setActiveTab] = useState<'browse' | 'health'>('browse');
+  const [activeTab, setActiveTab] = useState<'browse' | 'health' | 'rag'>('browse');
   const [rawMode, setRawMode] = useState(false);
 
   // Clipboard copy helpers
@@ -332,6 +422,12 @@ export default function KnowledgeBasePage() {
           >
             <Activity className="h-3.5 w-3.5" /> KNOWLEDGE HEALTH
           </button>
+          <button 
+            onClick={() => setActiveTab('rag')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${activeTab === 'rag' ? 'bg-background font-bold text-primary shadow' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            <HardDrive className="h-3.5 w-3.5" /> ADVANCED RETRIEVAL TRACES
+          </button>
         </div>
       </div>
 
@@ -340,6 +436,8 @@ export default function KnowledgeBasePage() {
           <div className="h-8 w-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
           <span className="font-mono text-xs text-muted-foreground uppercase tracking-widest">Scanning local documents...</span>
         </div>
+      ) : activeTab === 'rag' ? (
+        <KnowledgeExplorer />
       ) : activeTab === 'health' ? (
         /* KNOWLEDGE HEALTH VIEW */
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

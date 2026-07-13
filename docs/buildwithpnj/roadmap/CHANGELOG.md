@@ -5,6 +5,23 @@
 
 ---
 
+## [0.45] — 2026-07-13
+
+### 🎉 Advanced RAG Loop, Recursive Discovery, & Version Normalization
+
+This release unifies the brand and system dashboards under a consolidated version strategy, delivers the complete advanced multi-step RAG loop (V42–V45), and implements recursive multi-directory file indexing for the Knowledge Base.
+
+### Added
+- **Unified Looping Agent Runtime (V42–V45)** — Deployed the multi-step planner, reflection/critic gap corrector, safe tool action execution logs with rollback triggers, and runtime health evaluations.
+- **Recursive Workspace Indexer** — Next.js API scanner expanded to recursively discover `.py`, `.ts`, `.tsx`, `.json`, `.yml`, `.yaml`, and `.txt` files in scripts, packages, and api core folders.
+- **Inline Markdown Parser** — Built a regex-based inline tokenizer inside `SafeMarkdownRenderer` for bold, italic, code, and link rendering in dashboard wikis.
+- **Compatibility Redirects** — Added redirect paths for `/warborn-os` and `/systems` to prevent 404s.
+
+### Fixed
+- **FastAPI Duplicate Router Mount** — Fixed double mounting of `governance_router` in `apps/api/app/main.py`.
+- **Action Lifecycle Testing** — Restructured immediate write executions to correctly trigger idempotency validations and transition timestamps.
+- **Waitlist Form UX** — Added visual loaders and submitting states.
+
 ## [0.2.0] — 2026-07-10
 
 ### 🎉 Multi-Provider Google Storage, Life OS, & Telemetry Refinement

@@ -1,0 +1,7 @@
+[
+  {
+    "page_scope": "dashboard",
+    "query": "active alerts",
+    "expected_injected_query": "[dashboard] active alerts"
+  }
+]

@@ -99,7 +99,7 @@ export function PublicHeader() {
               >
                 PNJ
               </span>
-              <span className="absolute -top-1 -right-2 text-[7px] font-mono text-emerald-400 opacity-60 group-hover:opacity-100 transition-opacity">v1.2</span>
+              <span className="absolute -top-1 -right-2 text-[7px] font-mono text-emerald-400 opacity-60 group-hover:opacity-100 transition-opacity">v0.45</span>
             </div>
             <span className="hidden sm:inline font-mono text-[9px] text-muted-foreground mt-1.5 tracking-wider uppercase opacity-60 group-hover:opacity-100 transition-opacity">
               {"// AI_LABS"}

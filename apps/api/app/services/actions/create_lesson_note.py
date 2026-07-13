@@ -1,3 +1,4 @@
+import json
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any
 from app.models.notes import Note
@@ -10,11 +11,17 @@ class CreateLessonNoteAction:
         content = payload["content"]
         
         # Save note metadata in app models
-        note = Note(title=title, content=content)
+        note = Note(
+            user_id=user_id,
+            title=title,
+            body_json=json.dumps({"text": content}),
+            tags=""
+        )
         db.add(note)
-        await db.commit()
+        await db.flush()  # Populates note.id without final transaction commit yet
         
         return {
             "status": "success",
+            "note_id": note.id,
             "message": f"Successfully created lesson note: '{title}'"
         }

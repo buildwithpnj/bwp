@@ -27,7 +27,7 @@
 - [ ] Create `brand/assets/` with all logo variants
 - [ ] Design social media templates (Twitter/X, LinkedIn, GitHub)
 - [ ] Set up GitHub profile & organization (`buildwithpnj`)
-- [ ] Create brand landing page / portfolio website (see [WEBSITE_PRD.md](file:///c:/Users/praka/OneDrive/Documents/My%20dashboard/WEBSITE_PRD.md))
+- [ ] Create brand landing page / portfolio website (see [WEBSITE_PRD.md](file:///c:/Users/praka/OneDrive/Documents/My%20dashboard/docs/buildwithpnj/product/WEBSITE_PRD.md))
 
 ### Content
 
@@ -145,11 +145,12 @@
 | First blog post published | Jul 2026 | ✅ Completed |
 | Multi-Provider Storage Failover | Jul 2026 | ✅ Completed |
 | Google Calendar Sync Cache | Jul 2026 | ✅ Completed |
+| Advanced RAG Looping Agent (0.45) | Jul 2026 | ✅ Completed |
 | Product Hunt launch | Nov 2026 | 🔴 Planned |
 | Product #2 MVP | Jan 2027 | 🔴 Planned |
 | $1K MRR | Q2 2027 | 🔴 Planned |
 
 ---
 
-*Last updated: 2026-07-10*
+*Last updated: 2026-07-13*
 

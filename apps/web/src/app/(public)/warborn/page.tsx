@@ -10,14 +10,18 @@ import { PremiumPixelBackground } from '@/components/premium-pixel-background';
 
 export default function WarbornLandingPage() {
   const [emailInput, setEmailInput] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [waitlistSuccess, setWaitlistSuccess] = useState(false);
 
-  const handleWaitlistSubmit = (e: React.FormEvent) => {
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (emailInput.trim()) {
-      setWaitlistSuccess(true);
-      setEmailInput('');
-    }
+    if (!emailInput.trim()) return;
+    setIsSubmitting(true);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    console.log(`[Waitlist Ingestion] Registered email: ${emailInput}`);
+    setWaitlistSuccess(true);
+    setIsSubmitting(false);
+    setEmailInput('');
   };
 
   return (
@@ -202,16 +206,25 @@ export default function WarbornLandingPage() {
             <input
               type="email"
               required
+              disabled={isSubmitting}
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
               placeholder="Enter your developer email..."
-              className="flex-1 h-10 px-4 rounded-xl border border-border/40 bg-background/95 dark:bg-card/95 text-xs focus:outline-none focus:border-primary/50 text-foreground"
+              className="flex-1 h-10 px-4 rounded-xl border border-border/40 bg-background/95 dark:bg-card/95 text-xs focus:outline-none focus:border-primary/50 text-foreground disabled:opacity-50"
             />
             <button
               type="submit"
-              className="h-10 px-5 rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-xs transition-all"
+              disabled={isSubmitting}
+              className="h-10 px-5 rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {"Request Access"}
+              {isSubmitting ? (
+                <>
+                  <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin" />
+                  {"Submitting..."}
+                </>
+              ) : (
+                "Request Access"
+              )}
             </button>
           </form>
         )}

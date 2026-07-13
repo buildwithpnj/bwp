@@ -4,6 +4,7 @@ import { Search, Plus } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useShortcutStore } from '@/hooks/use-keyboard-shortcuts';
 import { usePathname } from 'next/navigation';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
 const pathNames: Record<string, string> = {
   '/': 'Home',
@@ -50,6 +51,9 @@ export function Header() {
       >
         <Plus className="h-4 w-4" />
       </button>
+
+      {/* Notifications feed alerts */}
+      <NotificationCenter />
 
       {/* Theme toggle */}
       <ThemeToggle />

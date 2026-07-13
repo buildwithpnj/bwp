@@ -3,6 +3,8 @@ from unittest.mock import AsyncMock, MagicMock
 from app.services.action_approval_service import ActionApprovalService
 from app.models.action_models import ActionApproval, ActionLog
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 @pytest.mark.asyncio
 async def test_action_approval_decide():
     db = AsyncMock()
@@ -19,8 +21,15 @@ async def test_action_approval_decide():
     
     db.execute.side_effect = [mock_app_res, mock_log_res]
     
-    ok = await ActionApprovalService.decide_approval(db, "app_123", approve=True)
-    assert ok is True
-    assert approval.status == "approved"
-    assert log.approval_status == "approved"
-    db.commit.assert_called_once()
+    with patch("app.services.job_enqueuer.JobEnqueuer.enqueue_action", AsyncMock()) as mock_enqueue:
+        ok = await ActionApprovalService.decide_approval(db, "app_123", approve=True)
+        assert ok is True
+        assert approval.status == "approved"
+        assert log.approval_status == "approved"
+        db.commit.assert_called()
+        mock_enqueue.assert_called_once_with(
+            action_log_id=log.id,
+            action_name=log.action_name,
+            user_id=log.user_id,
+            idempotency_key=log.idempotency_key
+        )

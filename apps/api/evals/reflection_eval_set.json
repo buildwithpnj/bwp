@@ -1,0 +1,8 @@
+[
+  {
+    "task_id": "eval_reflection_1",
+    "answer": "Dev B is fully active and correct.",
+    "grounded": false,
+    "expected_action": "abstain"
+  }
+]

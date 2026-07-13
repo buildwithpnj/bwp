@@ -1,0 +1,7 @@
+[
+  {
+    "task_id": "eval_planner_1",
+    "prompt": "sync Dev cluster B policies",
+    "expected_steps_count": 2
+  }
+]

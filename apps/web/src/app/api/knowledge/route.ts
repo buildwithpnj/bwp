@@ -70,7 +70,15 @@ export async function GET() {
     const scanDirs = [
       { path: path.join(rootPath, 'content'), category: 'content' },
       { path: path.join(rootPath, 'docs'), category: 'docs' },
+      { path: path.join(rootPath, 'scripts'), category: 'scripts' },
+      { path: path.join(rootPath, 'packages'), category: 'packages' },
+      { path: path.join(rootPath, 'apps/api/app/services'), category: 'backend-services' },
+      { path: path.join(rootPath, 'apps/api/app/routers'), category: 'backend-routers' },
+      { path: path.join(rootPath, 'apps/api/app/models'), category: 'backend-models' },
     ];
+
+    const allowedExtensions = ['.md', '.txt', '.py', '.ts', '.tsx', '.json', '.yml', '.yaml'];
+    const dirExclusions = ['node_modules', '.next', '.git', '.turbo', 'dist', 'build', 'public', 'brain', 'pnj photos', '__pycache__', '.venv', 'venv', 'cache'];
 
     function scanDir(dirPath: string, rootCategory: string) {
       if (!fs.existsSync(dirPath)) return;
@@ -80,27 +88,57 @@ export async function GET() {
         const fullPath = path.join(dirPath, entry.name);
         
         if (entry.isDirectory()) {
-          // Excludes standard dev and config folders
-          if (['node_modules', '.next', '.git', '.turbo', 'dist', 'build', 'public', 'packages', 'brain', 'pnj photos'].includes(entry.name)) {
+          if (dirExclusions.includes(entry.name)) {
             continue;
           }
           scanDir(fullPath, rootCategory);
-        } else if (entry.isFile() && entry.name.endsWith('.md')) {
-          try {
-            const rawContent = fs.readFileSync(fullPath, 'utf8');
-            const stats = fs.statSync(fullPath);
-            const { frontmatter, markdownContent } = parseFrontMatter(rawContent);
+        } else if (entry.isFile()) {
+          const ext = path.extname(entry.name).toLowerCase();
+          if (!allowedExtensions.includes(ext)) {
+            continue;
+          }
 
-            // Outlines parsing
-            const headings: { level: number; text: string; id: string }[] = [];
-            const lines = markdownContent.split('\n');
-            for (const line of lines) {
-              const match = line.match(/^(#{1,6})\s+(.+)$/);
-              if (match) {
-                const level = match[1].length;
-                const text = match[2].trim();
-                headings.push({ level, text, id: slugify(text) });
+          try {
+            let rawContent = fs.readFileSync(fullPath, 'utf8');
+            const stats = fs.statSync(fullPath);
+            
+            // Limit content size to keep payload scalable
+            if (rawContent.length > 50000) {
+              rawContent = rawContent.slice(0, 50000) + '\n\n... [Content truncated for scalability] ...';
+            }
+
+            let title = '';
+            let slug = '';
+            let markdownContent = rawContent;
+            let frontmatter: Record<string, any> = {};
+            let headings: { level: number; text: string; id: string }[] = [];
+            let tags: string[] = [];
+
+            if (ext === '.md') {
+              const parsed = parseFrontMatter(rawContent);
+              frontmatter = parsed.frontmatter;
+              markdownContent = parsed.markdownContent;
+
+              // Outlines parsing
+              const lines = markdownContent.split('\n');
+              for (const line of lines) {
+                const match = line.match(/^(#{1,6})\s+(.+)$/);
+                if (match) {
+                  const level = match[1].length;
+                  const text = match[2].trim();
+                  headings.push({ level, text, id: slugify(text) });
+                }
               }
+              title = frontmatter.title || entry.name.replace(/\.md$/, '').replace(/-/g, ' ');
+              slug = frontmatter.slug || slugify(title);
+              tags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [];
+            } else {
+              title = entry.name;
+              slug = slugify(entry.name);
+              const langTag = ext.slice(1);
+              tags = ['code', langTag];
+              if (rootCategory === 'packages') tags.push('shared-package');
+              if (rootCategory.startsWith('backend-')) tags.push('backend-core');
             }
 
             // Excerpt extraction
@@ -118,10 +156,6 @@ export async function GET() {
             const fileName = entry.name;
             const categoryFromFolder = path.dirname(relativePath);
 
-            const title = frontmatter.title || fileName.replace(/\.md$/, '').replace(/-/g, ' ');
-            const slug = frontmatter.slug || slugify(title);
-            const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [];
-            
             const words = markdownContent.split(/\s+/).filter(w => w.length > 0);
             const wordCount = words.length;
             const readingTime = Math.max(1, Math.ceil(wordCount / 200));
@@ -129,7 +163,7 @@ export async function GET() {
             const createdDate = frontmatter.date || new Date(stats.birthtimeMs).toISOString().split('T')[0];
             const updatedDate = new Date(stats.mtimeMs).toISOString().split('T')[0];
             const status = frontmatter.status || 'active';
-            const description = frontmatter.description || frontmatter.summary || '';
+            const description = frontmatter.description || frontmatter.summary || `${title} file from project structure.`;
 
             records.push({
               title,
@@ -167,8 +201,13 @@ export async function GET() {
         if (entry.isFile() && entry.name.endsWith('.md')) {
           const fullPath = path.join(rootPath, entry.name);
           try {
-            const rawContent = fs.readFileSync(fullPath, 'utf8');
+            let rawContent = fs.readFileSync(fullPath, 'utf8');
             const stats = fs.statSync(fullPath);
+            
+            if (rawContent.length > 50000) {
+              rawContent = rawContent.slice(0, 50000) + '\n\n... [Content truncated for scalability] ...';
+            }
+
             const { frontmatter, markdownContent } = parseFrontMatter(rawContent);
 
             const headings: { level: number; text: string; id: string }[] = [];
@@ -205,13 +244,13 @@ export async function GET() {
               content: markdownContent,
               excerpt,
               headings,
-              tags: Array.isArray(frontmatter.tags) ? frontmatter.tags : [],
+              tags: Array.isArray(frontmatter.tags) ? [...frontmatter.tags, 'root'] : ['root'],
               wordCount,
               readingTime: Math.max(1, Math.ceil(wordCount / 200)),
               createdDate: frontmatter.date || new Date(stats.birthtimeMs).toISOString().split('T')[0],
               updatedDate: new Date(stats.mtimeMs).toISOString().split('T')[0],
               status: frontmatter.status || 'active',
-              description: frontmatter.description || frontmatter.summary || ''
+              description: frontmatter.description || frontmatter.summary || `${title} root document.`
             });
           } catch (fileErr) {
             console.error(`Failed to index root file ${entry.name}:`, fileErr);

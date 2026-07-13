@@ -1,0 +1,6 @@
+[
+  {
+    "original_query": "sync",
+    "expected_expanded_query": "sync policy synchronization cluster drift"
+  }
+]

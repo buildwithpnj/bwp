@@ -1,0 +1,10 @@
+[
+  {
+    "stage": "retrieval",
+    "maximum_latency_budget_ms": 150.0
+  },
+  {
+    "stage": "rerank",
+    "maximum_latency_budget_ms": 100.0
+  }
+]

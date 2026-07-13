@@ -4,7 +4,18 @@ All notable changes to the BuildWithPNJ Dashboard are documented here.
 
 ---
 
-## [Unreleased] — 2026-07-10
+## [0.45] — 2026-07-13
+
+### Summary
+This release includes:
+1. **Unified Looping Agent (V42–V45)**: Integrated the full multi-step loop runtime (planner, reflection critics, safe execution rollbacks, and evaluations).
+2. **Recursive Workspace Discovery**: Next.js API scanner expanded to recursively index code and markdown files from `docs/`, `content/`, `scripts/`, `packages/`, and api services.
+3. **Markdown Rendering Hardening**: Integrated inline markdown tokenizing into `SafeMarkdownRenderer` for bold, italic, code, and links in the browser.
+4. **FastAPI Route Hardening**: Resolved a duplicate governance_router mount conflict.
+
+---
+
+## [0.2.0] — 2026-07-10
 
 ### Summary
 This release focused on:
