@@ -1,0 +1,19 @@
+{
+  "test_cases": [
+    {
+      "id": "CASE-001",
+      "prompt": "sync my habits routines",
+      "expected_tools": ["search", "read_file"]
+    },
+    {
+      "id": "CASE-002",
+      "prompt": "save a practice grammar lesson notes",
+      "expected_tools": ["write_action"]
+    },
+    {
+      "id": "CASE-003",
+      "prompt": "query the overall telemetry dashboard",
+      "expected_tools": ["search"]
+    }
+  ]
+}

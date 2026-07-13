@@ -228,11 +228,12 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
             await websocket.receive_text()
     except WebSocketDisconnect:
         WebSocketManager.disconnect(websocket)
-
 from app.storage.routes import router as storage_router
 app.include_router(storage_router)
 
-
+# Local LLM diagnostics
+from app.routers.llm_diagnostics_router import router as llm_diagnostics_router
+app.include_router(llm_diagnostics_router)
 
 @app.get("/api/health")
 async def health():

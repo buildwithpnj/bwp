@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Menu, X, Command, Github } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { ProviderBadge } from './agent/ProviderBadge';
 
 interface NavLink {
   label: string;
@@ -110,6 +111,11 @@ export function PublicHeader() {
           <span className="hidden lg:inline-flex items-center gap-1.5 font-mono text-[8px] text-muted-foreground/80 px-2 py-0.5 rounded border border-border/30 dark:bg-secondary/30 bg-secondary/70 ml-4 uppercase tracking-widest">
             <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
             SYSTEM ONLINE
+          </span>
+
+          {/* Provider Connection Badge */}
+          <span className="hidden lg:inline-flex ml-2">
+            <ProviderBadge />
           </span>
         </div>
 

@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { LocalRunHealthPanel } from '@/components/agent/LocalRunHealthPanel';
+import { ProviderFailurePanel } from '@/components/agent/ProviderFailurePanel';
 
 export const metadata = {
   title: 'Mission Control',
@@ -518,6 +520,12 @@ export default function PublicMissionControlPage() {
           </div>
         </div>
 
+      </div>
+
+      {/* ROW 4: Local Inference Diagnostics Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <LocalRunHealthPanel />
+        <ProviderFailurePanel />
       </div>
 
     </div>
