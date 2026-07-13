@@ -8,12 +8,6 @@ from app.services.idempotency_guard import IdempotencyGuard, DuplicateRequestExc
 from app.services.job_enqueuer import JobEnqueuer
 from datetime import datetime, timezone
 
-# Import all individual action executers
-from app.services.actions.save_corrected_example import SaveCorrectedExampleAction
-from app.services.actions.create_lesson_note import CreateLessonNoteAction
-from app.services.actions.update_preference import UpdatePreferenceAction
-from app.services.actions.mark_pattern_mastered import MarkPatternMasteredAction
-from app.services.actions.create_followup_practice import CreateFollowupPracticeAction
 
 class ActionExecutionService:
     @classmethod
@@ -104,12 +98,40 @@ class ActionExecutionService:
 
     @classmethod
     async def execute_log_action(cls, db: AsyncSession, log: ActionLog) -> Dict[str, Any]:
+        from app.services.actions.save_corrected_example import SaveCorrectedExampleAction
+        from app.services.actions.create_lesson_note import CreateLessonNoteAction
+        from app.services.actions.update_preference import UpdatePreferenceAction
+        from app.services.actions.mark_pattern_mastered import MarkPatternMasteredAction
+        from app.services.actions.create_followup_practice import CreateFollowupPracticeAction
+        from app.services.actions.create_note import CreateNoteAction
+        from app.services.actions.update_note import UpdateNoteAction
+        from app.services.actions.create_task import CreateTaskAction
+        from app.services.actions.update_task import UpdateTaskAction
+        from app.services.actions.complete_task import CompleteTaskAction
+        from app.services.actions.create_project_item import CreateProjectItemAction
+        from app.services.actions.update_project_item import UpdateProjectItemAction
+        from app.services.actions.create_calendar_event import CreateCalendarEventAction
+        from app.services.actions.create_memory_item import CreateMemoryItemAction
+        from app.services.actions.search_knowledge import SearchKnowledgeAction
+        from app.services.actions.get_recent_updates import GetRecentUpdatesAction
+
         executors: Dict[str, Any] = {
             "save_corrected_example": SaveCorrectedExampleAction,
             "create_lesson_note": CreateLessonNoteAction,
             "update_preference": UpdatePreferenceAction,
             "mark_pattern_mastered": MarkPatternMasteredAction,
-            "create_followup_practice": CreateFollowupPracticeAction
+            "create_followup_practice": CreateFollowupPracticeAction,
+            "create_note": CreateNoteAction,
+            "update_note": UpdateNoteAction,
+            "create_task": CreateTaskAction,
+            "update_task": UpdateTaskAction,
+            "complete_task": CompleteTaskAction,
+            "create_project_item": CreateProjectItemAction,
+            "update_project_item": UpdateProjectItemAction,
+            "create_calendar_event": CreateCalendarEventAction,
+            "create_memory_item": CreateMemoryItemAction,
+            "search_knowledge": SearchKnowledgeAction,
+            "get_recent_updates": GetRecentUpdatesAction
         }
 
         executor = executors.get(log.action_name)

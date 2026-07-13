@@ -16,6 +16,7 @@ from app.models.governance import AccessRequest, PreviewSession, SystemConfig, A
 from app.models.user_profile_memory import UserProfileMemory
 from app.models.learning_progress import LearningProgress
 from app.models.action_models import ActionDefinition, ActionLog, ActionApproval
+from app.models.project_item import ProjectItem
 
 # V37-V39 Models
 from app.models.telemetry_event import TelemetryEvent
@@ -74,6 +75,7 @@ __all__ = [
     "ActionDefinition",
     "ActionLog",
     "ActionApproval",
+    "ProjectItem",
     
     # V37-V39 Models
     "TelemetryEvent",

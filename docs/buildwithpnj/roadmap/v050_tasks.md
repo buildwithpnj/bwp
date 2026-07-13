@@ -1,0 +1,31 @@
+# Task Checklist - Warborn OS V0.50 Release
+
+- `[x]` Phase 1: Action Surface Audit
+  - `[x]` Create `app/services/action_capability_audit_service.py`
+  - `[x]` Create `app/services/action_registry_inspector.py`
+  - `[x]` Create `app/services/live_action_diagnostics_service.py`
+  - `[x]` Create `tests/test_action_capability_audit.py`
+- `[x]` Phase 2: Action Contract Hardening
+  - `[x]` Update `app/services/action_registry.py` with missing actions
+  - `[x]` Re-architect `app/services/action_contract_validator.py`
+  - `[x]` Update `app/services/action_result_verifier.py`
+  - `[x]` Create `app/services/action_persistence_guard.py`
+  - `[x]` Create tests for contract validator & verifier
+- `[x]` Phase 3: Professional Response Layer
+  - `[x]` Create `app/services/action_response_formatter.py`
+  - `[x]` Create `app/services/copilot_response_style_service.py`
+  - `[x]` Create `app/services/user_facing_outcome_renderer.py`
+  - `[x]` Create `app/services/error_explanation_service.py`
+- `[x]` Phase 4: Live Action Coverage Expansion
+  - `[x]` Create `app/models/project_item.py` database model & run Alembic migration
+  - `[x]` Create `app/services/project_action_service.py`
+  - `[x]` Create `app/services/calendar_action_service.py`
+  - `[x]` Create `app/services/memory_action_service.py`
+- `[x]` Phase 5: Loop Runtime Integration
+  - `[x]` Integrate state checkers into `app/services/full_loop_runtime.py` and criticize claims
+- `[x]` Phase 6: UI Result States (Next.js components)
+  - `[x]` Create `ActionResultCard.tsx` and custom hooks
+- `[x]` Phase 7: Live/Local Mode Split
+  - `[x]` Create runtime mode config
+- `[x]` Phase 8-9: Observability, telemetry & Evals
+  - `[x]` Run evaluations and verify all 10 release gates

@@ -5,6 +5,22 @@
 
 ---
 
+## [0.50] — 2026-07-14
+
+### 🎉 Live Action Reliability, Professional Response Layer, and Full Looping Fix Pass
+
+This release ships the production-grade V0.50 action runtime, introducing strict contract hardening, database transaction verifications, professional styling filters, live execution modes, and visual result cards on the Next.js frontend.
+
+### Added
+- **Dynamic Schema Validator** — Refactored action contract checks to dynamically validate incoming payloads against registry input schemas.
+- **Database Verifier** — Created action result verifiers to actively query persistent database tables before presenting successes.
+- **Professional Formatting Layer** — Deployed standardized status, action, result, scope, and next steps structured blocks, and built a filter to purge casual filler language.
+- **Visual Outcome Cards** — Integrated Next.js ActionResultCards inside the Copilot drawer.
+- **Live/Local Mode Split** — Supported environment-aware execution mode routing.
+
+### Fixed
+- **Ngrok Tunnel Verification** — Bypassed Ollama's host verification using host header rewrites and ngrok skip browser warnings.
+
 ## [0.45] — 2026-07-13
 
 ### 🎉 Advanced RAG Loop, Recursive Discovery, & Version Normalization

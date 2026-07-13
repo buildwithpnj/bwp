@@ -22,6 +22,101 @@ class ActionRegistry:
                 "content": str
             }
         },
+        "create_note": {
+            "description": "Creates a new workspace note.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "title": str,
+                "content": str
+            }
+        },
+        "update_note": {
+            "description": "Updates an existing note's title and content.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "note_id": str,
+                "title": str,
+                "content": str
+            }
+        },
+        "create_task": {
+            "description": "Creates a new operational task.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "title": str
+            }
+        },
+        "update_task": {
+            "description": "Updates task status and progress.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "task_id": str,
+                "status": str
+            }
+        },
+        "complete_task": {
+            "description": "Marks a task as completed.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "task_id": str
+            }
+        },
+        "create_project_item": {
+            "description": "Creates a new project item tracking entry.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "name": str
+            }
+        },
+        "update_project_item": {
+            "description": "Updates a project item's status.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "project_id": str,
+                "status": str
+            }
+        },
+        "create_calendar_event": {
+            "description": "Creates a new calendar event entry.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "title": str,
+                "start_time": str,
+                "end_time": str
+            }
+        },
+        "create_memory_item": {
+            "description": "Adds a fact or trait to user memory.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "fact": str
+            }
+        },
+        "search_knowledge": {
+            "description": "Searches the workspace knowledge base.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "query": str
+            }
+        },
+        "get_recent_updates": {
+            "description": "Retrieves recent changes across modules.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "requires_approval": False,
+            "input_schema": {
+                "limit": int
+            }
+        },
         "update_preference": {
             "description": "Updates tone, explanation style, target level, or language support preferences.",
             "allowed_roles": ["approved_user", "internal_admin"],
@@ -113,6 +208,12 @@ class ActionRegistry:
             "input_schema": {
                 "reason": str
             }
+        },
+        "delete_all_files": {
+            "description": "Deletes all files in the system.",
+            "allowed_roles": ["internal_admin"],
+            "requires_approval": True,
+            "input_schema": {}
         }
     }
 

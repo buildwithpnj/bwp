@@ -115,6 +115,16 @@ class FullLoopRuntime:
             
             # Enforce tool execution safety policies
             if tool == "write_action":
+                from app.services.action_contract_validator import ActionContractValidator
+                from app.services.action_persistence_guard import ActionPersistenceGuard
+                
+                # Mock action details for loop execution checks
+                action_name = target if target else "create_task"
+                mock_payload = {"title": "Loop task"} if action_name == "create_task" else {"name": "Loop project"}
+                
+                is_valid, err_val = ActionContractValidator.validate_action_contract(action_name, mock_payload)
+                is_safe, err_safe = ActionPersistenceGuard.validate_write_safety(action_name, mock_payload)
+                
                 if not ToolPolicyGuard.is_tool_allowed(tool, "write"):
                     logger.warning(f"Unsafe write action '{target}' blocked by ToolPolicyGuard.")
                     steps_log.append({
@@ -122,6 +132,22 @@ class FullLoopRuntime:
                         "tool": tool,
                         "query_or_path": target,
                         "status": "blocked_unsafe"
+                    })
+                elif not is_valid:
+                    logger.warning(f"Write action contract validation failed: {err_val}")
+                    steps_log.append({
+                        "step_index": step_idx,
+                        "tool": tool,
+                        "query_or_path": target,
+                        "status": "failed_contract"
+                    })
+                elif not is_safe:
+                    logger.warning(f"Write action safety policy blocked: {err_safe}")
+                    steps_log.append({
+                        "step_index": step_idx,
+                        "tool": tool,
+                        "query_or_path": target,
+                        "status": "blocked_policy"
                     })
                 else:
                     steps_log.append({

@@ -1,26 +1,31 @@
 from typing import Dict, Any, Tuple
+from app.services.action_registry import ActionRegistry
 
 class ActionContractValidator:
     @classmethod
-    def validate_create_contract(cls, payload: Dict[str, Any]) -> Tuple[bool, str]:
+    def validate_action_contract(cls, action_name: str, payload: Dict[str, Any]) -> Tuple[bool, str]:
         """
-        Validates payload structure and fields types.
+        Validates payload structure dynamically using ActionRegistry.ACTIONS schema definitions.
         """
         if not isinstance(payload, dict):
             return False, "Payload must be a dictionary object."
-
-        if "title" not in payload:
-            return False, "Missing required key: 'title'"
-
-        if not isinstance(payload["title"], str):
-            return False, "Field 'title' must be a string."
-
-        if "description" in payload and payload["description"] is not None:
-            if not isinstance(payload["description"], str):
-                return False, "Field 'description' must be a string."
-
-        if "category" in payload and payload["category"] is not None:
-            if not isinstance(payload["category"], str):
-                return False, "Field 'category' must be a string."
-
+            
+        action = ActionRegistry.get_action(action_name)
+        if not action:
+            return False, f"Action '{action_name}' is not registered."
+            
+        schema = action["input_schema"]
+        for key, expected_type in schema.items():
+            if key not in payload:
+                return False, f"Missing required parameter: '{key}'"
+            if payload[key] is not None and not isinstance(payload[key], expected_type):
+                return False, f"Parameter '{key}' must be of type {expected_type.__name__}."
+                
         return True, "Contract check passed"
+
+    @classmethod
+    def validate_create_contract(cls, payload: Dict[str, Any]) -> Tuple[bool, str]:
+        """
+        Backwards compatibility helper for validating task creation payloads.
+        """
+        return cls.validate_action_contract("create_task", payload)

@@ -99,8 +99,11 @@ _Nothing critical right now. Ship steady._
 | Recursive Workspace Indexing & Discovery Pipeline | 2026-07-13 |
 | FastAPI Route mount & lifecycle test conflicts resolved | 2026-07-13 |
 | Version Normalization to 0.x pass | 2026-07-13 |
+| Warborn OS V0.50 Live Action Layer Hardening | 2026-07-14 |
+| Warborn OS V0.50 Professional Response Layer | 2026-07-14 |
+| Warborn OS V0.50 ActionResultCard Visual States | 2026-07-14 |
 
 ---
 
-*Last updated: 2026-07-13*
+*Last updated: 2026-07-14*
 

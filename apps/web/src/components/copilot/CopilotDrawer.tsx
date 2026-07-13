@@ -11,6 +11,7 @@ import { PresenceHint } from './PresenceHint';
 import { SuggestedActionsStrip } from './SuggestedActionsStrip';
 import { ContextSnapshotCard } from './ContextSnapshotCard';
 import { SmartEntryPrompt } from './SmartEntryPrompt';
+import { ActionResultCard, isStructuredResponse } from './ActionResultCard';
 
 interface CopilotDrawerProps {
   isOpen: boolean;
@@ -111,7 +112,11 @@ export function CopilotDrawer({
                 : 'bg-muted text-foreground'
             )}
           >
-            <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+            {msg.role === 'assistant' && isStructuredResponse(msg.content) ? (
+              <ActionResultCard content={msg.content} />
+            ) : (
+              <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+            )}
             {msg.suggested_action && (
               <div className="mt-2 pt-2 border-t border-border/20 text-[10px] opacity-90 font-medium">
                 Action: {msg.suggested_action.action_name}
