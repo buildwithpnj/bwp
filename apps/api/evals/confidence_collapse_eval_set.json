@@ -1,0 +1,8 @@
+{
+  "test_cases": [
+    {
+      "id": "COLLAPSE-001",
+      "prompt": "force a confidence decay collapse under 0.4 threshold"
+    }
+  ]
+}

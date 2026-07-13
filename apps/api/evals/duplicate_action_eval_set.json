@@ -1,0 +1,8 @@
+{
+  "test_cases": [
+    {
+      "id": "DUP-001",
+      "prompt": "execute save_note twice to test duplicate action gate"
+    }
+  ]
+}

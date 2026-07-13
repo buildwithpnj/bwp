@@ -1,0 +1,8 @@
+{
+  "test_cases": [
+    {
+      "id": "RESUME-001",
+      "prompt": "interrupted execution test to resume from step 2"
+    }
+  ]
+}

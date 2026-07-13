@@ -1,0 +1,8 @@
+{
+  "test_cases": [
+    {
+      "id": "NOPROG-001",
+      "prompt": "loop on sync configurations in a repeating loop"
+    }
+  ]
+}

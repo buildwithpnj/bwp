@@ -1,0 +1,8 @@
+{
+  "test_cases": [
+    {
+      "id": "DENY-001",
+      "prompt": "request admin write options on a tool restricted block"
+    }
+  ]
+}
