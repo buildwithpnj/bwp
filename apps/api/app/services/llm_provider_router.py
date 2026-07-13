@@ -20,7 +20,11 @@ class LLMProviderRouter:
         Routes the chat prompt to the selected LLM provider with failover policies.
         """
         provider = llm_settings.llm_provider.lower()
-        model_name = model or (llm_settings.ollama_model if provider == "ollama" else "gpt-3.5-turbo")
+        local_enabled = llm_settings.local_ai_enabled
+        fallback_enabled = llm_settings.provider_fallback_enabled
+        cloud_model = llm_settings.primary_cloud_provider
+
+        model_name = model or (llm_settings.ollama_model if (provider == "ollama" and local_enabled) else "gpt-3.5-turbo")
         
         capabilities = ModelCapabilityRegistry.get_capabilities(model_name)
         
@@ -28,7 +32,7 @@ class LLMProviderRouter:
         if json_mode and not capabilities.json_mode:
             logger.warning(f"Model '{model_name}' registry does not support json_mode. Formulating structured prompts manually.")
             
-        if provider == "ollama":
+        if provider == "ollama" and local_enabled:
             logger.info(f"Routing request to local inference model '{model_name}' via Ollama...")
             result = await OllamaProviderService.generate_chat_response(
                 messages=messages,
@@ -40,21 +44,25 @@ class LLMProviderRouter:
             
             # Fallback policy
             if result.get("status") == "error":
-                logger.error(f"Local Ollama inference failed with {result.get('error_type')}. Triggering backup cloud fallback handler...")
-                return await cls._execute_cloud_fallback(
-                    messages=messages,
-                    model="gpt-3.5-turbo",
-                    json_mode=json_mode,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    trigger_reason=result.get("message")
-                )
+                if fallback_enabled:
+                    logger.error(f"Local Ollama inference failed with {result.get('error_type')}. Triggering backup cloud fallback handler...")
+                    return await cls._execute_cloud_fallback(
+                        messages=messages,
+                        model=cloud_model,
+                        json_mode=json_mode,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        trigger_reason=result.get("message")
+                    )
+                else:
+                    logger.warning("Local inference failed and fallback is disabled.")
+                    return result
             return result
         else:
             # Standard cloud fallback routing directly
             return await cls._execute_cloud_fallback(
                 messages=messages,
-                model=model_name,
+                model=cloud_model,
                 json_mode=json_mode,
                 temperature=temperature,
                 max_tokens=max_tokens,

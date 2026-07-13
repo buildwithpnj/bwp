@@ -21,12 +21,14 @@ class LoopDecisionService:
             return "stop_budget_exhausted"
 
         # 2. Confidence collapse check
-        confidence = state.get("confidence", 1.0)
-        if confidence < 0.4:
-            return "stop_confidence_collapse"
+        from app.llm_settings import llm_settings
+        if llm_settings.confidence_collapse_protection:
+            confidence = state.get("confidence", 1.0)
+            if confidence < 0.4:
+                return "stop_confidence_collapse"
 
         # 3. No-progress check (detect consecutive duplicate actions or queries)
-        if len(steps) >= 2:
+        if llm_settings.no_progress_stop_enabled and len(steps) >= 2:
             last_step = steps[-1]
             prev_step = steps[-2]
             

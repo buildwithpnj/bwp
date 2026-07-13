@@ -14,9 +14,17 @@ class FinalGroundingGuard:
         evidence_chunks: List[Dict[str, Any]],
         base_confidence: float
     ) -> Dict[str, Any]:
-        """
-        Validates final answer grounding support, blocks unsupported claims, and sets final confidence.
-        """
+        # Check if grounding guard is enabled
+        from app.llm_settings import llm_settings
+        if not llm_settings.grounding_guard_enabled:
+            logger.info("Grounding guard checks disabled by configuration settings.")
+            return {
+                "answer": answer,
+                "citations": [],
+                "grounded": True,
+                "confidence": base_confidence
+            }
+
         # If no evidence chunks exist, block claims immediately
         if not evidence_chunks:
             logger.warning("Zero evidence chunks provided. Activating UnsupportedClaimBlocker.")

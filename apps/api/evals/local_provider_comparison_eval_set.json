@@ -1,16 +1,9 @@
 {
   "test_cases": [
     {
-      "id": "COMP-001",
-      "prompt": "How do we handle OAuth token expiration in google drive storage?"
-    },
-    {
-      "id": "COMP-002",
-      "prompt": "List all active financial budgets categories in personal os database."
-    },
-    {
-      "id": "COMP-003",
-      "prompt": "Explain the role schema migration constraint backfill steps."
+      "id": "COMPARE-001",
+      "prompt": "evaluate semantic mapping consistency between local llama3 and cloud gpt-4o",
+      "models": ["llama3", "gpt-4o"]
     }
   ]
 }

@@ -61,7 +61,27 @@ class FullLoopRuntime:
         Asynchronous engine coordinating multi-step loops, grounding checkers, and state checkpoints.
         """
         # 1. Initialize budget service and trace state
-        budget = StepBudgetService(max_steps=max_steps, time_limit_sec=time_budget_sec)
+        from app.llm_settings import llm_settings
+        if llm_settings.tenant_guards_enabled:
+            if not tenant_id or tenant_id == "blocked_tenant":
+                logger.error("Tenant validation guard: blocked unauthorized tenant access.")
+                return {
+                    "state_id": "unauthorized",
+                    "final_answer": "Access Denied: Blocked unauthorized tenant context.",
+                    "status": "failed",
+                    "stop_reason": "stop_tenant_guard",
+                    "citations": [],
+                    "grounded": False,
+                    "confidence": 0.0,
+                    "steps_taken": 0,
+                    "elapsed_time": 0.0,
+                    "cost": 0.0,
+                    "health_metrics": {"score": 0.0, "latency_ms": 0.0, "status": "unhealthy"}
+                }
+
+        steps_limit = llm_settings.loop_max_steps
+        retries_limit = llm_settings.loop_max_retries
+        budget = StepBudgetService(max_steps=steps_limit, max_retries=retries_limit, time_limit_sec=time_budget_sec)
         state_id = LoopStateStore.initialize_state(prompt, tenant_id)
         
         steps_log: List[Dict[str, Any]] = []

@@ -46,12 +46,18 @@ class ActionExecutionService:
             return {"status": "failed", "error": "Unauthorized role context."}
 
         # 5. Idempotency guard — block duplicate in-flight or succeeded executions
-        try:
-            idempotency_key, is_new = await IdempotencyGuard.validate_and_gate(
-                db, user_id, action_name, payload
-            )
-        except DuplicateRequestException as e:
-            return {"status": "failed", "error": f"Duplicate request: {str(e)}", "idempotency_blocked": True}
+        from app.llm_settings import llm_settings
+        idempotency_key = None
+        if llm_settings.idempotency_guard_enabled:
+            try:
+                idempotency_key, is_new = await IdempotencyGuard.validate_and_gate(
+                    db, user_id, action_name, payload
+                )
+            except DuplicateRequestException as e:
+                return {"status": "failed", "error": f"Duplicate request: {str(e)}", "idempotency_blocked": True}
+        else:
+            import uuid
+            idempotency_key = str(uuid.uuid4())
 
         # 6. Create durable execution audit log with lifecycle timestamps
         log = ActionLog(
@@ -69,7 +75,7 @@ class ActionExecutionService:
         await db.refresh(log)
 
         # 7. Check manual approval rules
-        if action["requires_approval"]:
+        if llm_settings.approval_gates_enabled and action["requires_approval"]:
             log.approval_status = "pending"
             log.execution_status = ActionExecutionStatus.PENDING_APPROVAL
             await db.commit()
@@ -138,7 +144,8 @@ class ActionExecutionService:
         from app.services.rollback_service import RollbackService
 
         policy = ActionPolicyRegistry.get_policy(action_name)
-        if policy == "confirm_first":
+        from app.llm_settings import llm_settings
+        if policy == "confirm_first" and llm_settings.approval_gates_enabled:
             if not ApprovalGateService.is_approved(action_name):
                 return {"status": "pending_approval", "action": action_name}
                 
