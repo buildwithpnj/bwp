@@ -55,6 +55,7 @@ interface Breadcrumb {
 }
 
 export default function StoragePage() {
+  const [vaultView, setVaultView] = useState<'files' | 'media' | 'infrastructure'>('files');
   // Provider states
   const [providers, setProviders] = useState<StorageProvider[]>([]);
   const [isConfigured, setIsConfigured] = useState(false);
@@ -382,216 +383,241 @@ export default function StoragePage() {
   const isFolder = (mimeType: string) => mimeType === 'application/vnd.google-apps.folder';
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in text-foreground">
+    <div className="space-y-6 animate-fade-in text-pnj-textStrong font-sans">
       {/* ─── SYSTEM HEADER ────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between border border-border/80 rounded-2xl bg-card/45 p-6 grid-dots gap-4">
+      <div className="flex items-center justify-between border-b border-border pb-3">
         <div>
-          <span className="text-3xs font-bold uppercase tracking-[0.25em] text-primary">System Infrastructure</span>
-          <h1 className="text-2xl font-bold tracking-tight mt-1 flex items-center gap-2">
-            <HardDrive className="h-7 w-7 text-primary animate-pulse" />
-            Storage Manager
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Dynamic file classification, backup, and storage node capacity manager.
-          </p>
+          <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase font-bold">SYSTEM_VAULT // v0.51.0</span>
+          <h1 className="text-xl font-bold tracking-tight mt-0.5">THE VAULT</h1>
         </div>
-
-        <div className="flex items-center gap-3 flex-wrap">
-          {providers.filter(p => p.connected).map(p => (
-            <span key={p.id} className="text-xs text-muted-foreground border border-border bg-card/50 rounded-full px-3 py-1 flex items-center gap-1.5 font-mono">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-              Drive {p.provider_label}
-            </span>
+        <div className="flex gap-2">
+          {['files', 'media', 'infrastructure'].map((view) => (
+            <button
+              key={view}
+              onClick={() => setVaultView(view as any)}
+              className={`px-3 py-1 border transition-colors uppercase font-mono font-bold text-[10px] ${
+                vaultView === view
+                  ? 'text-primary border-primary bg-primary/5'
+                  : 'text-muted-foreground border-border hover:border-muted-foreground'
+              }`}
+            >
+              {view}
+            </button>
           ))}
         </div>
       </div>
 
-      {/* ─── STORAGE OVERVIEW PANEL ───────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Drive A (Primary) */}
-        {(() => {
-          const provA = providers.find(p => p.provider_label === 'A');
-          return (
-            <div className="rounded-xl border border-border bg-card/30 p-5 flex flex-col justify-between space-y-4">
+      {/* ─── INFRASTRUCTURE VIEW ───────────────────────────── */}
+      {vaultView === 'infrastructure' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Drive A (Primary) */}
+            {(() => {
+              const provA = providers.find(p => p.provider_label === 'A');
+              return (
+                <div className="border border-border bg-card p-5 flex flex-col justify-between space-y-4 font-mono text-xs">
+                  <div>
+                    <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold">Primary Drive</span>
+                      <span className={`text-[10px] font-bold ${
+                        provA?.connected ? 'text-emerald-400' : 'text-muted-foreground'
+                      }`}>
+                        {provA?.connected ? 'ONLINE' : 'OFFLINE'}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-bold mt-3 text-foreground">GOOGLE_DRIVE_A</h3>
+                    <p className="text-3xs text-muted-foreground mt-1 truncate">{provA?.account_email || 'Not connected'}</p>
+                    <p className="text-2xs text-muted-foreground mt-2 font-sans leading-relaxed">Stores docs, notes, databases, and AI memory contexts.</p>
+                  </div>
+
+                  <div className="pt-2">
+                    <div className="flex justify-between text-3xs text-muted-foreground mb-1">
+                      <span>Quota: 2.1 TB Free</span>
+                      <span>Max: 5.0 TB</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-border rounded-none overflow-hidden">
+                      <div className="h-full bg-primary" style={{ width: '58%' }} />
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      {provA?.connected ? (
+                        <button
+                          onClick={() => handleDisconnect(provA.id)}
+                          className="w-full border border-red-500/35 hover:bg-red-500/10 px-3 py-1.5 text-2xs font-semibold text-red-400 transition-colors flex items-center justify-center gap-1 uppercase"
+                        >
+                          <Link2Off className="h-3 w-3" /> Disconnect
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleConnect}
+                          className="w-full bg-primary hover:bg-primary/90 px-3 py-1.5 text-2xs font-semibold text-primary-foreground transition-colors flex items-center justify-center gap-1 uppercase"
+                        >
+                          <Link2 className="h-3 w-3" /> Connect
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Drive B (Assets) */}
+            {(() => {
+              const provB = providers.find(p => p.provider_label === 'B');
+              return (
+                <div className="border border-border bg-card p-5 flex flex-col justify-between space-y-4 font-mono text-xs">
+                  <div>
+                    <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold">Assets Drive</span>
+                      <span className={`text-[10px] font-bold ${
+                        provB?.connected ? 'text-primary' : 'text-muted-foreground'
+                      }`}>
+                        {provB?.connected ? 'ONLINE' : 'OFFLINE'}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-bold mt-3 text-foreground">GOOGLE_DRIVE_B</h3>
+                    <p className="text-3xs text-muted-foreground mt-1 truncate">{provB?.account_email || 'Not connected'}</p>
+                    <p className="text-2xs text-muted-foreground mt-2 font-sans leading-relaxed">Secondary backup storage node for logs, images, and archives.</p>
+                  </div>
+
+                  <div className="pt-2">
+                    <div className="flex justify-between text-3xs text-muted-foreground mb-1">
+                      <span>Quota: 4.6 TB Free</span>
+                      <span>Max: 5.0 TB</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-border rounded-none overflow-hidden">
+                      <div className="h-full bg-primary" style={{ width: '8%' }} />
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      {provB?.connected ? (
+                        <button
+                          onClick={() => handleDisconnect(provB.id)}
+                          className="w-full border border-red-500/35 hover:bg-red-500/10 px-3 py-1.5 text-2xs font-semibold text-red-400 transition-colors flex items-center justify-center gap-1 uppercase"
+                        >
+                          <Link2Off className="h-3 w-3" /> Disconnect
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleConnectB}
+                          className="w-full bg-primary hover:bg-primary/90 px-3 py-1.5 text-2xs font-semibold text-primary-foreground transition-colors flex items-center justify-center gap-1 uppercase"
+                        >
+                          <Link2 className="h-3 w-3" /> Connect
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Total Storage Summary */}
+            <div className="border border-border bg-card p-5 flex flex-col justify-between space-y-4 font-mono text-xs">
               <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-3xs font-bold uppercase tracking-wider text-muted-foreground">Primary Drive</span>
-                  <span className={`rounded-full px-2 py-0.5 text-3xs font-bold font-mono ${
-                    provA?.connected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {provA?.connected ? 'ONLINE' : 'OFFLINE'}
-                  </span>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold">Aggregated Quotas</span>
+                <h3 className="text-sm font-bold mt-3 text-foreground">TOTAL_POOLS</h3>
+                <p className="text-2xs text-muted-foreground mt-1 font-sans">Sum of all connected storage node free capacities.</p>
+                
+                <div className="mt-4 space-y-2 text-2xs">
+                  <div className="flex justify-between border-b border-border/40 pb-1.5">
+                    <span className="text-muted-foreground">Available Space:</span>
+                    <span className="font-bold text-foreground">6.7 TB Available</span>
+                  </div>
+                  <div className="flex justify-between border-b border-border/40 pb-1.5">
+                    <span className="text-muted-foreground">Encryption Status:</span>
+                    <span className="font-bold text-emerald-400">Fernet Crypt active</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Sync Engine:</span>
+                    <span className="font-bold text-foreground">Alembic-head compliant</span>
+                  </div>
                 </div>
-                <h3 className="text-sm font-bold mt-2">Google Drive A</h3>
-                <p className="text-3xs text-muted-foreground font-mono mt-1 truncate">{provA?.account_email || 'Not connected'}</p>
-                <p className="text-2xs text-muted-foreground mt-2">Used to store documents, notes, databases, and AI memory contexts.</p>
               </div>
 
-              <div className="pt-2">
-                <div className="flex justify-between text-3xs font-mono text-muted-foreground mb-1">
-                  <span>Quota: 2.1 TB Free</span>
-                  <span>Max: 5.0 TB</span>
-                </div>
-                <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-primary" style={{ width: '58%' }} />
-                </div>
-                <div className="mt-4 flex gap-2">
-                  {provA?.connected ? (
-                    <button
-                      onClick={() => handleDisconnect(provA.id)}
-                      className="w-full rounded-lg border border-destructive/30 hover:bg-destructive/10 px-3 py-1.5 text-2xs font-semibold text-destructive transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Link2Off className="h-3 w-3" /> Disconnect
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleConnect}
-                      className="w-full rounded-lg bg-primary hover:bg-primary/90 px-3 py-1.5 text-2xs font-semibold text-primary-foreground transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Link2 className="h-3 w-3" /> Connect
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Drive B (Assets) */}
-        {(() => {
-          const provB = providers.find(p => p.provider_label === 'B');
-          return (
-            <div className="rounded-xl border border-border bg-card/30 p-5 flex flex-col justify-between space-y-4">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-3xs font-bold uppercase tracking-wider text-muted-foreground">Assets Drive</span>
-                  <span className={`rounded-full px-2 py-0.5 text-3xs font-bold font-mono ${
-                    provB?.connected ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-muted text-muted-foreground border border-border'
-                  }`}>
-                    {provB?.connected ? 'ONLINE' : 'OFFLINE'}
-                  </span>
-                </div>
-                <h3 className="text-sm font-bold mt-2">Google Drive B</h3>
-                <p className="text-3xs text-muted-foreground font-mono mt-1 truncate">{provB?.account_email || 'Not connected'}</p>
-                <p className="text-2xs text-muted-foreground mt-2">Secondary backup storage node for images, logs, videos, and archives.</p>
-              </div>
-
-              <div className="pt-2">
-                <div className="flex justify-between text-3xs font-mono text-muted-foreground mb-1">
-                  <span>Quota: 4.6 TB Free</span>
-                  <span>Max: 5.0 TB</span>
-                </div>
-                <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500" style={{ width: '8%' }} />
-                </div>
-                <div className="mt-4 flex gap-2">
-                  {provB?.connected ? (
-                    <button
-                      onClick={() => handleDisconnect(provB.id)}
-                      className="w-full rounded-lg border border-destructive/30 hover:bg-destructive/10 px-3 py-1.5 text-2xs font-semibold text-destructive transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Link2Off className="h-3 w-3" /> Disconnect
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleConnectB}
-                      className="w-full rounded-lg bg-blue-600 hover:bg-blue-500 px-3 py-1.5 text-2xs font-semibold text-white transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Link2 className="h-3 w-3" /> Connect
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Total Storage Summary */}
-        <div className="rounded-xl border border-border bg-card/30 p-5 flex flex-col justify-between space-y-4">
-          <div>
-            <span className="text-3xs font-bold uppercase tracking-wider text-muted-foreground">Aggregated Quotas</span>
-            <h3 className="text-sm font-bold mt-2">Total Storage Pools</h3>
-            <p className="text-2xs text-muted-foreground mt-1">Sum of all connected storage node free capacities.</p>
-            
-            <div className="mt-4 space-y-2 font-mono text-2xs">
-              <div className="flex justify-between border-b border-border/40 pb-1.5">
-                <span className="text-muted-foreground">Available Space:</span>
-                <span className="font-bold text-foreground">6.7 TB Available</span>
-              </div>
-              <div className="flex justify-between border-b border-border/40 pb-1.5">
-                <span className="text-muted-foreground">Encryption Status:</span>
-                <span className="font-bold text-emerald-400">Fernet Crypt active</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Sync Engine:</span>
-                <span className="font-bold text-foreground">Alembic-head compliant</span>
+              <div className="border border-border/80 p-3 text-3xs text-muted-foreground flex flex-col gap-1">
+                <span className="font-bold text-foreground uppercase tracking-wider">Sync Status:</span>
+                <span>All local database tables aligned to Drive A root folder.</span>
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg bg-muted/20 border border-border/80 p-3 text-3xs text-muted-foreground flex flex-col gap-1">
-            <span className="font-bold text-foreground uppercase tracking-wider">Sync Status:</span>
-            <span>All local database tables aligned to Drive A root folder.</span>
+          {/* Sync status nodes */}
+          {isConnected && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {['notes', 'finance', 'books', 'habits'].map((section) => (
+                <div key={section} className="border border-border bg-card p-4 flex flex-col justify-between gap-3 font-mono text-xs text-left">
+                  <div>
+                    <h3 className="text-xs font-bold text-foreground capitalize flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-primary"></span>
+                      {section} Sync
+                    </h3>
+                    <p className="text-3xs text-muted-foreground mt-1 font-sans leading-relaxed">
+                      Backup local {section} database records or restore from Drive.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleSyncSection(section)}
+                      disabled={syncing[section]}
+                      className="flex-1 border border-border hover:border-primary px-2.5 py-1 text-3xs text-foreground font-semibold text-center hover:bg-primary/5 transition-colors disabled:opacity-50 inline-flex justify-center items-center gap-1 uppercase"
+                    >
+                      {syncing[section] ? (
+                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                      ) : (
+                        'Backup'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleRestoreSection(section)}
+                      disabled={restoring[section]}
+                      className="flex-1 bg-primary hover:bg-primary/95 px-2.5 py-1 text-3xs text-primary-foreground font-semibold text-center transition-colors disabled:opacity-50 inline-flex justify-center items-center gap-1 uppercase"
+                    >
+                      {restoring[section] ? (
+                        <Loader2 className="h-3 w-3 animate-spin text-primary-foreground" />
+                      ) : (
+                        'Restore'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── MEDIA GALLERY VIEW ───────────────────────────── */}
+      {vaultView === 'media' && (
+        <div className="border border-border bg-card p-5 space-y-4 font-mono text-xs">
+          <div className="flex items-center justify-between border-b border-border/40 pb-2">
+            <span className="text-[10px] text-muted-foreground uppercase font-bold">MEDIA_LIBRARY_INDEX</span>
+            <span className="text-[10px] text-emerald-400">8 FILES FOUND</span>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[
+              { name: 'architecture_diagram.png', size: '1.2 MB', type: 'IMAGE' },
+              { name: 'gating_flowchart.jpg', size: '890 KB', type: 'IMAGE' },
+              { name: 'telemetry_run_screencast.mp4', size: '14.5 MB', type: 'VIDEO' },
+              { name: 'system_alert_ping.wav', size: '120 KB', type: 'AUDIO' }
+            ].map((media, i) => (
+              <div key={i} className="border border-border/60 bg-muted/10 p-3 flex flex-col justify-between min-h-[140px] relative">
+                <div className="flex-1 flex items-center justify-center bg-background border border-border/40 mb-2 h-20 text-[10px] text-muted-foreground">
+                  [{media.type}] PREVIEW
+                </div>
+                <div>
+                  <span className="block truncate text-foreground font-bold text-3xs">{media.name.toUpperCase()}</span>
+                  <span className="text-[9px] text-muted-foreground block mt-0.5">{media.size}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
-
-      {/* ─── GOOGLE DRIVE SYNC PANEL ───────────────────────────── */}
-      {isConnected && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {['notes', 'finance', 'books', 'habits'].map((section) => (
-            <div key={section} className="rounded-xl border border-border bg-card/45 p-4 flex flex-col justify-between gap-3 text-left">
-              <div>
-                <h3 className="text-xs font-bold text-foreground capitalize flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-primary"></span>
-                  {section} Sync
-                </h3>
-                <p className="text-3xs text-muted-foreground mt-1">
-                  Backup local {section} database records to Google Drive or restore from cloud.
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleSyncSection(section)}
-                  disabled={syncing[section]}
-                  className="flex-1 rounded border border-border hover:border-primary px-2.5 py-1 text-3xs text-foreground font-semibold text-center hover:bg-primary/5 transition-colors disabled:opacity-50 inline-flex justify-center items-center gap-1"
-                >
-                  {syncing[section] ? (
-                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                  ) : (
-                    'Backup'
-                  )}
-                </button>
-                <button
-                  onClick={() => handleRestoreSection(section)}
-                  disabled={restoring[section]}
-                  className="flex-1 rounded bg-primary hover:bg-primary/95 px-2.5 py-1 text-3xs text-primary-foreground font-semibold text-center transition-colors disabled:opacity-50 inline-flex justify-center items-center gap-1"
-                >
-                  {restoring[section] ? (
-                    <Loader2 className="h-3 w-3 animate-spin text-primary-foreground" />
-                  ) : (
-                    'Restore'
-                  )}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
       )}
 
-      {/* Loading Indicator */}
-      {loading && files.length === 0 && (
-        <div className="flex min-h-[30vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      )}
-
-      {/* ─── CONNECTED STORAGE BROWSER ────────────────────────── */}
-      {isConnected && (
-        <div className="flex flex-col gap-4 border border-border rounded-xl bg-card p-4 shadow-sm">
-          
+      {/* ─── FILES BROWSER VIEW ───────────────────────────── */}
+      {vaultView === 'files' && (
+        <div className="border border-border bg-card p-4 flex flex-col gap-4">
           {/* Operations Bar */}
-          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between border-b border-border pb-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between border-b border-border/40 pb-4">
             {/* Search */}
             <form onSubmit={handleSearch} className="relative w-full sm:w-80">
               <input
@@ -599,14 +625,14 @@ export default function StoragePage() {
                 placeholder="Search files..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-md border border-border bg-background py-1.5 pl-8 pr-8 text-sm outline-none focus:border-primary transition-colors text-foreground"
+                className="w-full rounded-none border border-border bg-background py-1.5 pl-8 pr-8 text-xs outline-none focus:border-primary transition-colors text-foreground font-mono"
               />
               <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={clearSearch}
-                  className="absolute right-2.5 top-2.5 text-xs text-muted-foreground hover:text-foreground"
+                  className="absolute right-2.5 top-2 text-xs text-muted-foreground hover:text-foreground font-mono"
                 >
                   Clear
                 </button>
@@ -614,10 +640,10 @@ export default function StoragePage() {
             </form>
 
             {/* Folder Actions */}
-            <div className="flex gap-2 w-full sm:w-auto justify-end">
+            <div className="flex gap-2 w-full sm:w-auto justify-end font-mono">
               <button
                 onClick={() => setShowFolderModal(true)}
-                className="rounded-md border border-border bg-card hover:bg-accent px-3 py-1.5 text-xs font-semibold text-foreground flex items-center gap-1.5 transition-colors"
+                className="border border-border bg-card hover:bg-accent px-3 py-1.5 text-3xs font-bold text-foreground flex items-center gap-1.5 transition-colors uppercase"
               >
                 <FolderPlus className="h-3.5 w-3.5" />
                 New Folder
@@ -625,7 +651,7 @@ export default function StoragePage() {
               <button
                 onClick={handleUploadClick}
                 disabled={isUploading}
-                className="rounded-md bg-primary hover:bg-primary/90 px-3 py-1.5 text-xs font-semibold text-primary-foreground flex items-center gap-1.5 transition-colors"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 text-3xs font-bold flex items-center gap-1.5 transition-colors uppercase"
               >
                 {isUploading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -645,20 +671,20 @@ export default function StoragePage() {
 
           {/* Upload Progress Alert */}
           {isUploading && uploadProgress && (
-            <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 text-xs text-primary flex items-center gap-2">
+            <div className="border border-primary/20 bg-primary/5 p-3 text-xs text-primary flex items-center gap-2 font-mono">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               {uploadProgress}
             </div>
           )}
 
           {/* Breadcrumb Path */}
-          <div className="flex items-center gap-1 flex-wrap text-xs font-medium text-muted-foreground py-1 bg-muted/30 px-2 rounded-md">
+          <div className="flex items-center gap-1 flex-wrap text-xs font-mono text-muted-foreground py-1 bg-muted/10 px-2">
             {breadcrumbs.map((crumb, idx) => (
               <div key={crumb.id} className="flex items-center gap-1">
                 {idx > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />}
                 <button
                   onClick={() => handleBreadcrumbClick(crumb, idx)}
-                  className={`hover:text-foreground transition-colors ${
+                  className={`hover:text-foreground transition-colors uppercase ${
                     idx === breadcrumbs.length - 1 ? 'text-foreground font-semibold' : ''
                   }`}
                 >
@@ -673,18 +699,18 @@ export default function StoragePage() {
             )}
             <button
               onClick={() => loadFiles(currentFolder, searchQuery)}
-              className="ml-auto p-1 hover:bg-accent rounded-full transition-colors text-muted-foreground hover:text-foreground"
+              className="ml-auto p-1 hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
               title="Refresh list"
             >
               <RefreshCw className="h-3 w-3" />
             </button>
           </div>
 
-          {/* Directory Files Grid/List */}
+          {/* Directory Files List */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-border text-muted-foreground font-medium select-none">
+                <tr className="border-b border-border text-muted-foreground font-medium select-none font-mono">
                   <th className="py-2.5 pl-2 font-semibold">Name</th>
                   <th className="py-2.5 font-semibold hidden md:table-cell">Modified</th>
                   <th className="py-2.5 font-semibold text-right pr-6 hidden sm:table-cell">Size</th>
@@ -694,7 +720,7 @@ export default function StoragePage() {
               <tbody>
                 {files.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-12 text-center text-muted-foreground">
+                    <td colSpan={4} className="py-12 text-center text-muted-foreground font-mono">
                       This folder is empty.
                     </td>
                   </tr>
@@ -702,7 +728,7 @@ export default function StoragePage() {
                   files.map((file) => (
                     <tr
                       key={file.id}
-                      className="border-b border-border/50 hover:bg-muted/40 transition-colors group"
+                      className="border-b border-border/50 hover:bg-muted/40 transition-colors group font-mono"
                     >
                       <td className="py-3 pl-2 max-w-xs md:max-w-md truncate">
                         {isFolder(file.mimeType) ? (
@@ -711,22 +737,23 @@ export default function StoragePage() {
                             className="flex items-center gap-3 text-left font-medium hover:text-primary hover:underline outline-none text-foreground"
                           >
                             {getFileIcon(file.mimeType)}
-                            <span className="truncate">{file.name}</span>
+                            <span className="truncate">{file.name.toUpperCase()}</span>
                           </button>
                         ) : (
                           <div className="flex items-center gap-3 text-muted-foreground">
                             {getFileIcon(file.mimeType)}
-                            <span className="truncate font-medium text-foreground">{file.name}</span>
+                            <span className="truncate font-medium text-foreground">{file.name.toUpperCase()}</span>
                           </div>
                         )}
                       </td>
-                      <td className="py-3 text-muted-foreground hidden md:table-cell">
+                      <td className="py-3 text-muted-foreground hidden md:table-cell text-3xs">
                         {new Date(file.modifiedTime).toLocaleDateString(undefined, {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric',
                           hour: '2-digit',
                           minute: '2-digit',
+                          hour12: false
                         })}
                       </td>
                       <td className="py-3 text-right pr-6 text-muted-foreground hidden sm:table-cell">
@@ -764,10 +791,10 @@ export default function StoragePage() {
       {/* New Folder Modal */}
       {showFolderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-lg">
+          <div className="w-full max-w-sm border border-border bg-card p-6 rounded-none font-mono text-xs">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <FolderPlus className="h-4 w-4 text-primary" />
-              Create New Folder
+              CREATE NEW FOLDER
             </h3>
             <form onSubmit={handleCreateFolder} className="mt-4 flex flex-col gap-4">
               <input
@@ -776,7 +803,7 @@ export default function StoragePage() {
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 required
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-primary text-foreground"
+                className="w-full rounded-none border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-primary text-foreground"
                 autoFocus
               />
               <div className="flex justify-end gap-2 text-xs font-semibold">
@@ -786,14 +813,14 @@ export default function StoragePage() {
                     setShowFolderModal(false);
                     setNewFolderName('');
                   }}
-                  className="rounded-md border border-border px-3 py-1.5 text-foreground hover:bg-accent transition-colors"
+                  className="border border-border px-3 py-1.5 text-foreground hover:bg-accent transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isCreatingFolder}
-                  className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground hover:bg-primary/95 transition-colors flex items-center gap-1"
+                  className="bg-primary px-3 py-1.5 text-primary-foreground hover:bg-primary/95 transition-colors flex items-center gap-1 uppercase"
                 >
                   {isCreatingFolder && <Loader2 className="h-3 w-3 animate-spin" />}
                   Create

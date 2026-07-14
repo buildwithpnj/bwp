@@ -36,6 +36,7 @@ interface NoteDetail extends Note {
 }
 
 export default function NotesPage() {
+  const [cortexView, setCortexView] = useState<'notes' | 'knowledge' | 'memory'>('notes');
   const [notes, setNotes] = useState<Note[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
@@ -267,228 +268,291 @@ export default function NotesPage() {
         return trimmed ? `<p class="mb-2 leading-relaxed text-[13.5px] text-foreground/90">${line}</p>` : '<div class="h-2"></div>';
       })
       .join('\n');
-
     return html;
   };
 
   return (
-    <div className="flex h-[calc(100vh-80px)] overflow-hidden border border-border rounded-xl bg-card shadow-sm" id="notes-module">
-      
-      {/* 1. Left Notes List Panel */}
-      <div className="w-64 border-r border-border flex flex-col bg-card/50">
-        
-        {/* Panel Header */}
-        <div className="p-3 border-b border-border flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-              <StickyNote className="h-4 w-4 text-primary" />
-              Notes
-            </h2>
-            <button
-              onClick={handleCreateNote}
-              className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-              title="New Note"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Search */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search notes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-md border border-border bg-background py-1 pl-7 pr-3 text-xs outline-none focus:border-primary text-foreground"
-            />
-            <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-          </div>
+    <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden border border-border bg-card rounded-none" id="cortex-workspace">
+      {/* Cortex Header Bar */}
+      <div className="flex items-center justify-between border-b border-border bg-muted/10 px-4 py-2 font-mono text-xs">
+        <div className="flex items-center gap-1">
+          <span className="text-primary font-bold">CORTEX //</span>
+          <span className="text-muted-foreground uppercase">{cortexView}_INDEX</span>
         </div>
-
-        {/* List Content */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {loadingList && notes.length === 0 ? (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            </div>
-          ) : notes.length === 0 ? (
-            <p className="text-center text-xs text-muted-foreground py-10">
-              No notes found
-            </p>
-          ) : (
-            notes.map((note) => {
-              const isSelected = note.id === selectedNoteId;
-              return (
-                <div
-                  key={note.id}
-                  onClick={() => selectNote(note.id)}
-                  className={`group flex flex-col gap-1 rounded-md px-2.5 py-2 text-left cursor-pointer transition-colors ${
-                    isSelected
-                      ? 'bg-primary/10 text-primary'
-                      : 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-[13px] font-medium truncate block w-full text-foreground">
-                      {note.title || 'Untitled Note'}
-                    </span>
-                    <button
-                      onClick={(e) => handleDeleteNote(note.id, e)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-opacity"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-3xs text-muted-foreground font-mono">
-                    <span>
-                      {new Date(note.updated_at).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                    {note.tags && (
-                      <span className="truncate max-w-[100px] border border-border px-1 rounded-sm bg-muted/40 text-[10px]">
-                        {note.tags}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          )}
+        <div className="flex gap-2">
+          {['notes', 'knowledge', 'memory'].map((view) => (
+            <button
+              key={view}
+              onClick={() => setCortexView(view as any)}
+              className={`px-3 py-1 border transition-colors uppercase font-bold text-[10px] ${
+                cortexView === view
+                  ? 'text-primary border-primary bg-primary/5'
+                  : 'text-muted-foreground border-border hover:border-muted-foreground'
+              }`}
+            >
+              {view}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* 2. Right Note Editor Panel */}
-      <div className="flex-1 flex flex-col bg-background/25">
-        {loadingDetail ? (
-          <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : !selectedNoteId || !noteDetail ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
-            <StickyNote className="h-12 w-12 mb-4 text-muted-foreground/45" />
-            <h3 className="text-sm font-semibold text-foreground">No Note Selected</h3>
-            <p className="text-xs max-w-xs mt-1">
-              Select an existing note from the sidebar list, or click the **Plus (+)** button to start writing.
-            </p>
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Editor Top Bar (Controls / Status) */}
-            <div className="px-4 py-2 border-b border-border flex items-center justify-between bg-card/65">
-              {/* Tab Toggles */}
-              <div className="flex gap-1.5 border border-border p-0.5 rounded bg-muted/30">
-                <button
-                  onClick={() => setActiveTab('edit')}
-                  className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold transition-colors ${
-                    activeTab === 'edit'
-                      ? 'bg-card text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Edit3 className="h-3.5 w-3.5" />
-                  Edit
-                </button>
-                <button
-                  onClick={() => setActiveTab('preview')}
-                  className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold transition-colors ${
-                    activeTab === 'preview'
-                      ? 'bg-card text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <BookOpen className="h-3.5 w-3.5" />
-                  Preview
-                </button>
-              </div>
+      <div className="flex flex-1 overflow-hidden">
+        {cortexView === 'notes' && (
+          <div className="flex flex-1 overflow-hidden">
+            {/* 1. Left Notes List Panel */}
+            <div className="w-64 border-r border-border flex flex-col bg-card/50">
+              
+              {/* Panel Header */}
+              <div className="p-3 border-b border-border flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                    <StickyNote className="h-4 w-4 text-primary" />
+                    Notes
+                  </h2>
+                  <button
+                    onClick={handleCreateNote}
+                    className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                    title="New Note"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
 
-              {/* Auto-save Status Indicator */}
-              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-                {saveStatus === 'saving' && (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                    <span>Saving...</span>
-                  </>
-                )}
-                {saveStatus === 'saved' && (
-                  <>
-                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
-                    <span className="text-emerald-500">Saved</span>
-                  </>
-                )}
-                {saveStatus === 'error' && (
-                  <>
-                    <AlertCircle className="h-3.5 w-3.5 text-destructive" />
-                    <span className="text-destructive">Save Failed</span>
-                  </>
-                )}
-                {!saveStatus && <span>No changes</span>}
-              </div>
-            </div>
-
-            {/* Note Fields Input */}
-            <div className="p-4 border-b border-border flex flex-col gap-3 bg-card/30">
-              <input
-                type="text"
-                placeholder="Title your note..."
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full text-lg font-bold bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground/60"
-              />
-
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Tag className="h-3.5 w-3.5" />
-                <input
-                  type="text"
-                  placeholder="Add comma-separated tags..."
-                  value={editTags}
-                  onChange={(e) => setEditTags(e.target.value)}
-                  className="bg-transparent border-none outline-none text-foreground flex-1 placeholder:text-muted-foreground/60"
-                />
-              </div>
-            </div>
-
-            {/* Active Mode (Edit vs Preview) */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col">
-              {activeTab === 'edit' ? (
-                <textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  placeholder="Write your note content here (Markdown & backlinks [[Link Title]] supported)..."
-                  className="flex-1 w-full bg-transparent border-none resize-none outline-none text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/50 font-mono"
-                />
-              ) : (
-                <div
-                  onClick={handlePreviewClick}
-                  dangerouslySetInnerHTML={{ __html: renderMarkdown(editContent) }}
-                  className="prose dark:prose-invert max-w-none text-sm break-words outline-none text-foreground"
-                />
-              )}
-            </div>
-
-            {/* Obsidian Backlinks Footer */}
-            {noteDetail.backlinks && noteDetail.backlinks.length > 0 && (
-              <div className="border-t border-border p-3 bg-muted/20 text-xs">
-                <h4 className="font-semibold text-muted-foreground mb-1.5 flex items-center gap-1">
-                  <Link className="h-3 w-3" />
-                  Backlinks ({noteDetail.backlinks.length})
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {noteDetail.backlinks.map((link) => (
-                    <button
-                      key={link.id}
-                      onClick={() => selectNote(link.id)}
-                      className="px-2.5 py-1 border border-border hover:border-primary hover:text-primary rounded-md bg-card transition-colors flex items-center gap-1 font-medium"
-                    >
-                      <FileText className="h-3 w-3" />
-                      {link.title}
-                    </button>
-                  ))}
+                {/* Search */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search notes..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background py-1 pl-7 pr-3 text-xs outline-none focus:border-primary text-foreground"
+                  />
+                  <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                 </div>
               </div>
+
+              {/* List Content */}
+              <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                {loadingList && notes.length === 0 ? (
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  </div>
+                ) : notes.length === 0 ? (
+                  <p className="text-center text-xs text-muted-foreground py-10">
+                    No notes found
+                  </p>
+                ) : (
+                  notes.map((note) => {
+                    const isSelected = note.id === selectedNoteId;
+                    return (
+                      <div
+                        key={note.id}
+                        onClick={() => selectNote(note.id)}
+                        className={`group flex flex-col gap-1 rounded-md px-2.5 py-2 text-left cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'bg-primary/10 text-primary'
+                            : 'hover:bg-accent text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[13px] font-medium truncate block w-full text-foreground">
+                            {note.title || 'Untitled Note'}
+                          </span>
+                          <button
+                            onClick={(e) => handleDeleteNote(note.id, e)}
+                            className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-opacity"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-3xs text-muted-foreground font-mono">
+                          <span>
+                            {new Date(note.updated_at).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                          {note.tags && (
+                            <span className="truncate border border-border px-1 rounded-sm bg-muted/30">
+                              {note.tags}
+                            </span>
+                          )}
+                          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-500" title="AI Ingested" />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* 2. Right Note Details Pane */}
+            {selectedNoteId && noteDetail && (
+              <div className="flex-1 flex flex-col bg-background">
+                {/* Header Metadata bar */}
+                <div className="p-3 border-b border-border flex items-center justify-between bg-card/25">
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setActiveTab('edit')}
+                      className={`px-3 py-1 text-xs rounded-md flex items-center gap-1.5 transition-colors border ${
+                        activeTab === 'edit'
+                          ? 'bg-accent border-border text-foreground font-semibold'
+                          : 'text-muted-foreground hover:text-foreground border-transparent'
+                      }`}
+                    >
+                      <Edit3 className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('preview')}
+                      className={`px-3 py-1 text-xs rounded-md flex items-center gap-1.5 transition-colors border ${
+                        activeTab === 'preview'
+                          ? 'bg-accent border-border text-foreground font-semibold'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <BookOpen className="h-3.5 w-3.5" />
+                      Preview
+                    </button>
+                  </div>
+
+                  {/* Auto-save Status Indicator */}
+                  <div className="text-xs text-muted-foreground flex items-center gap-1.5 font-mono">
+                    {saveStatus === 'saving' && (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                        <span>Saving...</span>
+                      </>
+                    )}
+                    {saveStatus === 'saved' && (
+                      <>
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                        <span className="text-emerald-500">Saved</span>
+                      </>
+                    )}
+                    {saveStatus === 'error' && (
+                      <>
+                        <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+                        <span className="text-destructive">Save Failed</span>
+                      </>
+                    )}
+                    {!saveStatus && <span>No changes</span>}
+                  </div>
+                </div>
+
+                {/* Note Fields Input */}
+                <div className="p-4 border-b border-border flex flex-col gap-3 bg-card/30">
+                  <input
+                    type="text"
+                    placeholder="Title your note..."
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full text-lg font-bold bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground/60"
+                  />
+
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Tag className="h-3.5 w-3.5" />
+                    <input
+                      type="text"
+                      placeholder="Add comma-separated tags..."
+                      value={editTags}
+                      onChange={(e) => setEditTags(e.target.value)}
+                      className="bg-transparent border-none outline-none text-foreground flex-1 placeholder:text-muted-foreground/60"
+                    />
+                  </div>
+                </div>
+
+                {/* Active Mode (Edit vs Preview) */}
+                <div className="flex-1 overflow-y-auto p-4 flex flex-col">
+                  {activeTab === 'edit' ? (
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      placeholder="Write your note content here (Markdown & backlinks [[Link Title]] supported)..."
+                      className="flex-1 w-full bg-transparent border-none resize-none outline-none text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/50 font-mono"
+                    />
+                  ) : (
+                    <div
+                      onClick={handlePreviewClick}
+                      dangerouslySetInnerHTML={{ __html: renderMarkdown(editContent) }}
+                      className="prose dark:prose-invert max-w-none text-sm break-words outline-none text-foreground"
+                    />
+                  )}
+                </div>
+
+                {/* Obsidian Backlinks Footer */}
+                {noteDetail.backlinks && noteDetail.backlinks.length > 0 && (
+                  <div className="border-t border-border p-3 bg-muted/20 text-xs">
+                    <h4 className="font-semibold text-muted-foreground mb-1.5 flex items-center gap-1 font-mono">
+                      <Link className="h-3 w-3" />
+                      Backlinks ({noteDetail.backlinks.length})
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {noteDetail.backlinks.map((link) => (
+                        <button
+                          key={link.id}
+                          onClick={() => selectNote(link.id)}
+                          className="px-2.5 py-1 border border-border hover:border-primary hover:text-primary rounded-md bg-card transition-colors flex items-center gap-1 font-medium"
+                        >
+                          <FileText className="h-3 w-3" />
+                          {link.title}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
+          </div>
+        )}
+
+        {cortexView === 'knowledge' && (
+          <div className="flex-1 p-6 overflow-y-auto space-y-6 font-mono text-xs">
+            <div className="flex items-center justify-between border-b border-border/40 pb-2">
+              <span className="text-[10px] text-muted-foreground uppercase font-bold">SEMANTIC_KNOWLEDGE_BASE</span>
+              <span className="text-[10px] text-emerald-400">12 INDEXED ENTITIES</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { title: 'WARBORN_OS_SPECS', desc: 'Core specifications of the AI workspace, memory caching, and gating token controls.', links: 3 },
+                { title: 'GATING_MIDDLEWARE', desc: 'Custom Express/FastAPI middlewares that block unauthorized destructive execution plans.', links: 5 },
+                { title: 'COGNITIVE_COACH_PROMPTS', desc: 'Configured prompt schemas for wellness logs, recovery tracking, and telemetry updates.', links: 2 },
+                { title: 'VAULT_SYNC_NODE', desc: 'File storage clusters mapped to local SQLite databases and Google Drive nodes.', links: 4 }
+              ].map((entity, i) => (
+                <div key={i} className="border border-border/60 bg-muted/15 p-4 flex flex-col justify-between min-h-[120px]">
+                  <div>
+                    <h4 className="text-foreground font-bold">{entity.title}</h4>
+                    <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed font-sans">{entity.desc}</p>
+                  </div>
+                  <div className="mt-4 pt-2 border-t border-border/40 text-[10px] text-muted-foreground flex justify-between">
+                    <span>LINKS: {entity.links}</span>
+                    <span className="text-primary hover:underline cursor-pointer">READ_NODE &gt;</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {cortexView === 'memory' && (
+          <div className="flex-1 p-6 overflow-y-auto space-y-6 font-mono text-xs">
+            <div className="flex items-center justify-between border-b border-border/40 pb-2">
+              <span className="text-[10px] text-muted-foreground uppercase font-bold">COGNITIVE_KERNEL_MEMORY</span>
+              <span className="text-[10px] text-primary">STREAK: 12 DAYS</span>
+            </div>
+            <div className="border border-border divide-y divide-border/60">
+              {[
+                { fact: 'User prefers dark true black visual layouts for high IDE-like contrast.', type: 'Style Preference' },
+                { fact: 'Gating token execution mode defaults to CONFIRM_FIRST on local runs.', type: 'Security Policy' },
+                { fact: 'Notes, Knowledge base, and AI memory must be grouped as Cortex workspace.', type: 'Architecture Rule' }
+              ].map((item, i) => (
+                <div key={i} className="flex justify-between items-center p-3 text-[11px]">
+                  <span className="text-foreground">{item.fact}</span>
+                  <span className="text-[10px] px-2 py-0.5 border border-primary/20 text-primary bg-primary/5">{item.type.toUpperCase()}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
