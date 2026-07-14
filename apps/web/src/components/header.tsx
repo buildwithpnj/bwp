@@ -22,12 +22,15 @@ export function Header() {
   const pathname = usePathname();
   const { setCommandPaletteOpen, setQuickCaptureOpen } = useShortcutStore();
 
-  const title = pathNames[pathname] || 'WarBorn OS';
+  const segments = pathname.split('/').filter(Boolean);
+  const breadcrumb = segments.length > 0 
+    ? 'system / ' + segments.map(s => s.replace('-dashboard', '').replace('-', ' ').toLowerCase()).join(' / ') 
+    : 'system / mission control';
 
   return (
     <header className="sticky top-0 z-20 flex h-12 items-center border-b border-border bg-background/80 backdrop-blur-sm px-4 gap-3" id="header">
       {/* Title / Breadcrumb */}
-      <h1 className="text-sm font-semibold text-foreground">{title}</h1>
+      <h1 className="text-[12px] font-mono font-medium tracking-wider uppercase text-pnj-textMuted">{breadcrumb}</h1>
 
       <div className="flex-1" />
 

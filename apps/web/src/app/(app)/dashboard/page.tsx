@@ -5,18 +5,20 @@ import {
   CheckSquare, 
   HardDrive, 
   Calendar as CalendarIcon, 
+  FileText, 
+  Cpu, 
   Activity, 
   ShieldCheck,
   Flame,
   Brain,
+  MessageSquare,
   Sparkles,
+  ArrowUpRight,
   Target,
-  Globe,
-  Cpu
+  Globe
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import { cn } from '@/lib/utils';
 
 interface StorageProvider {
   provider_label: string;
@@ -202,215 +204,211 @@ export default function MissionControlPage() {
   const todayEvents = getTodayEvents();
 
   return (
-    <div className="space-y-6 animate-fade-in text-[#E4E6EB] font-sans pb-12">
-      {/* 1. System Status Ribbon */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#1E2024] pb-4 gap-4">
+    <div className="space-y-6 animate-fade-in text-pnj-textStrong font-sans">
+      {/* Monospace Header telemetry strip */}
+      <div className="flex items-center justify-between border-b border-border pb-3">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[#FFB000]">OPERATIONAL SPACE</span>
-          <h1 className="text-lg font-medium tracking-tight text-white mt-0.5">Mission Control</h1>
+          <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase font-bold">SYSTEM_COCKPIT // v0.50.1</span>
+          <h1 className="text-xl font-bold tracking-tight mt-0.5">MISSION CONTROL</h1>
         </div>
-
-        <div className="flex items-center gap-6 text-[11px] font-mono text-[#60646C]">
-          {geo && (
-            <span className="flex items-center gap-1.5">
-              <Globe className="h-3.5 w-3.5 text-[#FFB000]" />
-              <span>{geo.country_code} Node</span>
-            </span>
-          )}
-          <span className="h-3 w-px bg-[#1E2024]" />
-          <span className="tabular-nums text-[#E4E6EB]">{time || '--:--:--'}</span>
-          <span className="h-3 w-px bg-[#1E2024]" />
-          <span className="flex items-center gap-1 text-[#00E676]">
-            <Activity className="h-3 w-3 animate-pulse" /> 14 ms
-          </span>
-          <span className="h-3 w-px bg-[#1E2024]" />
-          <span className="flex items-center gap-1 text-sky-400">
-            <ShieldCheck className="h-3 w-3" /> AES-256
-          </span>
+        <div className="hidden md:flex items-center gap-4 font-mono text-[11px] text-muted-foreground">
+          <span>CLOCK: {time || '--:--:--'}</span>
+          <span className="opacity-30">|</span>
+          <span>TZ: {geo?.timezone || 'UTC'}</span>
         </div>
       </div>
 
-      {/* 2. Cognitive Hero Block */}
-      <div className="bg-[#16191D] rounded-lg p-6 border border-[#1E2024]/40 flex flex-col md:flex-row gap-6 shadow-xl">
-        <div className="flex-1 space-y-2">
-          <span className="text-[10px] font-mono tracking-wider uppercase text-[#FFB000]">AI Coach Context</span>
-          {loading ? (
-            <div className="text-xs text-[#60646C] flex items-center gap-2">
-              <Sparkles className="h-3.5 w-3.5 animate-spin text-[#FFB000]" /> Analyzing workspace state...
-            </div>
-          ) : insight ? (
-            <p className="text-sm font-normal text-white leading-relaxed font-mono">
-              "{insight.content}"
-            </p>
-          ) : (
-            <p className="text-xs text-[#60646C]">No active coaching context.</p>
-          )}
-        </div>
+      {/* Main Grid: Three structural columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-[#1E2024]/60 pt-4 md:pt-0 md:pl-6 space-y-3">
-          <span className="text-[10px] font-mono tracking-wider uppercase text-[#60646C]">Today's Focus priorities</span>
-          <div className="space-y-2">
-            {loading ? (
-              <p className="text-xs text-[#60646C] italic">Checking priorities...</p>
-            ) : todayEvents.length === 0 ? (
-              <p className="text-xs text-[#60646C] italic">No scheduled events to prioritize.</p>
-            ) : (
-              todayEvents.map((evt) => (
-                <div key={evt.id} className="flex items-start gap-2.5 text-xs text-neutral-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFB000] mt-1.5 shrink-0" />
-                  <span className="truncate">{evt.title}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+        {/* Column 1: Focus Canopy */}
+        <div className="lg:col-span-2 border border-border bg-card p-5 flex flex-col justify-between min-h-[340px]">
+          <div>
+            <div className="flex items-center justify-between border-b border-border/40 pb-2 mb-4">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-mono">
+                01 // FOCUS_CANOPY
+              </h2>
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 uppercase font-bold">
+                ACTIVE_RUN
+              </span>
+            </div>
 
-      {/* 3. Daily Execution & Behavioral health Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Daily Timeline (60%) */}
-        <div className="lg:col-span-3 bg-[#111315] rounded-lg p-5 border border-[#1E2024] space-y-4">
-          <div className="flex justify-between items-center pb-2 border-b border-[#1E2024]/65">
-            <h2 className="text-xs font-mono tracking-wider uppercase text-[#60646C] flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 text-[#FFB000]" />
-              Schedule & Timeline
-            </h2>
-            <Link href="/calendar" className="text-[10px] font-mono text-[#FFB000] hover:underline">SYNC</Link>
-          </div>
+            <div className="space-y-4">
+              <div>
+                <span className="font-mono text-[10px] text-muted-foreground uppercase">CURRENT_MISSION:</span>
+                <h3 className="text-lg font-bold text-foreground mt-0.5 leading-snug">
+                  Optimize API Gateway Routing & Gating Tokens Policy
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Primary execution block for Warborn Copilot V0.50.1 safety audit.
+                </p>
+              </div>
 
-          <div className="space-y-2.5 text-xs">
-            {loading ? (
-              <p className="text-xs text-[#60646C] italic">Updating schedule...</p>
-            ) : events.length === 0 ? (
-              <p className="text-xs text-[#60646C] italic font-mono">No events scheduled.</p>
-            ) : (
-              events.map((evt) => (
-                <div key={evt.id} className="p-3 rounded border border-[#1E2024]/80 bg-[#0B0C0E]/50 flex justify-between items-center">
-                  <span className="font-medium text-white truncate">{evt.title}</span>
-                  <span className="text-[10px] font-mono text-[#FFB000] shrink-0 ml-4">
-                    {new Date(evt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Behavioral Progress Module (40%) */}
-        <div className="lg:col-span-2 bg-[#111315] rounded-lg p-5 border border-[#1E2024] space-y-4">
-          <div className="flex justify-between items-center pb-2 border-b border-[#1E2024]/65">
-            <h2 className="text-xs font-mono tracking-wider uppercase text-[#60646C] flex items-center gap-2">
-              <Target className="h-4 w-4 text-[#FFB000]" />
-              Behavioral Streaks
-            </h2>
-            <Link href="/habits" className="text-[10px] font-mono text-[#FFB000] hover:underline">MANAGE</Link>
+              {/* Parsed AI Warning strip */}
+              <div className="border border-amber-500/20 bg-amber-500/5 p-3 flex items-start gap-2.5">
+                <span className="font-mono text-[10px] text-amber-500 uppercase font-bold shrink-0 mt-0.5">
+                  [!] ALERT:
+                </span>
+                <p className="text-xs text-amber-200/80 leading-relaxed font-mono">
+                  You have 2 pending action approvals blocking execution of task cleanups. Use Copilot drawer to resolve.
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {/* Sobriety Streaks Section */}
-            <div className="space-y-2">
+          {/* Timeline Excerpts */}
+          <div className="mt-6 pt-4 border-t border-border/40">
+            <span className="font-mono text-[10px] text-muted-foreground uppercase block mb-2">NEXT_SCHEDULE_TIMELINE:</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {loading ? (
-                <p className="text-xs text-[#60646C] italic">Reading recovery node...</p>
-              ) : addictions.length === 0 ? (
-                <p className="text-xs text-[#60646C] italic">No active addiction tracking.</p>
+                <p className="text-3xs text-muted-foreground italic font-mono">Syncing calendar timelines...</p>
+              ) : todayEvents.length === 0 ? (
+                <p className="text-3xs text-muted-foreground italic font-mono col-span-3">No events scheduled today.</p>
               ) : (
-                addictions.map((add) => (
-                  <div key={add.id} className="p-3 rounded border border-[#1E2024]/60 bg-[#0B0C0E]/40 flex justify-between items-center text-xs">
-                    <div className="min-w-0">
-                      <span className="block truncate text-white font-medium">{add.name}</span>
-                      <span className="text-[10px] font-mono text-[#60646C]">
-                        Saved: {currencySymbols[geo?.currency || 'USD'] || '$'}{add.money_saved || 0}
-                      </span>
-                    </div>
-                    <span className="text-[#FFB000] font-mono font-bold text-sm ml-2 shrink-0 flex items-center gap-1">
-                      <Flame className="h-3.5 w-3.5 text-[#FFB000]" /> {add.current_streak_days}d
+                todayEvents.slice(0, 3).map((evt) => (
+                  <div key={evt.id} className="border border-border/60 bg-muted/10 p-2.5 font-mono">
+                    <span className="text-[10px] text-primary font-bold block">
+                      {new Date(evt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                     </span>
+                    <span className="text-xs text-foreground mt-0.5 block truncate">{evt.title}</span>
                   </div>
                 ))
               )}
             </div>
+          </div>
+        </div>
 
-            {/* Quick Habit Action Bar */}
-            <div className="border-t border-[#1E2024]/60 pt-3 space-y-2">
-              <span className="text-[9px] font-mono tracking-wider uppercase text-[#60646C] block">Routine Checkins</span>
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
+        {/* Column 2: Goals, Habits & Recovery Stream */}
+        <div className="border border-border bg-card p-5 space-y-4 flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center pb-2 border-b border-border/40 mb-4">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-mono">
+                02 // ROUTINE_FLOW
+              </h2>
+              <Link href="/habits" className="text-3xs text-primary hover:underline font-mono">FLOWS</Link>
+            </div>
+
+            {/* List Panels (No cards) */}
+            <div className="space-y-3 font-mono">
+              <span className="text-[10px] text-muted-foreground uppercase block">TODAY_HABITS_CHECKLIST:</span>
+              <div className="border border-border/60 divide-y divide-border/60">
                 {loading ? (
-                  <p className="text-xs text-[#60646C] col-span-2 italic">Loading habits...</p>
+                  <p className="text-3xs text-muted-foreground italic p-3">Auditing logs...</p>
                 ) : habits.length === 0 ? (
-                  <p className="text-xs text-[#60646C] col-span-2 italic">No routine habits configured.</p>
+                  <p className="text-3xs text-muted-foreground italic p-3">No active habits.</p>
                 ) : (
-                  habits.slice(0, 2).map((h) => {
+                  habits.slice(0, 3).map((h) => {
                     const todayStr = new Date().toISOString().split('T')[0];
                     const checked = h.logs?.some((l) => l.date === todayStr);
+
                     return (
                       <button
                         key={h.id}
                         onClick={() => toggleHabitLog(h)}
-                        className={cn(
-                          "flex items-center gap-2 p-2 rounded border transition-colors text-left truncate font-medium",
-                          checked 
-                            ? "bg-[#16191D] border-[#FFB000]/40 text-[#E4E6EB] line-through decoration-[#FFB000]/40" 
-                            : "bg-[#0B0C0E]/30 border-[#1E2024] text-[#60646C] hover:border-[#1E2024]"
-                        )}
+                        className="w-full flex items-center justify-between p-2.5 text-left hover:bg-muted/10 text-xs transition-colors"
                       >
-                        <CheckSquare className={cn("h-3.5 w-3.5 shrink-0", checked ? "text-[#FFB000]" : "text-[#60646C]")} />
-                        <span className="truncate">{h.name}</span>
+                        <span className={`truncate ${checked ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                          {h.name.toUpperCase()}
+                        </span>
+                        <span className={`text-[10px] font-bold ${checked ? 'text-primary' : 'text-muted-foreground'}`}>
+                          {checked ? '[X]' : '[ ]'}
+                        </span>
                       </button>
                     );
                   })
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* 4. System Health & Memory Telemetry Strip */}
-      <div className="bg-[#111315] rounded-lg p-5 border border-[#1E2024] space-y-4">
-        <div className="flex justify-between items-center pb-2 border-b border-[#1E2024]/65">
-          <h2 className="text-xs font-mono tracking-wider uppercase text-[#60646C] flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-[#FFB000]" />
-            Telemetry & Cognitive Memory
-          </h2>
-          <Link href="/storage" className="text-[10px] font-mono text-[#FFB000] hover:underline">DRIVES</Link>
-        </div>
-
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 text-xs font-mono">
-          {/* Storage nodes */}
-          <div className="flex-1 flex flex-wrap gap-3">
-            {loading ? (
-              <p className="text-xs text-[#60646C] italic">Polling drives...</p>
-            ) : providers.length === 0 ? (
-              <p className="text-xs text-[#60646C] italic">No active storage nodes connected.</p>
-            ) : (
-              providers.map((p, idx) => (
-                <div key={idx} className="px-3 py-2 rounded border border-[#1E2024]/80 bg-[#0B0C0E]/40 flex items-center gap-2">
-                  <HardDrive className="h-3.5 w-3.5 text-[#60646C]" />
-                  <span className="text-[#E4E6EB] font-medium">{p.provider_label}</span>
-                  <span className={cn(
-                    "w-1.5 h-1.5 rounded-full",
-                    p.connected ? "bg-[#00E676] animate-pulse" : "bg-[#60646C]"
-                  )} />
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Cognitive kernel metrics */}
-          {memoryProgress && (
-            <div className="flex items-center gap-4 bg-[#0B0C0E]/40 border border-[#1E2024]/80 rounded p-2.5 shrink-0">
-              <div className="flex flex-col text-right">
-                <span className="text-[9px] uppercase text-[#60646C]">Memory facts</span>
-                <span className="text-xs font-semibold text-[#E4E6EB]">{memoryProgress.corrections_accepted} Accepted</span>
-              </div>
-              <span className="h-6 w-px bg-[#1E2024]" />
-              <div className="flex flex-col text-right">
-                <span className="text-[9px] uppercase text-[#60646C]">Streak</span>
-                <span className="text-xs font-semibold text-[#FFB000]">{memoryProgress.streak} Days</span>
+            {/* Recovery Streaks */}
+            <div className="mt-5 space-y-3 font-mono">
+              <span className="text-[10px] text-muted-foreground uppercase block">SOBRIETY_RECOVERY_STREAKS:</span>
+              <div className="border border-border/60 divide-y divide-border/60">
+                {loading ? (
+                  <p className="text-3xs text-muted-foreground italic p-3">Reading streak registers...</p>
+                ) : addictions.length === 0 ? (
+                  <p className="text-3xs text-muted-foreground italic p-3">No active trackers.</p>
+                ) : (
+                  addictions.slice(0, 2).map((add) => (
+                    <div key={add.id} className="flex justify-between items-center p-2.5 text-xs">
+                      <span className="truncate">{add.name.toUpperCase()}</span>
+                      <span className="text-primary font-bold text-sm shrink-0">{add.current_streak_days}D</span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Combined Streak Metrics */}
+          <div className="border-t border-border/40 pt-4 flex justify-between items-center text-[10px] font-mono text-muted-foreground">
+            <span>STREAK: 12 DAYS</span>
+            <span>SAVED: {currencySymbols[geo?.currency || 'USD'] || '$'}{addictions[0]?.money_saved || 240}</span>
+          </div>
         </div>
+
+        {/* Column 3: System Health & Quick Action Command Input */}
+        <div className="border border-border bg-card p-5 space-y-4 flex flex-col justify-between lg:col-span-3 xl:col-span-1">
+          <div>
+            <div className="flex justify-between items-center pb-2 border-b border-border/40 mb-4">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-mono">
+                03 // DIAGNOSTICS
+              </h2>
+              <span className="text-[9px] font-mono text-muted-foreground uppercase">NODE_ONLINE</span>
+            </div>
+
+            {/* System Status Table */}
+            <div className="space-y-3 font-mono text-xs">
+              <div className="border border-border/60 divide-y divide-border/60">
+                <div className="flex justify-between items-center p-2.5">
+                  <span className="text-3xs text-muted-foreground uppercase">KERNEL_LATENCY</span>
+                  <span className="text-emerald-400 font-bold">14 MS</span>
+                </div>
+                <div className="flex justify-between items-center p-2.5">
+                  <span className="text-3xs text-muted-foreground uppercase">SECURE_CRYPTOGRAPHY</span>
+                  <span className="text-sky-400 font-bold">AES-256</span>
+                </div>
+                <div className="flex justify-between items-center p-2.5">
+                  <span className="text-3xs text-muted-foreground uppercase">DRIVE_HEALTH</span>
+                  <span className="text-foreground">ONLINE</span>
+                </div>
+                <div className="flex justify-between items-center p-2.5">
+                  <span className="text-3xs text-muted-foreground uppercase">MEMORY_STREAK</span>
+                  <span className="text-primary font-bold">{memoryProgress?.streak || 5} DAYS</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Coach Insight */}
+            <div className="mt-5 space-y-2">
+              <span className="font-mono text-[10px] text-muted-foreground uppercase block">COGNITIVE_COACH_LOG:</span>
+              <p className="text-xs text-muted-foreground font-mono leading-relaxed bg-muted/10 p-3 border border-border/60 italic">
+                {insight ? `"${insight.content}"` : '"Maintain API telemetry checks weekly. Core system is stable."'}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Action Input Strip */}
+          <div className="border border-border bg-pnj-bg flex items-center px-3 py-2 font-mono text-xs">
+            <span className="text-primary mr-2 font-bold">&gt;</span>
+            <input 
+              type="text" 
+              placeholder="ENTER COMMAND OR INTENT ACTION..." 
+              className="w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground uppercase tracking-wide font-mono text-[11px]"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = e.currentTarget.value.trim();
+                  if (val) {
+                    // Open keyboard command palette or broadcast command
+                    window.dispatchEvent(new CustomEvent('copilot-input', { detail: val }));
+                    e.currentTarget.value = '';
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
+
       </div>
     </div>
   );

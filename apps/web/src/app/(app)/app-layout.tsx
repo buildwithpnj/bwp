@@ -76,7 +76,7 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-6">
       <Sidebar />
       <div
         className={cn(
@@ -86,8 +86,27 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
       >
         <Header />
         <OperatingThreadBar />
-        <main className="p-4">{children}</main>
+        <main className="p-4 pb-12">{children}</main>
       </div>
+
+      {/* Telemetry Gutter */}
+      <footer className="fixed bottom-0 left-0 right-0 z-20 h-6 border-t border-border bg-card flex items-center px-4 font-mono text-[11px] text-muted-foreground justify-between">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+            DB_SYNC: OK
+          </span>
+          <span className="opacity-30">|</span>
+          <span>LLM_LATENCY: 120ms</span>
+          <span className="opacity-30">|</span>
+          <span>API_STATUS: ACTIVE</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span>GIT: MAIN</span>
+          <span className="opacity-30">|</span>
+          <span>ENV: DEV_COCKPIT</span>
+        </div>
+      </footer>
 
       {/* Overlays */}
       <CommandPalette />

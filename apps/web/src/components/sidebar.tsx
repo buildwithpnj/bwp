@@ -59,37 +59,37 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-[#1E2024] bg-[#0B0C0E] transition-all duration-200',
+        'fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-border bg-card transition-all duration-200',
         collapsed ? 'w-14' : 'w-52'
       )}
       id="sidebar"
     >
       {/* Logo */}
-      <div className="flex h-12 items-center justify-between border-b border-[#1E2024] px-3">
+      <div className="flex h-12 items-center border-b border-border px-3">
         {!collapsed && (
-          <span className="text-xs font-semibold tracking-wider text-[#E4E6EB] uppercase font-mono">
-            Warborn<span className="text-[#FFB000]">.OS</span>
+          <span className="text-sm font-semibold tracking-tight text-foreground">
+            WarBorn<span className="text-primary">OS</span>
           </span>
         )}
         <button
           onClick={toggle}
           className={cn(
-            'inline-flex items-center justify-center rounded p-1 text-[#60646C] hover:bg-[#111315] hover:text-[#E4E6EB] transition-colors',
-            collapsed && 'mx-auto'
+            'ml-auto inline-flex items-center justify-center rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors',
+            collapsed && 'ml-0'
           )}
           aria-label="Toggle sidebar"
           id="sidebar-toggle"
         >
           {collapsed ? (
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight className="h-4 w-4" />
           ) : (
-            <ChevronLeft className="h-3.5 w-3.5" />
+            <ChevronLeft className="h-4 w-4" />
           )}
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-1.5 space-y-1">
+      <nav className="flex-1 overflow-y-auto py-2 px-2">
         {navItems.map((item) => {
           const isActive =
             item.href === '/'
@@ -101,22 +101,18 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'group relative flex items-center gap-2.5 rounded px-2.5 py-1.5 text-xs font-medium transition-colors',
+                'group flex items-center gap-2.5 px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150',
                 isActive
-                  ? 'bg-[#16191D] text-[#E4E6EB]'
-                  : 'text-[#60646C] hover:bg-[#111315] hover:text-[#E4E6EB]'
+                  ? 'bg-primary/10 text-primary border-l-2 border-primary rounded-none'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground border-l-2 border-transparent rounded-sm'
               )}
               id={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
             >
-              {/* Active left marker */}
-              {isActive && (
-                <span className="absolute left-0 top-1/4 bottom-1/4 w-[2px] bg-[#FFB000] rounded-r" />
-              )}
-              <item.icon className={cn("h-3.5 w-3.5 flex-shrink-0 transition-colors", isActive ? "text-[#FFB000]" : "text-[#60646C] group-hover:text-[#E4E6EB]")} />
+              <item.icon className="h-4 w-4 flex-shrink-0" />
               {!collapsed && (
                 <>
-                  <span className="flex-1 tracking-wide">{item.label}</span>
-                  <span className="text-[9px] font-mono text-[#60646C]/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="flex-1">{item.label}</span>
+                  <span className="kbd opacity-0 group-hover:opacity-100 transition-opacity">
                     {item.shortcut}
                   </span>
                 </>
@@ -128,9 +124,9 @@ export function Sidebar() {
 
       {/* Footer */}
       {!collapsed && (
-        <div className="border-t border-[#1E2024] p-3">
-          <p className="text-[10px] font-mono text-[#60646C]">
-            <span className="text-[#FFB000] font-semibold">?</span> HELP & SHORTCUTS
+        <div className="border-t border-border p-3">
+          <p className="text-2xs text-muted-foreground">
+            <span className="kbd">?</span> Shortcuts
           </p>
         </div>
       )}
