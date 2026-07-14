@@ -96,6 +96,15 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     cors_origins: str = "http://localhost:3000"
+    mode: str = Field(default="development", validation_alias="environment_mode")
+
+    @property
+    def is_production(self) -> bool:
+        return self.mode.lower() in ("production", "prod")
+
+    @property
+    def is_development(self) -> bool:
+        return self.mode.lower() in ("development", "dev", "local")
 
 
 settings = Settings()

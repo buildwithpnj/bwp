@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { CopilotMessage } from './useCopilotSession';
 
-export function useVoiceSession(onTranscriptionReceived: (text: string, reply: string) => void) {
+export function useVoiceSession(
+  onTranscriptionReceived: (userMsg: CopilotMessage, assistantMsg: CopilotMessage) => void
+) {
   const pathname = usePathname();
   const [isListening, setIsListening] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
@@ -28,7 +31,23 @@ export function useVoiceSession(onTranscriptionReceived: (text: string, reply: s
 
       if (response.ok) {
         const data = await response.json();
-        onTranscriptionReceived(data.transcription, data.reply);
+        
+        const userMsg: CopilotMessage = {
+          role: 'user',
+          content: data.transcription
+        };
+        
+        const assistantMsg: CopilotMessage = {
+          role: 'assistant',
+          content: data.reply,
+          suggested_action: data.suggested_action,
+          approval_required: data.approval_required,
+          approval_request: data.approval_request,
+          token: data.token,
+          approval_decided: false
+        };
+        
+        onTranscriptionReceived(userMsg, assistantMsg);
       }
     } catch (e) {
       console.error('Voice session error:', e);

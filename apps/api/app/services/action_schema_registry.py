@@ -203,6 +203,41 @@ class PermanentPurgeItemInput(BaseModel):
     item_type: str
     item_id: str
 
+# New inputs for v0.50.1 Action Layer
+class GetRecentUpdatesInput(BaseModel):
+    limit: Optional[int] = 10
+
+class GetAgentStatusInput(BaseModel):
+    agent_id: Optional[str] = None
+
+class MoveTaskToProjectInput(BaseModel):
+    task_id: str
+    project_id: str
+
+class UpdateSettingsPreferenceInput(BaseModel):
+    key: str
+    value: str
+
+class PermanentlyDeleteItemInput(BaseModel):
+    item_type: str
+    item_id: str
+
+class PurgeTrashInput(BaseModel):
+    confirm: bool = True
+
+class RevealSensitiveConfigInput(BaseModel):
+    config_key: str
+
+class DeleteSharedWorkspaceResourcesInput(BaseModel):
+    resource_id: str
+
+class ModifySystemPoliciesInput(BaseModel):
+    policy_name: str
+    enabled: bool
+
+class AccessRestrictedCredentialsInput(BaseModel):
+    credential_name: str
+
 # Central Map of Schemas
 SCHEMA_MAP = {
     # Notes
@@ -211,6 +246,7 @@ SCHEMA_MAP = {
     "delete_note": DeleteNoteInput,
     "restore_note": RestoreNoteInput,
     "search_notes": SearchNotesInput,
+    "archive_note": DeleteNoteInput,  # maps to note deletion schema for simplicity
 
     # Tasks
     "create_task": CreateTaskInput,
@@ -219,6 +255,7 @@ SCHEMA_MAP = {
     "prioritize_task": PrioritizeTaskInput,
     "delete_task": DeleteTaskInput,
     "restore_task": RestoreTaskInput,
+    "move_task_to_project": MoveTaskToProjectInput,
 
     # Projects
     "create_project": CreateProjectInput,
@@ -278,9 +315,20 @@ SCHEMA_MAP = {
     # Settings
     "update_preference": UpdatePreferenceInput,
     "update_reminder_preferences": UpdateReminderPreferencesInput,
+    "update_settings_preference": UpdateSettingsPreferenceInput,
 
     # Trash
     "list_trash_items": ListTrashItemsInput,
     "restore_trash_item": RestoreTrashItemInput,
     "permanent_purge_item": PermanentPurgeItemInput,
+    "permanently_delete_item": PermanentlyDeleteItemInput,
+    "purge_trash": PurgeTrashInput,
+
+    # New system-level actions
+    "get_recent_updates": GetRecentUpdatesInput,
+    "get_agent_status": GetAgentStatusInput,
+    "reveal_sensitive_config": RevealSensitiveConfigInput,
+    "delete_shared_workspace_resources": DeleteSharedWorkspaceResourcesInput,
+    "modify_system_policies": ModifySystemPoliciesInput,
+    "access_restricted_credentials": AccessRestrictedCredentialsInput,
 }

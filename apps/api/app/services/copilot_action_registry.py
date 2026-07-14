@@ -252,7 +252,7 @@ class CopilotActionRegistry:
             "module": "mission_control",
         },
 
-        # Settings (2 actions)
+        # Settings (3 actions)
         "update_preference": {
             "description": "Updates workspace response mode and tone settings.",
             "allowed_roles": ["approved_user", "internal_admin"],
@@ -263,8 +263,13 @@ class CopilotActionRegistry:
             "allowed_roles": ["approved_user", "internal_admin"],
             "module": "settings",
         },
+        "update_settings_preference": {
+            "description": "Updates sensitive workspace settings and parameters.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "module": "settings",
+        },
 
-        # Trash (3 actions)
+        # Trash (5 actions)
         "list_trash_items": {
             "description": "Lists all deleted items in the trash bin.",
             "allowed_roles": ["approved_user", "internal_admin"],
@@ -279,6 +284,64 @@ class CopilotActionRegistry:
             "description": "Purges an item permanently from databases.",
             "allowed_roles": ["internal_admin"],
             "module": "trash",
+        },
+        "permanently_delete_item": {
+            "description": "Permanently deletes an item from trash, bypassing standard restore.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "module": "trash",
+        },
+        "purge_trash": {
+            "description": "Purges all soft-deleted items currently in the trash bin.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "module": "trash",
+        },
+
+        # Notes additional (1 action)
+        "archive_note": {
+            "description": "Archives a workspace note card.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "module": "notes",
+        },
+
+        # Tasks additional (1 action)
+        "move_task_to_project": {
+            "description": "Moves a task to a designated project.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "module": "tasks",
+        },
+
+        # System telemetry / agent metadata (2 actions)
+        "get_recent_updates": {
+            "description": "Retrieves recent changes across all active workspace records.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "module": "mission_control",
+        },
+        "get_agent_status": {
+            "description": "Checks the operational status of the Copilot background process.",
+            "allowed_roles": ["approved_user", "internal_admin"],
+            "module": "mission_control",
+        },
+
+        # Privileged actions (4 actions)
+        "reveal_sensitive_config": {
+            "description": "Exposes encrypted configuration blocks or sensitive variables.",
+            "allowed_roles": ["internal_admin"],
+            "module": "settings",
+        },
+        "delete_shared_workspace_resources": {
+            "description": "Deletes core database assets shared across workspace users.",
+            "allowed_roles": ["internal_admin"],
+            "module": "projects",
+        },
+        "modify_system_policies": {
+            "description": "Modifies base access-control or execution policies.",
+            "allowed_roles": ["internal_admin"],
+            "module": "settings",
+        },
+        "access_restricted_credentials": {
+            "description": "Requests plaintext API keys or credentials.",
+            "allowed_roles": ["internal_admin"],
+            "module": "settings",
         },
     }
 

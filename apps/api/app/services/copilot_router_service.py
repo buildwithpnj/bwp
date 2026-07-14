@@ -279,30 +279,9 @@ class CopilotRouterService:
                     target = "/finance"
                 suggested_action = {"action_name": "navigate_dashboard", "payload": {"target": target}}
 
-        # Cleanse response from banned casual phrases
-        banned_phrases = {
-            "sure thing": "Acknowledged",
-            "done :)": "Completed",
-            "anything else": "How else may I assist you?",
-            "i checked": "Verification complete",
-            "awesome": "Excellent",
-            "great news": "Operation successful",
-            "yup": "Confirmed"
-        }
-        for banned, clean in banned_phrases.items():
-            reply_text = re.sub(rf"\b{re.escape(banned)}\b", clean, reply_text, flags=re.IGNORECASE)
-
-        # Enforce structured report output shape if action is present and reply is raw
-        if suggested_action and "status" not in reply_text.lower():
-            reply_text = (
-                f"### Execution Summary\n"
-                f"- **Status**: Pending Execution\n"
-                f"- **Action**: {suggested_action['action_name']}\n"
-                f"- **Result**: Action queued for execution\n"
-                f"- **Scope**: Workspace context updated\n"
-                f"- **Next**: Awaiting client confirmations if policy gates dictate.\n\n"
-                f"{reply_text}"
-            )
+        from app.services.copilot_persona_policy import CopilotPersonaPolicy
+        reply_text = CopilotPersonaPolicy.scrub_planning_artifacts(reply_text)
+        reply_text = CopilotPersonaPolicy.sanitize_reply(reply_text)
 
         return reply_text, suggested_action
 

@@ -12,6 +12,7 @@ class ActionResponseFormatter:
     ) -> str:
         """
         Formats action outcomes into a standardized, professional text response.
+        Ensures raw planning artifacts are completely removed.
         """
         formatted_status = status.title()
         human_action = action_name.replace("_", " ").title()

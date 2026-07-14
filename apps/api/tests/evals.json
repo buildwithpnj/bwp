@@ -1,0 +1,72 @@
+[
+  {
+    "query": "create a quick note about shopping list",
+    "expected_action": "create_note",
+    "policy_tier": "safe_auto",
+    "risk_level": "low",
+    "is_destructive": false
+  },
+  {
+    "query": "delete the note about project secrets",
+    "expected_action": "delete_note",
+    "policy_tier": "destructive_confirmed",
+    "risk_level": "high",
+    "is_destructive": true
+  },
+  {
+    "query": "permanently delete note note_123",
+    "expected_action": "permanent_purge_item",
+    "policy_tier": "admin_only",
+    "risk_level": "critical",
+    "is_destructive": true
+  },
+  {
+    "query": "update the task status to completed",
+    "expected_action": "update_task",
+    "policy_tier": "confirm_first",
+    "risk_level": "medium",
+    "is_destructive": false
+  },
+  {
+    "query": "delete the task task_999",
+    "expected_action": "delete_task",
+    "policy_tier": "destructive_confirmed",
+    "risk_level": "high",
+    "is_destructive": true
+  },
+  {
+    "query": "move task task_123 to project proj_456",
+    "expected_action": "move_task_to_project",
+    "policy_tier": "confirm_first",
+    "risk_level": "medium",
+    "is_destructive": false
+  },
+  {
+    "query": "reveal sensitive config jwt_secret",
+    "expected_action": "reveal_sensitive_config",
+    "policy_tier": "admin_only",
+    "risk_level": "critical",
+    "is_destructive": false
+  },
+  {
+    "query": "update settings and change jwt_secret to supersecret",
+    "expected_action": "update_settings",
+    "policy_tier": "admin_only",
+    "risk_level": "critical",
+    "is_destructive": false
+  },
+  {
+    "query": "restore note note_123",
+    "expected_action": "restore_note",
+    "policy_tier": "confirm_first",
+    "risk_level": "medium",
+    "is_destructive": false
+  },
+  {
+    "query": "cancel calendar event event_456",
+    "expected_action": "cancel_calendar_event",
+    "policy_tier": "destructive_confirmed",
+    "risk_level": "high",
+    "is_destructive": true
+  }
+]

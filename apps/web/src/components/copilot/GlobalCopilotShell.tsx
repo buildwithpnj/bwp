@@ -5,14 +5,28 @@ import { useCopilotSession, CopilotMessage } from '@/hooks/useCopilotSession';
 import { CopilotDrawer } from './CopilotDrawer';
 
 export function GlobalCopilotShell() {
-  const { isOpen, setIsOpen, messages, sendMessage, isSending } = useCopilotSession();
+  const { isOpen, setIsOpen, messages, setMessages, sendMessage, isSending } = useCopilotSession();
   const [extraMessages, setExtraMessages] = useState<CopilotMessage[]>([]);
 
-  // Local helper to merge voice/STT triggers
-  const handleAddAssistantMessage = (userText: string, reply: string) => {
-    const userMsg: CopilotMessage = { role: 'user', content: userText };
-    const replyMsg: CopilotMessage = { role: 'assistant', content: reply };
-    setExtraMessages(prev => [...prev, userMsg, replyMsg]);
+  const handleVoiceMessages = (userMsg: CopilotMessage, assistantMsg: CopilotMessage) => {
+    setExtraMessages(prev => [...prev, userMsg, assistantMsg]);
+  };
+
+  const handleUpdateMessage = (idx: number, updated: CopilotMessage) => {
+    if (idx < messages.length) {
+      setMessages(prev => {
+        const next = [...prev];
+        next[idx] = updated;
+        return next;
+      });
+    } else {
+      const extraIdx = idx - messages.length;
+      setExtraMessages(prev => {
+        const next = [...prev];
+        next[extraIdx] = updated;
+        return next;
+      });
+    }
   };
 
   const combinedMessages = [...messages, ...extraMessages];
@@ -49,7 +63,8 @@ export function GlobalCopilotShell() {
         messages={combinedMessages}
         sendMessage={sendMessage}
         isSending={isSending}
-        onAddAssistantMessage={handleAddAssistantMessage}
+        onAddAssistantMessage={handleVoiceMessages}
+        onUpdateMessage={handleUpdateMessage}
       />
     </>
   );

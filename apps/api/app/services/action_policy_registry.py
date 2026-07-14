@@ -8,7 +8,7 @@ class ActionPolicyTier(str, Enum):
     READ_ONLY = "read_only"
 
 class ActionPolicyRegistry:
-    # Policies mapping actions to policy tiers
+    # Centrally map actions to policy tiers
     POLICIES = {
         # Notes
         "create_note": ActionPolicyTier.SAFE_AUTO,
@@ -16,14 +16,16 @@ class ActionPolicyRegistry:
         "delete_note": ActionPolicyTier.DESTRUCTIVE_CONFIRMED,
         "restore_note": ActionPolicyTier.SAFE_AUTO,
         "search_notes": ActionPolicyTier.READ_ONLY,
+        "archive_note": ActionPolicyTier.CONFIRM_FIRST,
 
         # Tasks
         "create_task": ActionPolicyTier.SAFE_AUTO,
-        "update_task": ActionPolicyTier.SAFE_AUTO,
+        "update_task": ActionPolicyTier.CONFIRM_FIRST,  # Required by Phase 1
         "complete_task": ActionPolicyTier.SAFE_AUTO,
         "prioritize_task": ActionPolicyTier.SAFE_AUTO,
         "delete_task": ActionPolicyTier.DESTRUCTIVE_CONFIRMED,
         "restore_task": ActionPolicyTier.SAFE_AUTO,
+        "move_task_to_project": ActionPolicyTier.CONFIRM_FIRST,
 
         # Projects
         "create_project": ActionPolicyTier.SAFE_AUTO,
@@ -53,7 +55,7 @@ class ActionPolicyRegistry:
 
         # Calendar
         "create_calendar_event": ActionPolicyTier.SAFE_AUTO,
-        "update_calendar_event": ActionPolicyTier.SAFE_AUTO,
+        "update_calendar_event": ActionPolicyTier.CONFIRM_FIRST,  # Required by Phase 1
         "cancel_calendar_event": ActionPolicyTier.CONFIRM_FIRST,
 
         # Habits
@@ -73,21 +75,32 @@ class ActionPolicyRegistry:
 
         # Knowledge
         "create_knowledge_item": ActionPolicyTier.SAFE_AUTO,
-        "search_knowledge": ActionPolicyTier.READ_ONLY,
+        "search_knowledge": ActionPolicyTier.SAFE_AUTO,  # Maps to SAFE_AUTO per Phase 1
         "delete_knowledge_item": ActionPolicyTier.DESTRUCTIVE_CONFIRMED,
 
-        # Mission Control
+        # Mission Control / Telemetry
         "get_telemetry_status": ActionPolicyTier.READ_ONLY,
         "trigger_system_sync": ActionPolicyTier.ADMIN_ONLY,
 
-        # Settings
+        # Settings / Preferences
         "update_preference": ActionPolicyTier.SAFE_AUTO,
         "update_reminder_preferences": ActionPolicyTier.SAFE_AUTO,
+        "update_settings_preference": ActionPolicyTier.CONFIRM_FIRST,
 
         # Trash
         "list_trash_items": ActionPolicyTier.READ_ONLY,
         "restore_trash_item": ActionPolicyTier.SAFE_AUTO,
         "permanent_purge_item": ActionPolicyTier.ADMIN_ONLY,
+        "permanently_delete_item": ActionPolicyTier.DESTRUCTIVE_CONFIRMED,
+        "purge_trash": ActionPolicyTier.DESTRUCTIVE_CONFIRMED,
+
+        # New mappings for v0.50.1 Action Layer
+        "get_recent_updates": ActionPolicyTier.SAFE_AUTO,
+        "get_agent_status": ActionPolicyTier.SAFE_AUTO,
+        "reveal_sensitive_config": ActionPolicyTier.ADMIN_ONLY,
+        "delete_shared_workspace_resources": ActionPolicyTier.ADMIN_ONLY,
+        "modify_system_policies": ActionPolicyTier.ADMIN_ONLY,
+        "access_restricted_credentials": ActionPolicyTier.ADMIN_ONLY,
 
         # Test action mappings
         "fail_action": ActionPolicyTier.SAFE_AUTO,

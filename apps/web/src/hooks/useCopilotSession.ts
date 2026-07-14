@@ -9,6 +9,20 @@ export interface CopilotMessage {
     action_name: string;
     payload: any;
   };
+  approval_required?: boolean;
+  approval_request?: {
+    id: string;
+    action_name: string;
+    policy_tier: string;
+    risk_level: string;
+    human_summary: string;
+    execution_preview: string;
+    expires_at: string;
+  };
+  token?: string;
+  approval_decided?: boolean;
+  approval_decision_status?: 'success' | 'denied' | 'failed' | 'confirm';
+  approval_decision_message?: string;
 }
 
 export function useCopilotSession() {
@@ -39,7 +53,11 @@ export function useCopilotSession() {
       const assistantMsg: CopilotMessage = {
         role: 'assistant',
         content: data.reply,
-        suggested_action: data.suggested_action
+        suggested_action: data.suggested_action,
+        approval_required: data.approval_required,
+        approval_request: data.approval_request,
+        token: data.token,
+        approval_decided: false
       };
       setMessages(prev => [...prev, assistantMsg]);
     } catch (e) {
@@ -53,6 +71,7 @@ export function useCopilotSession() {
     isOpen,
     setIsOpen,
     messages,
+    setMessages,
     sendMessage,
     isSending
   };

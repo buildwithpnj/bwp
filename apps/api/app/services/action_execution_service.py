@@ -236,9 +236,8 @@ class ActionExecutionService:
 
         policy = ActionPolicyRegistry.get_policy(action_name)
         from app.llm_settings import llm_settings
-        if policy == "confirm_first" and llm_settings.approval_gates_enabled:
-            if not ApprovalGateService.is_approved(action_name):
-                return {"status": "pending_approval", "action": action_name}
+        if policy in ("confirm_first", "destructive_confirmed") and llm_settings.approval_gates_enabled:
+            return {"status": "pending_approval", "action": action_name}
                 
         # Record audit log
         log_id = ActionAuditLogService.log_execution(action_name, payload, tenant_id)

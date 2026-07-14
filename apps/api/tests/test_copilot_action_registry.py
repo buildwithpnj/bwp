@@ -4,8 +4,8 @@ from app.services.action_policy_registry import ActionPolicyTier
 
 def test_copilot_action_registry_listing():
     actions = CopilotActionRegistry.list_actions()
-    # Should have 49 actions
-    assert len(actions) == 49
+    # Should have 60 actions
+    assert len(actions) == 60
     assert "create_note" in actions
     assert "create_task" in actions
     assert "permanent_purge_item" in actions

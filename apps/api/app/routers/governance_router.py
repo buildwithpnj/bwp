@@ -79,3 +79,41 @@ async def toggle_alert_muting(
         )
         
     return await TenantAlertRuleService.configure_alert_muting(db, tenant_id, rule_name, muted)
+
+@router.get("/approvals", status_code=status.HTTP_200_OK)
+async def list_approvals(
+    current_user: CurrentUser,
+    db: DB,
+    approval_status: str = None
+):
+    """
+    Retrieves all action approval requests.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Requires administrator privileges."
+        )
+    from sqlalchemy import select
+    from app.models.action_approval_models import ActionApprovalRequest
+    stmt = select(ActionApprovalRequest)
+    if approval_status:
+        stmt = stmt.where(ActionApprovalRequest.status == approval_status)
+    stmt = stmt.order_by(ActionApprovalRequest.created_at.desc())
+    res = await db.execute(stmt)
+    return res.scalars().all()
+
+@router.get("/approvals/metrics", status_code=status.HTTP_200_OK)
+async def get_approval_metrics(
+    current_user: CurrentUser
+):
+    """
+    Retrieves execution approval telemetry and counts.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Requires administrator privileges."
+        )
+    from app.services.approval_metrics_service import ApprovalMetricsService
+    return ApprovalMetricsService.get_metrics()

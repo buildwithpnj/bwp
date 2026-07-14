@@ -12,6 +12,8 @@ import { SuggestedActionsStrip } from './SuggestedActionsStrip';
 import { ContextSnapshotCard } from './ContextSnapshotCard';
 import { SmartEntryPrompt } from './SmartEntryPrompt';
 import { ActionResultCard, isStructuredResponse } from './ActionResultCard';
+import { ApprovalPromptCard } from './ApprovalPromptCard';
+import { useApprovalActions } from '@/hooks/useApprovalActions';
 
 interface CopilotDrawerProps {
   isOpen: boolean;
@@ -19,7 +21,8 @@ interface CopilotDrawerProps {
   messages: CopilotMessage[];
   sendMessage: (text: string) => void;
   isSending: boolean;
-  onAddAssistantMessage: (userText: string, reply: string) => void;
+  onAddAssistantMessage: (userMsg: CopilotMessage, assistantMsg: CopilotMessage) => void;
+  onUpdateMessage: (idx: number, updated: CopilotMessage) => void;
 }
 
 export function CopilotDrawer({
@@ -28,14 +31,18 @@ export function CopilotDrawer({
   messages,
   sendMessage,
   isSending,
-  onAddAssistantMessage
+  onAddAssistantMessage,
+  onUpdateMessage
 }: CopilotDrawerProps) {
   const pathname = usePathname();
   const [inputVal, setInputVal] = useState('');
+  
+  const { decideApproval, isProcessing } = useApprovalActions();
+  const [processingIdx, setProcessingIdx] = useState<number | null>(null);
 
   const { isListening, isThinking, startListening, stopListening } = useVoiceSession(
-    (transcription, reply) => {
-      onAddAssistantMessage(transcription, reply);
+    (userMsg, assistantMsg) => {
+      onAddAssistantMessage(userMsg, assistantMsg);
     }
   );
 
@@ -53,6 +60,31 @@ export function CopilotDrawer({
       stopListening();
     } else {
       startListening();
+    }
+  };
+
+  const handleDecision = async (idx: number, approve: boolean) => {
+    const msg = messages[idx];
+    if (!msg.approval_request || !msg.token) return;
+
+    setProcessingIdx(idx);
+    const res = await decideApproval(msg.approval_request.id, approve, msg.token);
+    setProcessingIdx(null);
+
+    if (res.success) {
+      onUpdateMessage(idx, {
+        ...msg,
+        approval_decided: true,
+        approval_decision_status: approve ? 'success' : 'denied',
+        content: `Status: ${approve ? 'Success' : 'Denied'}\nAction: ${msg.suggested_action?.action_name || 'Action'}\nResult: ${approve ? 'Action approved and executed successfully.' : 'Action denied. No changes were made.'}\nScope: workspace`
+      });
+    } else {
+      onUpdateMessage(idx, {
+        ...msg,
+        approval_decided: true,
+        approval_decision_status: 'failed',
+        content: `Status: Fail\nAction: ${msg.suggested_action?.action_name || 'Action'}\nResult: ${res.error || 'Verification failed.'}\nScope: workspace`
+      });
     }
   };
 
@@ -102,28 +134,41 @@ export function CopilotDrawer({
             />
           </div>
         )}
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={cn(
-              'flex flex-col gap-1 max-w-[85%] rounded-lg p-2.5 text-xs',
-              msg.role === 'user'
-                ? 'bg-primary text-primary-foreground ml-auto'
-                : 'bg-muted text-foreground'
-            )}
-          >
-            {msg.role === 'assistant' && isStructuredResponse(msg.content) ? (
-              <ActionResultCard content={msg.content} />
-            ) : (
-              <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-            )}
-            {msg.suggested_action && (
-              <div className="mt-2 pt-2 border-t border-border/20 text-[10px] opacity-90 font-medium">
-                Action: {msg.suggested_action.action_name}
-              </div>
-            )}
-          </div>
-        ))}
+        {messages.map((msg, idx) => {
+          const showApprovalCard = msg.role === 'assistant' && msg.approval_required && !msg.approval_decided;
+          
+          return (
+            <div
+              key={idx}
+              className={cn(
+                'flex flex-col gap-1 max-w-[85%] rounded-lg text-xs',
+                showApprovalCard 
+                  ? 'w-full max-w-full' 
+                  : msg.role === 'user'
+                    ? 'bg-primary text-primary-foreground ml-auto p-2.5'
+                    : 'bg-muted text-foreground p-2.5'
+              )}
+            >
+              {showApprovalCard ? (
+                <ApprovalPromptCard
+                  request={msg.approval_request!}
+                  token={msg.token!}
+                  isProcessing={processingIdx === idx}
+                  onDecision={(approved) => handleDecision(idx, approved)}
+                />
+              ) : msg.role === 'assistant' && isStructuredResponse(msg.content) ? (
+                <ActionResultCard content={msg.content} />
+              ) : (
+                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+              )}
+              {msg.suggested_action && !showApprovalCard && !msg.approval_decided && (
+                <div className="mt-2 pt-2 border-t border-border/20 text-[10px] opacity-90 font-medium">
+                  Action: {msg.suggested_action.action_name}
+                </div>
+              )}
+            </div>
+          );
+        })}
         {isSending && (
           <div className="bg-muted text-muted-foreground rounded-lg p-2.5 text-xs max-w-[85%] animate-pulse">
             Thinking...

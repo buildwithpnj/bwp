@@ -82,12 +82,19 @@ We bypassed Ollama's strict host header verification in remote tunnels by config
 ### 3.2 Action Capability Audit
 Created audit unit tests to ensure that all actions declared in the database register match their class definitions and that payload structures match backend validation schemas.
 
-### 3.3 Robust Parameter Cleansing & Fallback Matcher [NEW]
-We addressed LLM payload inconsistencies by building an automated key-cleanser and a regex fallback routing engine. When the Copilot suggests actions with non-conforming JSON fields (such as using `notes` instead of `description`), the parser auto-maps synonyms, injects calendar/recovery defaults, and prunes invalid keys. If JSON generation fails entirely, fallback routers match conversational triggers for tasks, habits, and addiction recovery targets.
-
 ---
 
-## 4. Next Steps
-With all 250 unit tests passing successfully, the V0.50 Copilot Control Plane is verified. We will next begin implementation of **V0.50.1**, introducing a robust, governed approval token layer with Allow/Deny gates for state-changing operations.
+## 4. Upgrade to V0.50.1 — Permanent Approval Layer for Copilot Action Execution
+
+To prevent blind execution of state-changing operations and enforce production-grade safety, we upgraded the platform to **V0.50.1** by implementing a permanent, token-authorized approval layer:
+
+- **Security Policy Matrix**: Classified all 60 actions into `SAFE_AUTO`, `CONFIRM_FIRST`, `DESTRUCTIVE_CONFIRMED`, and `ADMIN_ONLY` tiers. Built a dynamic classifier (`action_risk_classifier.py`) that escalates credentials modifications to `ADMIN_ONLY`.
+- **Single-Use Cryptographic Tokens**: Implemented `ApprovalTokenService` using secure token caches that validate and burn tokens immediately upon execution to prevent replay attacks.
+- **FastAPI / React Bridge**: Built the `/api/copilot/approve` endpoint and React components (`ApprovalPromptCard.tsx`, `DestructiveActionWarning.tsx`, `ApprovalDecisionBar.tsx`) to allow user Allow/Deny decisions inline in the Copilot drawer.
+- **Cleansed Persona & Spacing**: Created `CopilotPersonaPolicy` to scrub casual chatbot phrases, strip LLM planning tag leaks, and normalize spacing.
+
+## 5. Verification & Final Results
+
+We verified the entire upgrade by expanding our test coverage to **278 passing unit tests** (adding 28 new tests for approvals, expiries, denier workflows, and tone formatting). All tests pass with a 100% success rate.
 
 
