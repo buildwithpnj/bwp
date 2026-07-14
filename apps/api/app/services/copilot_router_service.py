@@ -8,6 +8,8 @@ from app.services.hybrid_retrieval_service import HybridRetrievalService
 
 logger = logging.getLogger("copilot_router_service")
 
+from app.schemas.copilot_planner_schemas import CopilotPlannerOutput
+
 # Route-specific system prompt expansions
 _ROUTE_HINTS: Dict[str, str] = {
     "finance":   "The user is on the Finance page. You can help with budgets, transactions, account balances, and spending trends.",
@@ -31,12 +33,19 @@ Keep replies under 3 sentences unless the user asks for detail.
 
 If the user is asking to perform any dashboard operation (create, update, delete, archive, complete, restore, search, settings updates, etc. across notes, tasks, projects, books, habits, quit addiction, calendar, user memory, knowledge base, settings, etc.), you must output a special JSON action block inside <action>...</action> tags at the very end of your response.
 Do NOT mention the action block to the user in your conversational reply.
-The JSON inside the tags must follow this exact format:
+The JSON inside the tags must follow this exact format representing the planner output contract:
 {
-  "action_name": "<action_name>",
-  "payload": { ... }
+  "message_to_user": "<Direct conversational answer or summary of the action planned>",
+  "action_name": "<action_name or null>",
+  "action_payload": { ... or null },
+  "requires_clarification": false,
+  "clarification_question": null,
+  "confidence": 1.0,
+  "refusal_reason": null
 }
-All properties in the payload must strictly match the expected schemas (e.g. create_note requires 'title' and 'content'; log_habit_checkin requires 'habit_id' and 'date'; etc.).
+
+If required parameters for the action are missing, set "requires_clarification" to true and populate "clarification_question" rather than guessing.
+All properties in the action_payload must strictly match the expected schemas.
 """
 
 
@@ -169,28 +178,77 @@ class CopilotRouterService:
                 cleansed = payload
             return {k: v for k, v in cleansed.items() if v is not None}
 
+        has_action_tag = False
         # 1. Parse JSON inside <action>...</action> tags
         import re
         import json
         action_match = re.search(r"<action>(.*?)</action>", reply_text, re.DOTALL)
         
         if action_match:
+            has_action_tag = True
             try:
                 raw_json = action_match.group(1).strip()
                 parsed = json.loads(raw_json)
+                
+                # Support both new planner output contract and legacy action blocks
                 action_name = parsed.get("action_name")
-                raw_payload = parsed.get("payload", {})
+                raw_payload = parsed.get("action_payload") or parsed.get("payload") or {}
                 
-                # Apply parameter mapping and auto-correction
-                cleansed_pay = cleanse_payload(action_name, raw_payload)
+                # Populate Planner Output structure
+                planner_output = CopilotPlannerOutput(
+                    message_to_user=parsed.get("message_to_user") or parsed.get("message") or reply_text,
+                    action_name=action_name,
+                    action_payload=raw_payload,
+                    requires_clarification=parsed.get("requires_clarification", False),
+                    clarification_question=parsed.get("clarification_question"),
+                    confidence=float(parsed.get("confidence", 1.0)),
+                    refusal_reason=parsed.get("refusal_reason")
+                )
                 
-                # Validate using registry
-                from app.services.copilot_action_registry import CopilotActionRegistry
-                if CopilotActionRegistry.get_action(action_name) and CopilotActionRegistry.validate_inputs(action_name, cleansed_pay):
+                # Check Hard Rules:
+                # Rule 1: Never invent an action not present in CopilotActionRegistry
+                if planner_output.action_name:
+                    from app.services.copilot_action_registry import CopilotActionRegistry
+                    action_meta = CopilotActionRegistry.get_action(planner_output.action_name)
+                    if not action_meta:
+                        planner_output.refusal_reason = "Action not present in registry"
+                        planner_output.action_name = None
+                        planner_output.action_payload = None
+                
+                # Rule 3: If required parameters are missing, ask clarification instead of guessing
+                if planner_output.action_name and planner_output.action_payload:
+                    from app.services.copilot_action_registry import CopilotActionRegistry
+                    cleansed_pay = cleanse_payload(planner_output.action_name, planner_output.action_payload)
+                    
+                    if not CopilotActionRegistry.validate_inputs(planner_output.action_name, cleansed_pay):
+                        planner_output.requires_clarification = True
+                        planner_output.clarification_question = f"Please specify the missing parameters for {planner_output.action_name}."
+                        planner_output.action_name = None
+                        planner_output.action_payload = None
+                    else:
+                        planner_output.action_payload = cleansed_pay
+                        
+                # Rule 4: If confidence is below threshold, do not execute
+                if planner_output.confidence < 0.6:
+                    planner_output.refusal_reason = "Confidence below threshold"
+                    planner_output.action_name = None
+                    planner_output.action_payload = None
+                
+                # Formulate final suggested action based on validated planner output
+                if planner_output.action_name and not planner_output.requires_clarification and not planner_output.refusal_reason:
                     suggested_action = {
-                        "action_name": action_name,
-                        "payload": cleansed_pay
+                        "action_name": planner_output.action_name,
+                        "payload": planner_output.action_payload
                     }
+                
+                # Overwrite reply text if clarification is required or if message_to_user is specified
+                if planner_output.requires_clarification and planner_output.clarification_question:
+                    reply_text = planner_output.clarification_question
+                elif planner_output.refusal_reason:
+                    reply_text = f"I cannot execute that action: {planner_output.refusal_reason}."
+                elif planner_output.message_to_user:
+                    reply_text = planner_output.message_to_user
+                
                 # Always strip action tag from user-facing reply text to keep drawer UX clean
                 reply_text = re.sub(r"<action>.*?</action>", "", reply_text, flags=re.DOTALL).strip()
             except Exception as e:
@@ -199,7 +257,7 @@ class CopilotRouterService:
                 reply_text = re.sub(r"<action>.*?</action>", "", reply_text, flags=re.DOTALL).strip()
 
         # 2. Fallback heuristics for note/task/habit/addiction/calendar actions
-        if not suggested_action:
+        if not suggested_action and not has_action_tag:
             has_create = any(w in query_lower for w in ["create", "add", "new", "save", "make", "write", "track"])
             
             # Note Fallback

@@ -13,12 +13,12 @@ class ActionCapabilityService:
             if data:
                 # Convert the input schema to string representation for JSON compatibility
                 schema_dict = {}
-                if data.get("input_schema"):
+                if data.get("pydantic_schema"):
                     try:
                         # If schema is a Pydantic model
-                        schema_dict = {k: str(v.annotation) for k, v in data["input_schema"].model_fields.items()}
+                        schema_dict = {k: str(v.annotation) for k, v in data["pydantic_schema"].model_fields.items()}
                     except AttributeError:
-                        schema_dict = {k: str(v) for k, v in data["input_schema"].items()}
+                        schema_dict = {k: str(v) for k, v in data["pydantic_schema"].items()}
 
                 capabilities.append({
                     "action_name": name,

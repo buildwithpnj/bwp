@@ -352,13 +352,25 @@ class CopilotActionRegistry:
             return None
             
         policy = ActionPolicyRegistry.get_policy(action_name)
+        # Default to confirm-first if policy tier is unknown (Hard Rule)
+        if not policy:
+            policy = ActionPolicyTier.CONFIRM_FIRST
+
         schema = SCHEMA_MAP.get(action_name)
+        words = action_name.replace("_", " ").title()
         
         return {
-            **action,
+            "canonical_action_name": action_name,
+            "description": action["description"],
+            "pydantic_schema": schema,
             "policy_tier": policy,
-            "input_schema": schema,
-            "requires_approval": policy in [ActionPolicyTier.CONFIRM_FIRST, ActionPolicyTier.DESTRUCTIVE_CONFIRMED]
+            "idempotency_strategy": "user_payload_hash",
+            "verifier_class": "ActionResultVerifier",
+            "ui_success_message": f"{words} completed successfully.",
+            "ui_failure_message": f"{words} execution failed.",
+            "requires_approval": policy in [ActionPolicyTier.CONFIRM_FIRST, ActionPolicyTier.DESTRUCTIVE_CONFIRMED],
+            "allowed_roles": action.get("allowed_roles", ["approved_user"]),
+            "module": action.get("module")
         }
 
     @classmethod
