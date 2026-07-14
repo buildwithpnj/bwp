@@ -28,24 +28,24 @@ export function ApprovalPromptCard({
   const isDestructive = request.policy_tier === 'destructive_confirmed';
   
   // Risk styling
-  let borderColor = 'border-indigo-500/30 bg-indigo-500/5';
-  let badgeColor = 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20';
-  let riskLabel = 'Medium Risk';
+  let borderColor = 'border-border bg-card';
+  let badgeColor = 'text-primary border-primary bg-primary/5';
+  let riskLabel = 'REVERSIBLE_ACTION';
 
   if (isDestructive) {
-    borderColor = 'border-rose-500/30 bg-rose-500/5';
-    badgeColor = 'text-rose-400 bg-rose-400/10 border-rose-400/20';
-    riskLabel = 'High Risk';
+    borderColor = 'border-red-500/20 bg-red-500/5';
+    badgeColor = 'text-red-500 border-red-500/25 bg-red-500/5';
+    riskLabel = 'DESTRUCTIVE_ACTION';
   }
 
   return (
-    <div className={`p-4 rounded-xl border flex flex-col gap-3 transition-all duration-300 backdrop-blur-md ${borderColor} text-[11px] font-sans shadow-lg`}>
+    <div className={`p-4 rounded-none border flex flex-col gap-3 transition-all duration-150 ${borderColor} text-[11px] font-sans`}>
       {/* Risk Header */}
-      <div className="flex items-center justify-between border-b border-white/5 pb-2">
-        <span className="font-bold tracking-wide uppercase text-[9px] text-muted-foreground">
+      <div className="flex items-center justify-between border-b border-border/40 pb-2">
+        <span className="font-bold tracking-wide uppercase text-[9px] text-muted-foreground font-mono">
           Awaiting Authorization
         </span>
-        <span className={`px-2 py-0.5 rounded text-[8px] font-extrabold tracking-wider border uppercase ${badgeColor}`}>
+        <span className={`px-2 py-0.5 rounded-none text-[8px] font-extrabold tracking-wider border uppercase font-mono ${badgeColor}`}>
           {riskLabel}
         </span>
       </div>
@@ -59,8 +59,8 @@ export function ApprovalPromptCard({
         {isDestructive ? (
           <DestructiveActionWarning actionName={request.action_name} />
         ) : (
-          <div className="flex items-center gap-1.5 text-muted-foreground text-[10px]">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5 text-emerald-400">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-mono">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5 text-primary">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
             <span>This action is reversible.</span>
@@ -69,7 +69,7 @@ export function ApprovalPromptCard({
       </div>
 
       {/* Execution Code Preview */}
-      <div className="bg-black/40 border border-white/5 rounded-lg p-2.5 font-mono text-[9px] text-muted-foreground whitespace-pre-wrap max-h-24 overflow-y-auto leading-relaxed">
+      <div className="bg-background border border-border/60 p-2.5 font-mono text-[9px] text-muted-foreground whitespace-pre-wrap max-h-24 overflow-y-auto leading-relaxed rounded-none">
         {request.execution_preview}
       </div>
 
